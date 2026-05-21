@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>☀️ Café Matinal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f4f0; color: #1a1a18; max-width: 720px; margin: 0 auto; padding: 24px 16px; }
+.header { margin-bottom: 20px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.header h1 { font-size: 22px; font-weight: 500; }
+.header .sub { font-size: 13px; color: #888; margin-top: 3px; }
+.stats { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.red { background: #FCEBEB; color: #A32D2D; }
+.amber { background: #FAEEDA; color: #854F0B; }
+.teal { background: #E1F5EE; color: #0F6E56; }
+.gray { background: #eeede6; color: #5F5E5A; }
+.purple { background: #EEEDFE; color: #534AB7; }
+.card { background: #fff; border: 0.5px solid #e0dfd7; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; color: #aaa; margin-bottom: 10px; text-transform: uppercase; }
+.cal-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.cal-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 20px; border: 0.5px solid #e0dfd7; font-size: 12px; color: #555; background: #f9f8f5; }
+.task { border: 0.5px solid #e8e7e0; border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
+.task-top { display: flex; align-items: center; gap: 8px; padding: 9px 12px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.task-body { flex: 1; min-width: 0; }
+.task-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.task-name a { color: #185FA5; text-decoration: none; }
+.task-name a:hover { text-decoration: underline; }
+.task-meta { font-size: 11px; color: #999; }
+.task-btns { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; }
+.btn { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; border: 0.5px solid #ddd; color: #888; background: #f5f4f0; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.btn-close { border-color: #5DCAA5; color: #0F6E56; background: #E1F5EE; }
+.btn-agent { border-color: #AFA9EC; color: #534AB7; background: #EEEDFE; }
+.btn-snooze { border-color: #EF9F27; color: #854F0B; background: #FAEEDA; }
+.agents { border-top: 0.5px solid #f0efe8; padding: 6px 12px; background: #f9f8f5; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.ag-label { font-size: 9px; font-weight: 600; letter-spacing: 0.07em; color: #aaa; margin-right: 3px; }
+.question { border-top: 0.5px solid #f0efe8; padding: 7px 12px; background: #f9f8f5; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.q-text { font-size: 11px; color: #666; flex: 1; min-width: 160px; }
+.q-yes { padding: 3px 12px; border-radius: 20px; background: #534AB7; color: #fff; border: none; font-size: 11px; cursor: pointer; }
+.q-no { padding: 3px 12px; border-radius: 20px; background: #f5f4f0; border: 0.5px solid #ddd; color: #888; font-size: 11px; cursor: pointer; }
+.insight { background: #EEEDFE; border-left: 2px solid #534AB7; padding: 11px 14px; border-radius: 0 8px 8px 0; font-size: 12px; color: #3C3489; line-height: 1.6; margin-top: 4px; }
+.create { display: flex; align-items: center; gap: 7px; padding: 9px 12px; border: 0.5px dashed #ddd; border-radius: 8px; color: #aaa; font-size: 12px; cursor: pointer; margin-top: 6px; }
+.divider { height: 0.5px; background: #e8e7e0; margin: 12px 0; }
+.empty-state { text-align: center; padding: 40px 20px; color: #aaa; }
+.empty-state .es-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state h2 { font-size: 16px; font-weight: 500; color: #888; margin-bottom: 6px; }
+.empty-state p { font-size: 13px; line-height: 1.6; }
+.footer { font-size: 11px; color: #bbb; text-align: center; margin-top: 28px; padding-top: 16px; border-top: 0.5px solid #e8e7e0; }
+.section-my { border-left: 2px solid #185FA5; padding-left: 10px; }
+.section-mentioned { border-left: 2px solid #888; padding-left: 10px; }
+.section-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; margin-bottom: 8px; }
+.section-tag.blue { color: #185FA5; }
+.section-tag.gray { color: #888; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>☀️ Café Matinal</h1>
+    <div class="sub" id="data-sub">a carregar...</div>
+  </div>
+  <div class="stats" id="stats-bar"></div>
+</div>
+
+<div id="content">
+  <div class="empty-state">
+    <div class="es-icon">☀️</div>
+    <h2>Ainda sem dados de hoje</h2>
+    <p>O sistema actualiza diariamente às 8h30.<br>A partir de amanhã verás aqui o teu dashboard completo.</p>
+  </div>
+</div>
+
+<div class="footer">
+  ☀️ Café Matinal · BBTOP20 · actualiza automaticamente às 8h30 e 18h00 · seg–sex
+</div>
+
+<script>
+const now = new Date();
+const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+document.getElementById('data-sub').textContent =
+  now.toLocaleDateString('pt-PT', opts) + ' · aguarda actualização às 8h30';
+</script>
+
+</body>
+</html>
