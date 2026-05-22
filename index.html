@@ -247,7 +247,6 @@ function renderTasks(tasks) {
       const acc = t.priority==='urgent'?'acc-red':t.priority==='high'?'acc-amber':t.priority==='normal'?'acc-blue':'acc-gray';
       const due = t.due_date ? new Date(t.due_date).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
       const isLate = t.due_date && new Date(t.due_date)<now;
-      const agentOptions = AGENTS.map(a=>`<option value="${a.value}">${a.label}</option>`).join('');
       s += `<div class="task-card" id="${cid}">
         <div class="task-main">
           <div class="task-accent ${acc}"></div>
@@ -265,11 +264,9 @@ function renderTasks(tasks) {
           </div>
         </div>
         <div class="agent-strip">
-          <span class="ag-label">AGENTE</span>
-          <select class="agent-select" id="sel-${cid}">${agentOptions}</select>
-          <button class="btn btn-agent" onclick="runAgent('${t.id}','${cid}')">Executar</button>
+          <span class="ag-label">AGENTE LIVRE</span>
+          <button class="btn btn-agent" onclick="openAgent('${t.id}', '${t.name.replace(/'/g,\"\")}')">✦ Executar → </button>
         </div>
-        <div class="agent-output" id="ao-${cid}"></div>
       </div>`;
     });
     return s + '</div>';
@@ -294,6 +291,64 @@ if(typeof TASKS_DATA !== 'undefined') {
     <div style="margin-top:8px;">Consulta o email da manhã para a lista completa de hoje.</div>
   </div>`;
 }
+
+// ── AGENTE LIVRE MODAL ──────────────────────────────────────────────
+(function() {
+  const m = document.createElement('div');
+  m.id = 'agentModal';
+  m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(26,25,22,.45);z-index:300;align-items:center;justify-content:center;';
+  m.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px;width:480px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.18);font-family:DM Sans,Arial,sans-serif;">
+      <div style="font-family:DM Serif Display,Georgia,serif;font-size:18px;color:#1A1916;margin-bottom:4px;">Agente Livre</div>
+      <div id="am-task" style="font-size:12px;color:#A8A59E;margin-bottom:16px;font-family:DM Mono,Courier New;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      <textarea id="am-prompt" placeholder="Escreve o que queres fazer...&#10;ex: cria um alerta para daqui a 2 dias&#10;ex: resume o histórico desta tarefa&#10;ex: redige um email de seguimento&#10;ex: quais os próximos passos?" rows="5"
+        style="width:100%;font-size:13px;padding:10px 12px;border:1px solid #E2DDD5;border-radius:8px;font-family:DM Sans,Arial;resize:vertical;outline:none;color:#1A1916;line-height:1.6;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;align-items:center;">
+        <span style="font-size:10px;color:#A8A59E;font-style:italic;flex:1;">Resultado chega por email em ~30s e fica no ClickUp</span>
+        <button onclick="document.getElementById('agentModal').style.display='none'" style="font-size:12px;padding:7px 14px;border-radius:20px;border:1px solid #E2DDD5;background:#F5F2EC;color:#5A5750;cursor:pointer;">Cancelar</button>
+        <button id="am-btn" onclick="submitAgentModal()" style="font-size:12px;padding:7px 18px;border-radius:20px;border:none;background:#4A3A8A;color:#fff;cursor:pointer;display:flex;align-items:center;gap:6px;">Executar &#8594;</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click', e => { if(e.target===m) m.style.display='none'; });
+})();
+
+let _agentTaskId = null;
+function openAgent(taskId, taskName) {
+  _agentTaskId = taskId;
+  document.getElementById('am-task').textContent = decodeURIComponent(taskName || taskId);
+  document.getElementById('am-prompt').value = '';
+  document.getElementById('am-btn').textContent = 'Executar →';
+  document.getElementById('am-btn').disabled = false;
+  document.getElementById('agentModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('am-prompt').focus(), 80);
+}
+
+function submitAgentModal() {
+  const prompt = document.getElementById('am-prompt').value.trim();
+  if(!prompt) { document.getElementById('am-prompt').style.borderColor='#C23B22'; return; }
+  const btn = document.getElementById('am-btn');
+  btn.textContent = 'A enviar...'; btn.disabled = true;
+  fetch(WEBHOOK + '?action=agent&agent_type=libre&task_id=' + _agentTaskId + '&prompt=' + encodeURIComponent(prompt), {mode:'no-cors'})
+    .finally(() => {
+      document.getElementById('agentModal').style.display = 'none';
+      showToast('✓ Agente em processamento — resultado chega por email em ~30s', 4500);
+    });
+}
+
+// Auto-open modal if URL has task_id param
+(function() {
+  const p = new URLSearchParams(location.search);
+  if(p.get('task_id')) {
+    const tid = p.get('task_id'), tname = p.get('task') || '';
+    setTimeout(() => {
+      const card = document.getElementById('task-' + tid);
+      if(card) { card.scrollIntoView({behavior:'smooth',block:'center'}); card.style.outline='2px solid #4A3A8A'; setTimeout(()=>card.style.outline='',2000); }
+      openAgent(tid, tname);
+    }, 600);
+  }
+})();
+
 </script>
 </body>
 </html>
