@@ -3,86 +3,297 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>☀️ Café Matinal</title>
+<title>Café Matinal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f4f0; color: #1a1a18; max-width: 720px; margin: 0 auto; padding: 24px 16px; }
-.header { margin-bottom: 20px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-.header h1 { font-size: 22px; font-weight: 500; }
-.header .sub { font-size: 13px; color: #888; margin-top: 3px; }
-.stats { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-.red { background: #FCEBEB; color: #A32D2D; }
-.amber { background: #FAEEDA; color: #854F0B; }
-.teal { background: #E1F5EE; color: #0F6E56; }
-.gray { background: #eeede6; color: #5F5E5A; }
-.purple { background: #EEEDFE; color: #534AB7; }
-.card { background: #fff; border: 0.5px solid #e0dfd7; border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; }
-.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; color: #aaa; margin-bottom: 10px; text-transform: uppercase; }
-.cal-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
-.cal-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 20px; border: 0.5px solid #e0dfd7; font-size: 12px; color: #555; background: #f9f8f5; }
-.task { border: 0.5px solid #e8e7e0; border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
-.task-top { display: flex; align-items: center; gap: 8px; padding: 9px 12px; }
-.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.task-body { flex: 1; min-width: 0; }
-.task-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
-.task-name a { color: #185FA5; text-decoration: none; }
-.task-name a:hover { text-decoration: underline; }
-.task-meta { font-size: 11px; color: #999; }
-.task-btns { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; }
-.btn { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; border: 0.5px solid #ddd; color: #888; background: #f5f4f0; cursor: pointer; text-decoration: none; white-space: nowrap; }
-.btn-close { border-color: #5DCAA5; color: #0F6E56; background: #E1F5EE; }
-.btn-agent { border-color: #AFA9EC; color: #534AB7; background: #EEEDFE; }
-.btn-snooze { border-color: #EF9F27; color: #854F0B; background: #FAEEDA; }
-.agents { border-top: 0.5px solid #f0efe8; padding: 6px 12px; background: #f9f8f5; display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
-.ag-label { font-size: 9px; font-weight: 600; letter-spacing: 0.07em; color: #aaa; margin-right: 3px; }
-.question { border-top: 0.5px solid #f0efe8; padding: 7px 12px; background: #f9f8f5; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.q-text { font-size: 11px; color: #666; flex: 1; min-width: 160px; }
-.q-yes { padding: 3px 12px; border-radius: 20px; background: #534AB7; color: #fff; border: none; font-size: 11px; cursor: pointer; }
-.q-no { padding: 3px 12px; border-radius: 20px; background: #f5f4f0; border: 0.5px solid #ddd; color: #888; font-size: 11px; cursor: pointer; }
-.insight { background: #EEEDFE; border-left: 2px solid #534AB7; padding: 11px 14px; border-radius: 0 8px 8px 0; font-size: 12px; color: #3C3489; line-height: 1.6; margin-top: 4px; }
-.create { display: flex; align-items: center; gap: 7px; padding: 9px 12px; border: 0.5px dashed #ddd; border-radius: 8px; color: #aaa; font-size: 12px; cursor: pointer; margin-top: 6px; }
-.divider { height: 0.5px; background: #e8e7e0; margin: 12px 0; }
-.empty-state { text-align: center; padding: 40px 20px; color: #aaa; }
-.empty-state .es-icon { font-size: 40px; margin-bottom: 12px; }
-.empty-state h2 { font-size: 16px; font-weight: 500; color: #888; margin-bottom: 6px; }
-.empty-state p { font-size: 13px; line-height: 1.6; }
-.footer { font-size: 11px; color: #bbb; text-align: center; margin-top: 28px; padding-top: 16px; border-top: 0.5px solid #e8e7e0; }
-.section-my { border-left: 2px solid #185FA5; padding-left: 10px; }
-.section-mentioned { border-left: 2px solid #888; padding-left: 10px; }
-.section-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; margin-bottom: 8px; }
-.section-tag.blue { color: #185FA5; }
-.section-tag.gray { color: #888; }
+:root{--cream:#F5F2EC;--ink:#1A1916;--ink-soft:#5A5750;--ink-faint:#A8A59E;--border:#E2DDD5;--red:#C23B22;--red-bg:#FBF0EE;--amber:#B36B00;--amber-bg:#FBF4E8;--teal:#1A6B55;--teal-bg:#EAF3EE;--blue:#1A4A7A;--blue-bg:#EAF0F8;--purple:#4A3A8A;--purple-bg:#F0EEF8;--r:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+.site-header{border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;background:var(--cream);position:sticky;top:0;z-index:100}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-.3px;color:var(--ink);display:flex;align-items:center;gap:8px}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0}
+.header-meta{font-size:12px;color:var(--ink-faint);font-family:'DM Mono',monospace}
+.header-status{display:flex;align-items:center;gap:20px}
+.pulse{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--teal);font-family:'DM Mono',monospace}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse-anim 2s ease-in-out infinite}
+@keyframes pulse-anim{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.main{max-width:860px;margin:0 auto;padding:32px 24px 64px}
+.morning-banner{margin-bottom:28px}
+.morning-date{font-family:'DM Serif Display',serif;font-size:36px;line-height:1.1;color:var(--ink);margin-bottom:6px;letter-spacing:-.5px}
+.morning-sub{font-size:14px;color:var(--ink-soft);line-height:1.5}
+.morning-sub strong{color:var(--ink);font-weight:500}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.stat-num{font-family:'DM Serif Display',serif;font-size:28px;line-height:1;margin-bottom:4px}
+.stat-label{font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+.stat-card.red .stat-num{color:var(--red)}.stat-card.amber .stat-num{color:var(--amber)}.stat-card.teal .stat-num{color:var(--teal)}.stat-card.blue .stat-num{color:var(--blue)}
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--ink-faint)}
+.section-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.sb-red{background:var(--red-bg);color:var(--red);border:1px solid #EEBBAF}
+.sb-amber{background:var(--amber-bg);color:var(--amber);border:1px solid #EDD598}
+.sb-teal{background:var(--teal-bg);color:var(--teal);border:1px solid #9ECBBF}
+.sb-blue{background:var(--blue-bg);color:var(--blue);border:1px solid #9ABDE0}
+.sb-purple{background:var(--purple-bg);color:var(--purple);border:1px solid #B9AEE0}
+.task-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;overflow:hidden;transition:box-shadow .15s ease}
+.task-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.task-card.done{opacity:.45}
+.task-card.done .task-name{text-decoration:line-through}
+.task-main{display:flex;align-items:center;gap:10px;padding:11px 14px}
+.task-accent{width:3px;align-self:stretch;border-radius:3px;flex-shrink:0}
+.acc-red{background:var(--red)}.acc-amber{background:var(--amber)}.acc-teal{background:var(--teal)}.acc-blue{background:var(--blue)}.acc-gray{background:var(--border)}
+.task-body{flex:1;min-width:0}
+.task-name{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-name a{color:inherit;text-decoration:none}
+.task-name a:hover{color:var(--blue)}
+.task-meta{font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.meta-late{color:var(--red)}
+.meta-list{background:var(--cream);border:1px solid var(--border);padding:1px 7px;border-radius:10px;font-size:10px}
+.task-actions{display:flex;gap:5px;flex-shrink:0;align-items:center}
+.btn{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:var(--cream);color:var(--ink-soft);cursor:pointer;white-space:nowrap;transition:all .12s ease;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.btn:hover{background:#EDE9E1}
+.btn-close{border-color:#9ECBBF;background:var(--teal-bg);color:var(--teal)}
+.btn-close:hover{background:#D0E9E2}
+.btn-open{border-color:var(--border);color:var(--blue)}
+.btn-agent{border-color:#B9AEE0;background:var(--purple-bg);color:var(--purple)}
+.btn-agent:hover{background:#E4E0F4}
+.btn-primary{background:var(--purple);color:#fff;border-color:var(--purple)}
+.btn-primary:hover{background:#3A2A7A}
+.agent-strip{border-top:1px solid var(--border);padding:8px 14px;background:#FAFAF8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ag-label{font-size:9px;font-weight:500;letter-spacing:.09em;color:var(--ink-faint);margin-right:3px}
+.agent-select{font-size:11px;padding:4px 8px;border-radius:20px;border:1px solid #B9AEE0;background:var(--purple-bg);color:var(--purple);cursor:pointer;font-family:'DM Sans',sans-serif}
+.agent-output{border-top:1px solid #D5CEEE;padding:14px 16px;background:var(--purple-bg);display:none}
+.ao-header{font-size:10px;font-weight:500;letter-spacing:.08em;color:var(--purple);margin-bottom:8px}
+.ao-body{font-size:12px;color:#3A2A6A;line-height:1.7;white-space:pre-wrap;font-family:'DM Mono',monospace;background:rgba(255,255,255,.6);padding:10px 12px;border-radius:6px;border:1px solid #C9C0E8}
+.ao-footer{margin-top:10px;display:flex;gap:7px}
+.btn-use{background:var(--purple);color:#fff;border-color:var(--purple)}
+.notice{font-size:10px;color:var(--ink-faint);font-style:italic;margin-top:6px}
+.q-strip{border-top:1px solid var(--border);padding:9px 14px;background:#FAFAF8;display:flex;align-items:center;gap:10px}
+.q-text{font-size:12px;color:var(--ink-soft);flex:1;line-height:1.4}
+.btn-yes{background:var(--purple);color:#fff;border-color:var(--purple)}
+.insight{background:var(--purple-bg);border:1px solid #C9C0E8;border-left:3px solid var(--purple);border-radius:0 var(--r) var(--r) 0;padding:13px 16px;font-size:13px;color:#3A2A6A;line-height:1.6;margin-top:8px}
+.insight strong{color:var(--purple)}
+.radar-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--ink-soft)}
+.radar-row:last-child{border-bottom:none}
+.radar-name{flex:1}
+.radar-name a{color:var(--ink-soft);text-decoration:none}
+.radar-name a:hover{color:var(--blue)}
+.radar-due{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-faint)}
+.create-card{background:#fff;border:1px dashed var(--border);border-radius:var(--r);padding:11px 16px;display:flex;align-items:center;gap:9px;color:var(--ink-faint);font-size:13px;cursor:pointer;transition:all .12s;margin-top:8px}
+.create-card:hover{border-color:var(--ink-soft);color:var(--ink);background:var(--cream)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.site-footer{text-align:center;font-size:11px;color:var(--ink-faint);font-family:'DM Mono',monospace;margin-top:40px}
+.spinner{display:inline-block;width:10px;height:10px;border:1.5px solid #C9C0E8;border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:var(--r);font-size:13px;z-index:999;opacity:0;transform:translateY(8px);transition:all .25s ease;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div>
-    <h1>☀️ Café Matinal</h1>
-    <div class="sub" id="data-sub">a carregar...</div>
+<header class="site-header">
+  <div class="logo"><div class="logo-dot"></div>Café Matinal</div>
+  <div class="header-status">
+    <span class="pulse"><span class="pulse-dot"></span>sistema activo</span>
+    <span class="header-meta" id="header-date">—</span>
   </div>
-  <div class="stats" id="stats-bar"></div>
-</div>
+</header>
 
-<div id="content">
-  <div class="empty-state">
-    <div class="es-icon">☀️</div>
-    <h2>Ainda sem dados de hoje</h2>
-    <p>O sistema actualiza diariamente às 8h30.<br>A partir de amanhã verás aqui o teu dashboard completo.</p>
+<div class="toast" id="toast"></div>
+
+<main class="main">
+  <div class="morning-banner">
+    <div class="morning-date" id="morning-date">Bom dia, Vasco.</div>
+    <div class="morning-sub" id="morning-sub">A carregar tarefas...</div>
   </div>
-</div>
 
-<div class="footer">
-  ☀️ Café Matinal · BBTOP20 · actualiza automaticamente às 8h30 e 18h00 · seg–sex
-</div>
+  <div class="stats-row">
+    <div class="stat-card red"><div class="stat-num" id="s-urgent">—</div><div class="stat-label">URGENTE</div></div>
+    <div class="stat-card amber"><div class="stat-num" id="s-today">—</div><div class="stat-label">PARA HOJE</div></div>
+    <div class="stat-card teal"><div class="stat-num" id="s-prog">—</div><div class="stat-label">EM PROGRESSO</div></div>
+    <div class="stat-card blue"><div class="stat-num" id="s-total">—</div><div class="stat-label">TOTAL</div></div>
+  </div>
+
+  <div id="tasks-container">
+    <div style="text-align:center;padding:40px;color:var(--ink-faint);font-size:13px;">A carregar tarefas do ClickUp...</div>
+  </div>
+
+  <div class="create-card" onclick="createTask()">
+    <span>+</span><span>Adicionar tarefa rápida...</span>
+  </div>
+
+  <div class="insight" style="margin-top:20px">
+    <strong>Nota:</strong> Os botões de acção actualizam directamente o ClickUp. Os agentes processam o pedido e enviam o resultado por email em ~30 segundos.
+  </div>
+
+  <div class="site-footer">café matinal · sistema autónomo · actualiza às 8h30 · segunda a sexta</div>
+</main>
 
 <script>
-const now = new Date();
-const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-document.getElementById('data-sub').textContent =
-  now.toLocaleDateString('pt-PT', opts) + ' · aguarda actualização às 8h30';
-</script>
+const WEBHOOK = 'https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu';
 
+const AGENTS = [
+  {value:'email',    label:'✉ Redigir email'},
+  {value:'reel',     label:'▷ Guião Reel'},
+  {value:'carrossel',label:'⬟ Estrutura carrossel'},
+  {value:'pesquisa', label:'◈ Pesquisar tema'},
+  {value:'resumo',   label:'≡ Resumir tarefa'},
+];
+
+const PRIORITY_COLORS = {urgent:'acc-red',high:'acc-amber',normal:'acc-blue'};
+const PRIORITY_LABELS = {urgent:'urgente',high:'alta',normal:'normal'};
+
+// Datas dinâmicas
+const now = new Date();
+const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+document.getElementById('morning-date').textContent = 'Bom dia, Vasco.';
+document.getElementById('header-date').textContent = `${now.getDate()} ${meses[now.getMonth()].slice(0,3).toLowerCase()} · actualizado às 8h30`;
+
+// Toast
+function showToast(msg, dur=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), dur);
+}
+
+// Chamar webhook
+async function callWebhook(params) {
+  const url = WEBHOOK + '?' + new URLSearchParams(params).toString();
+  try { await fetch(url, {mode:'no-cors'}); return true; } catch(e) { return true; }
+}
+
+// Fechar tarefa
+function closeTask(taskId, cardId, btn) {
+  btn.textContent = '⟳ A fechar...';
+  btn.disabled = true;
+  callWebhook({action:'close', task_id:taskId}).then(()=>{
+    const card = document.getElementById(cardId);
+    if(card) card.classList.add('done');
+    btn.textContent = '✓ Fechada';
+    showToast('Tarefa fechada no ClickUp ✓');
+  });
+}
+
+// Adiar tarefa
+function delayTask(taskId, btn) {
+  btn.textContent = '⟳';
+  btn.disabled = true;
+  callWebhook({action:'delay', task_id:taskId}).then(()=>{
+    btn.textContent = '+1 dia';
+    btn.disabled = false;
+    showToast('Prazo adiado 1 dia ✓');
+  });
+}
+
+// Executar agente
+function runAgent(taskId, cardId) {
+  const sel = document.getElementById('sel-' + cardId);
+  const agentType = sel ? sel.value : 'email';
+  const output = document.getElementById('ao-' + cardId);
+  const btn = sel ? sel.nextElementSibling : null;
+  if(btn) { btn.innerHTML = '<span class="spinner"></span> A processar...'; btn.disabled = true; }
+  callWebhook({action:'agent', agent_type:agentType, task_id:taskId}).then(()=>{
+    if(output) {
+      output.innerHTML = `<div class="ao-header">≡ Agente "${AGENTS.find(a=>a.value===agentType)?.label||agentType}" · em processamento</div>
+      <div class="ao-body">O pedido foi enviado ao Claude. O resultado chega por email em ~30 segundos e fica também como comentário no ClickUp.</div>
+      <div class="notice">⚠ Gerado por IA — rever antes de usar</div>`;
+      output.style.display = 'block';
+    }
+    if(btn) { btn.innerHTML = '✓ Enviado'; btn.disabled = false; }
+    showToast('Agente em processamento — resultado chega por email ✓', 4000);
+  });
+}
+
+// Criar tarefa
+function createTask() {
+  const name = prompt('Nome da nova tarefa:');
+  if(!name) return;
+  callWebhook({action:'create', task_name:name}).then(()=>{
+    showToast('Tarefa criada no ClickUp ✓');
+  });
+}
+
+// Render tasks
+function renderTasks(tasks) {
+  if(!tasks||!tasks.length) {
+    document.getElementById('tasks-container').innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink-faint);">Sem tarefas em aberto.</div>';
+    return;
+  }
+  const urgent=[], today=[], progress=[], other=[];
+  const nowMs = Date.now();
+  const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+  tasks.forEach(t=>{
+    if(t.priority==='urgent') urgent.push(t);
+    else if(t.due_date && new Date(t.due_date)<=todayEnd) today.push(t);
+    else if(t.status==='in progress'||t.status==='a trabalhar') progress.push(t);
+    else other.push(t);
+  });
+  document.getElementById('s-urgent').textContent = urgent.length;
+  document.getElementById('s-today').textContent = today.length;
+  document.getElementById('s-prog').textContent = progress.length;
+  document.getElementById('s-total').textContent = tasks.length;
+  document.getElementById('morning-sub').innerHTML = `<strong>${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]}</strong> · ${tasks.length} tarefas activas`;
+
+  let html = '';
+  const renderSection = (list, badgeClass, label) => {
+    if(!list.length) return '';
+    let s = `<div class="section"><div class="section-header"><div class="section-title"><span class="section-badge ${badgeClass}">${list.length} ${label}</span></div></div>`;
+    list.forEach((t,i)=>{
+      const cid = 'task-'+t.id;
+      const acc = t.priority==='urgent'?'acc-red':t.priority==='high'?'acc-amber':t.priority==='normal'?'acc-blue':'acc-gray';
+      const due = t.due_date ? new Date(t.due_date).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+      const isLate = t.due_date && new Date(t.due_date)<now;
+      const agentOptions = AGENTS.map(a=>`<option value="${a.value}">${a.label}</option>`).join('');
+      s += `<div class="task-card" id="${cid}">
+        <div class="task-main">
+          <div class="task-accent ${acc}"></div>
+          <div class="task-body">
+            <div class="task-name"><a href="https://app.clickup.com/t/${t.id}" target="_blank">${t.name}</a></div>
+            <div class="task-meta">
+              ${isLate?`<span class="meta-late">prazo ultrapassado</span>`:due?`<span>prazo ${due}</span>`:''}
+              <span class="meta-list">${t.list||''}</span>
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="btn btn-close" onclick="closeTask('${t.id}','${cid}',this)">✓ Fechar</button>
+            <button class="btn" onclick="delayTask('${t.id}',this)">+1 dia</button>
+            <a class="btn btn-open" href="https://app.clickup.com/t/${t.id}" target="_blank">↗ ClickUp</a>
+          </div>
+        </div>
+        <div class="agent-strip">
+          <span class="ag-label">AGENTE</span>
+          <select class="agent-select" id="sel-${cid}">${agentOptions}</select>
+          <button class="btn btn-agent" onclick="runAgent('${t.id}','${cid}')">Executar</button>
+        </div>
+        <div class="agent-output" id="ao-${cid}"></div>
+      </div>`;
+    });
+    return s + '</div>';
+  };
+  html += renderSection(urgent, 'sb-red', 'urgente');
+  html += renderSection(today, 'sb-amber', 'para hoje');
+  html += renderSection(progress, 'sb-teal', 'em progresso');
+  html += renderSection(other, 'sb-blue', 'outras');
+  document.getElementById('tasks-container').innerHTML = html;
+}
+
+// Carregar dados dos tasks (injectados pelo Make ou fallback)
+if(typeof TASKS_DATA !== 'undefined') {
+  renderTasks(TASKS_DATA);
+} else {
+  document.getElementById('morning-sub').innerHTML = 'Dashboard actualizado às 8h30 · consulta o email para as tarefas de hoje';
+  document.getElementById('s-urgent').textContent = '—';
+  document.getElementById('tasks-container').innerHTML = `<div style="text-align:center;padding:40px;color:var(--ink-faint);font-size:13px;">
+    <div style="font-size:28px;margin-bottom:12px;">☀️</div>
+    <div style="font-weight:500;color:var(--ink);margin-bottom:8px;">Dashboard Café Matinal</div>
+    <div>As tarefas são actualizadas diariamente às 8h30.</div>
+    <div style="margin-top:8px;">Consulta o email da manhã para a lista completa de hoje.</div>
+  </div>`;
+}
+</script>
 </body>
 </html>
