@@ -171,8 +171,35 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
       )
     ),
     ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},SB.map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"11px 14px"}},ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:26,color:s.c,lineHeight:1,marginBottom:3}},s.n),ce("div",{style:{fontSize:10,color:"#9B9890",letterSpacing:".04em"}},s.l)))),
-    dailyBrief&&dailyBrief.date===new Date().toDateString()&&ce("div",{style:{background:"#1A1A2E",borderRadius:10,padding:"14px 16px",marginBottom:14,border:"1px solid #2D2D45"}},ce("div",{style:{fontSize:10,fontWeight:600,letterSpacing:".08em",color:"#7C8DB5",marginBottom:8}},"☀ BRIEF DO DIA · IA"),dailyBrief.motivacao&&ce("p",{style:{color:"#C8D0E0",fontSize:13,lineHeight:1.5,marginBottom:10,fontStyle:"italic"}},"\""+dailyBrief.motivacao+"\""),ce("div",{style:{display:"flex",flexDirection:"column",gap:6}},(dailyBrief.top3||[]).map(function(t,i){return ce("div",{key:i,style:{display:"flex",gap:10,alignItems:"flex-start"}},ce("div",{style:{width:20,height:20,borderRadius:"50%",background:"#7C3AED",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",flexShrink:0}},i+1),ce("div",null,ce("div",{style:{fontSize:13,fontWeight:500,color:"#fff"}},typeof t==="string"?t:(t.name||t)),t&&t.reason&&ce("div",{style:{fontSize:11,color:"#7C8DB5",marginTop:1}},t.reason)));})),genBrief&&ce("button",{onClick:function(){genBrief([]);},style:{marginTop:10,fontSize:11,color:"#7C8DB5",background:"transparent",border:"1px solid rgba(255,255,255,.15)",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontFamily:"inherit"}},"↻ Novo brief")),
-    recentTasks&&recentTasks.length>0&&ce("div",{style:{marginBottom:14}},ce("div",{style:{fontSize:11,fontWeight:600,letterSpacing:".06em",color:"#3182CE",marginBottom:8}},"↻ ACTIVIDADE RECENTE · 48h"),ce("div",{className:"cd"},recentTasks.slice(0,8).map(function(t,i){return ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"7px 12px",borderBottom:i<7?"1px solid #F0EEE8":"none"}},ce("div",{style:{width:6,height:6,borderRadius:"50%",background:({urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE"}[t.priority]||"#CBD5E0"),flexShrink:0}}),ce("a",{href:t.url,target:"_blank",rel:"noreferrer",style:{flex:1,fontSize:12,color:"#1A1A2E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),ce("span",{style:{fontSize:10,color:"#9B9890",flexShrink:0,marginLeft:4}},t.list),ce("button",{className:"bt pu2",onClick:function(){setAT(t);},style:{fontSize:10,padding:"3px 7px",flexShrink:0}},"✦"));}))),
+    dailyBrief&&dailyBrief.date===new Date().toDateString()&&ce("div",{style:{background:"#1A1A2E",borderRadius:10,padding:"14px 16px",marginBottom:14}},
+      ce("div",{style:{fontSize:10,fontWeight:600,letterSpacing:".08em",color:"#7C8DB5",marginBottom:8}},"☀ BRIEF DO DIA · IA"),
+      dailyBrief.motivacao&&ce("p",{style:{color:"#C8D0E0",fontSize:13,lineHeight:1.5,marginBottom:10,fontStyle:"italic"}},dailyBrief.motivacao),
+      ce("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+        (dailyBrief.top3||[]).map(function(t,i){
+          return ce("div",{key:i,style:{display:"flex",gap:10,alignItems:"flex-start"}},
+            ce("div",{style:{width:20,height:20,borderRadius:"50%",background:"#7C3AED",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",flexShrink:0}},i+1),
+            ce("div",null,
+              ce("div",{style:{fontSize:13,fontWeight:500,color:"#fff"}},t&&t.name?t.name:String(t)),
+              t&&t.reason?ce("div",{style:{fontSize:11,color:"#7C8DB5",marginTop:1}},t.reason):null
+            )
+          );
+        })
+      ),
+      genBrief?ce("button",{onClick:function(){genBrief(tasks);},style:{marginTop:10,fontSize:11,color:"#7C8DB5",background:"transparent",border:"1px solid rgba(255,255,255,.15)",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontFamily:"inherit"}},"↻ Novo brief"):null
+    ),
+    recentTasks&&recentTasks.length>0&&ce("div",{style:{marginBottom:14}},
+      ce("div",{style:{fontSize:11,fontWeight:600,letterSpacing:".06em",color:"#3182CE",marginBottom:8}},"↻ ACTIVIDADE RECENTE · 48h"),
+      ce("div",{className:"cd"},
+        recentTasks.slice(0,8).map(function(t,i){
+          return ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"7px 12px",borderBottom:i<7?"1px solid #F0EEE8":"none"}},
+            ce("div",{style:{width:6,height:6,borderRadius:"50%",background:({urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE"}[t.priority]||"#CBD5E0"),flexShrink:0}}),
+            ce("a",{href:t.url,target:"_blank",rel:"noreferrer",style:{flex:1,fontSize:12,color:"#1A1A2E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
+            ce("span",{style:{fontSize:10,color:"#9B9890",flexShrink:0}},t.list),
+            ce("button",{className:"bt pu2",onClick:function(){setAT(t);},style:{fontSize:10,padding:"3px 7px"}},"✦")
+          );
+        })
+      )
+    ),
         late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-alert-circle",style:{fontSize:16}}),`Tens ${late.length} tarefa${late.length!==1?"s":""} em atraso`),
     ce("button",{onClick:gen3,disabled:t3l,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"9px",borderRadius:8,border:"1px solid #DDD6FE",background:"#F5F3FF",color:"#6D28D9",fontSize:13,cursor:"pointer",marginBottom:14,fontFamily:"inherit"}},t3l?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:14}}),t3l?"A gerar...":"Sugerir 3 tarefas prioritárias para hoje (IA)"),
     ce("div",{className:"cd",style:{padding:14,marginBottom:14}},
@@ -536,20 +563,43 @@ function App(){
     const key=localStorage.getItem('cu_key');
     if(key){
       try{
-        const r=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?assignees[]='+CU_USER+'&include_closed=false&subtasks=true&page=0',{headers:{'Authorization':key}});
-        if(r.ok){
-          const d=await r.json();
-          const arr=(d.tasks||[]).map(t=>({id:t.id,name:t.name,status:t.status?.status||'open',priority:({1:'urgent',2:'high',3:'normal',4:'low'}[t.priority?.priority]||'normal'),list:t.list?.name||'',due_date:t.due_date||'null',url:t.url||('https://app.clickup.com/t/'+t.id)}));
+        const r1=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?assignees[]='+CU_USER+'&include_closed=false&subtasks=true&page=0&order_by=updated&reverse=true',{headers:{'Authorization':key}});
+        if(r1.ok){
+          const d=await r1.json();
+          const arr=(d.tasks||[]).map(function(t){return{id:t.id,name:t.name,status:t.status?.status||'open',priority:({1:'urgent',2:'high',3:'normal',4:'low'}[t.priority?.priority]||'normal'),list:t.list?.name||'',due_date:t.due_date||'null',url:t.url||('https://app.clickup.com/t/'+t.id),date_updated:t.date_updated||'0'};});
           setTasks(arr);ss('bj-tasks',arr);
-          const t=new Date();setSync(String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));
         }
+        const since=Date.now()-48*60*60*1000;
+        const r2=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?date_updated_gt='+since+'&include_closed=false&page=0&order_by=updated&reverse=true',{headers:{'Authorization':key}});
+        if(r2.ok){const d2=await r2.json();setRecentTasks((d2.tasks||[]).map(function(t){return{id:t.id,name:t.name,priority:({1:'urgent',2:'high',3:'normal',4:'low'}[t.priority?.priority]||'normal'),list:t.list?.name||'',url:t.url||('https://app.clickup.com/t/'+t.id)};}).slice(0,12));}
+        const now=new Date();setSync(String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'));
       }catch(e){const c=await sg('bj-tasks');if(c)setTasks(c);}
     } else {const c=await sg('bj-tasks');if(c&&c.length)setTasks(c);}
     setLoading(false);setReady(true);
   }
+  async function genBrief(ts){
+    const dk=new Date().toDateString();
+    const cached=await sg('bj-brief');
+    if(cached&&cached.date===dk){setDailyBrief(cached);return;}
+    const now=new Date();
+    const parts=(ts||[]).slice(0,20).map(function(t){
+      var late=t.due_date&&t.due_date!=='null'&&(new Date(+t.due_date))<now;
+      var tod=t.due_date&&t.due_date!=='null'&&(new Date(+t.due_date)).toDateString()===now.toDateString();
+      return t.name+' ['+t.priority+']'+(late?' ATRASADA':tod?' HOJE':'');
+    }).join('; ');
+    var dateStr=now.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+    var prompt='Hoje '+dateStr+'. Tarefas do Vasco BBTOP20: '+parts
+      +'. Responde APENAS em JSON sem markdown: {"top3":[{"name":"x","reason":"y"}],"motivacao":"z"}';
+    var res=await aiC([{role:'user',content:prompt}],'Assistente BBTOP20 pt-pt. So JSON.',500);
+    try{
+      var clean=res.replace(/```json|```/g,'').trim();
+      var b=Object.assign(JSON.parse(clean),{date:dk});
+      setDailyBrief(b);ss('bj-brief',b);
+    }catch(e){}
+  }
 
   useEffect(()=>{fetchData();const iv=setInterval(fetchData,60*1000);return()=>clearInterval(iv);},[]);
-  useEffect(()=>{if(ready&&tasks.length>0&&!dailyBrief)genBrief(tasks);},[ready,tasks.length]);
+  useEffect(()=>{if(ready&&tasks.length>0&&!dailyBrief){genBrief(tasks);}},[ready,tasks.length]);
 
   function toast(msg,dur=3000){setToast(msg);setTimeout(()=>setToast(null),dur)}
   function addTask(t){setTasks(p=>{const u=[t,...p.filter(x=>x.id!==t.id)];ss("bj-tasks",u);return u})}
