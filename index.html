@@ -182,7 +182,7 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
             ce("div",{style:{fontSize:13,fontWeight:500,color:"#fff"}},typeof t==="string"?t:t.name),
             typeof t!=="string"&&t.reason&&ce("div",{style:{fontSize:11,color:"#7C8DB5",marginTop:1}},t.reason)
           )
-        ))
+        )))
       ),
       ce("button",{onClick:()=>genBrief&&genBrief([]),style:{marginTop:10,fontSize:11,color:"#7C8DB5",background:"transparent",border:"1px solid rgba(255,255,255,.1)",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontFamily:"inherit"}},"↻ Gerar novo brief")
     ),
