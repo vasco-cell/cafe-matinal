@@ -380,7 +380,21 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
 function PNotas({notes,saveNotes,toast,addTask,setPage}){
   const[inp,setInp]=useState("");const[title,setTitle]=useState("");const[show,setShow]=useState(false);const[ais,setAis]=useState({});
   function add(){if(!inp.trim())return;saveNotes([{id:`n${Date.now()}`,title:title||inp.slice(0,30),content:inp,created:Date.now()},...notes]);setInp("");setTitle("");setShow(false);toast("Nota guardada ✓")}
-  async function doAI(id,a,c){setAis(s=>({...s,[id+a]:"ld"}));const P={resumir:"Resume em 2-3 frases.",expandir:"Expande com mais detalhe.",extrair:"Lista as tarefas e acções concretas."};const r=await aiC([{role:"user",content:`${P[a]}\n\nTexto:\n${c}`}],"Assistente BBTOP20. Pt-pt.");setAis(s=>({...s,[id+a]:r}))}
+  async function doAI(id,a,c){
+    setAis(function(s){var x=Object.assign({},s);x[id+a]="ld";return x;});
+    const P={resumir:"Resume em 2-3 frases.",expandir:"Expande com mais detalhe.",extrair:"Lista as tarefas concretas, uma por linha, sem bullets."};
+    const r=await aiC([{role:"user",content:P[a]+"\n\nTexto:\n"+c}],"Assistente BBTOP20 pt-pt.",400);
+    var result=r;
+    if(a==="extrair"&&addTask){
+      var lines=r.split("\n").filter(function(l){return l.trim();});
+      lines.forEach(function(l){
+        var name=l.replace(/^[-*\u2022\d.]+\s*/,"").trim();
+        if(name)addTask({id:"l"+Date.now()+Math.random(),name:name,status:"todo",priority:"normal",list:"BBTOP20",due_date:"null"});
+      });
+      result=lines.length+" tarefa"+(lines.length!==1?"s":"")+" criada"+(lines.length!==1?"s":"")+" no ClickUp!";
+    }
+    setAis(function(s){var x=Object.assign({},s);x[id+a]=result;return x;});
+  }
   const fmt=ms=>{const d=new Date(ms);return`${d.getDate()} ${MC[d.getMonth()]}, ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`};
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}},
