@@ -10,7 +10,7 @@
 <style>
 html,body{height:100%;margin:0;padding:0;background:#FAF9F7;overflow:hidden}
 #bjr{height:100vh;display:flex;font-family:'DM Sans',system-ui,sans-serif;overflow:hidden}
-#err{display:none;position:fixed;inset:0;background:#fff;padding:24px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap;z-index:9999;overflow:auto}
+#err{display:none;position:fixed;inset:0;background:#fff;padding:24px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap;z-index:9999;overflow:auto;line-height:1.6}
 
 *{box-sizing:border-box;margin:0;padding:0}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#E5E3DC;border-radius:2px}
@@ -36,35 +36,31 @@ a{text-decoration:none}
 .po{transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1s linear}
 
 </style>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
 </head>
 <body>
 <div id="err"></div>
-<div id="bjr"><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Georgia,serif;color:#9B9890;font-size:14px">A carregar...</div></div>
+<div id="bjr"><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Georgia,serif;color:#9B9890;font-size:14px;gap:10px"><span style="display:inline-block;width:14px;height:14px;border:2px solid #ddd;border-top-color:#7C3AED;border-radius:50%;animation:spin 0.8s linear infinite"></span>A carregar...</div></div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script>
 window.onerror=function(msg,src,line,col,err){
-  var d=document.getElementById('err');
-  d.style.display='block';
-  d.textContent='ERRO: '+msg+'\nFicheiro: '+src+'\nLinha: '+line+'\n\n'+(err&&err.stack?err.stack:'');
+  var d=document.getElementById('err');d.style.display='block';
+  d.textContent='ERRO: '+msg+'\nFicheiro: '+(src||'(inline)')+'\nLinha: '+line+'\n\n'+(err&&err.stack?err.stack:'sem stack');
 };
 window.addEventListener('unhandledrejection',function(e){
-  var d=document.getElementById('err');
-  d.style.display='block';
-  d.textContent=(d.textContent||'')+'\nPROMISE REJEITADA: '+(e.reason&&e.reason.stack?e.reason.stack:e.reason);
+  var d=document.getElementById('err');d.style.display='block';
+  d.textContent=(d.textContent?d.textContent+'\n---\n':'')+'PROMISE: '+(e.reason&&e.reason.stack?e.reason.stack:String(e.reason));
 });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.js"></script>
 <script>
 
 const {useState,useEffect,useRef,useCallback}=React;
 const ce=React.createElement;
-let LineChart,Line,BarChart,Bar,PieChart,Pie,Cell,XAxis,YAxis,Tooltip,ResponsiveContainer;
-try{({LineChart,Line,BarChart,Bar,PieChart,Pie,Cell,XAxis,YAxis,Tooltip,ResponsiveContainer}=Recharts);}catch(e){
-  // Recharts not available - stub chart components
-  const _stub=({children,width,height})=>React.createElement("div",{style:{padding:"20px",color:"#9B9890",fontSize:12,textAlign:"center"}},"Gráfico indisponível");
-  LineChart=BarChart=PieChart=_stub;Line=Bar=Pie=Cell=XAxis=YAxis=Tooltip=ResponsiveContainer=_stub;
-}
+// Recharts replaced with lightweight CSS bars (no CDN dependency)
+const _ChartStub=({children,style})=>ce('div',{style:{padding:'8px 0',...(style||{})}},children);
+const LineChart=BarChart=PieChart=ResponsiveContainer=_ChartStub;
+const Line=Bar=Pie=Cell=XAxis=YAxis=Tooltip=()=>null;
 const WH="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
 const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
@@ -76,21 +72,8 @@ const isLate=ms=>ms&&ms!=="null"&&new Date(+ms)<new Date(new Date().setHours(0,0
 const isToday_=ms=>{if(!ms||ms==="null")return false;return new Date(+ms).toDateString()===new Date().toDateString()};
 const fmtD=ms=>{if(!ms||ms==="null")return"";const d=new Date(+ms);return`${d.getDate()} ${MC[d.getMonth()]}`};
 const fmtT=dt=>{if(!dt)return"";try{return new Date(dt).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"})}catch{return""}};
-const sg=async k=>{
-  const pm={"bj-notes":"data/notes.json","bj-habits":"data/habits.json","bj-logs":"data/habits.json","bj-mem":"data/mem.json","bj-cvs":"data/convs.json","bj-tasks":"data/tasks.json"};
-  try{if(pm[k]){const r=await fetch("https://raw.githubusercontent.com/vasco-cell/cafe-matinal/main/"+pm[k]+"?t="+Date.now());if(!r.ok){const v=localStorage.getItem(k);return v?JSON.parse(v):null;}const d=await r.json();if(k==="bj-notes")return d.notes;if(k==="bj-habits")return d.habits;if(k==="bj-logs")return d.logs;if(k==="bj-mem")return d.items;if(k==="bj-cvs")return d.convs;if(k==="bj-tasks")return d.tasks;}const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}
-};
-const ss=async(k,v)=>{
-  const _t=['ghp', '_i69NK4x5cr', 'swgJ7Amo3Km', 'iJm4Qky8T4c5Up7'];const _gt=()=>_t.join("");const _repo="vasco-cell/cafe-matinal";
-  async function _gw(path,data){try{const r1=await fetch("https://api.github.com/repos/"+_repo+"/contents/"+path,{headers:{"Authorization":"token "+_gt()}});let sha=r1.ok?(await r1.json()).sha:null;const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));const body={message:"update: "+path,content};if(sha)body.sha=sha;await fetch("https://api.github.com/repos/"+_repo+"/contents/"+path,{method:"PUT",headers:{"Authorization":"token "+_gt(),"Content-Type":"application/json"},body:JSON.stringify(body)});}catch{}}
-  try{localStorage.setItem(k,JSON.stringify(v));
-    if(k==="bj-notes")_gw("data/notes.json",{notes:v});
-    else if(k==="bj-habits"){fetch("https://raw.githubusercontent.com/"+_repo+"/main/data/habits.json?t="+Date.now()).then(r=>r.json()).then(e=>_gw("data/habits.json",{...e,habits:v})).catch(()=>_gw("data/habits.json",{habits:v,logs:{}}));}
-    else if(k==="bj-logs"){fetch("https://raw.githubusercontent.com/"+_repo+"/main/data/habits.json?t="+Date.now()).then(r=>r.json()).then(e=>_gw("data/habits.json",{...e,logs:v})).catch(()=>_gw("data/habits.json",{habits:[],logs:v}));}
-    else if(k==="bj-mem")_gw("data/mem.json",{items:v});
-    else if(k==="bj-cvs")_gw("data/convs.json",{convs:v});
-  }catch{}
-};
+const sg=async k=>{const pm={'bj-notes':'data/notes.json','bj-habits':'data/habits.json','bj-logs':'data/habits.json','bj-mem':'data/mem.json','bj-cvs':'data/convs.json','bj-tasks':'data/tasks.json'};try{if(pm[k]){const r=await fetch('https://raw.githubusercontent.com/vasco-cell/cafe-matinal/main/'+pm[k]+'?t='+Date.now());if(!r.ok){const v=localStorage.getItem(k);return v?JSON.parse(v):null;}const d=await r.json();if(k==='bj-notes')return d.notes;if(k==='bj-habits')return d.habits;if(k==='bj-logs')return d.logs;if(k==='bj-mem')return d.items;if(k==='bj-cvs')return d.convs;if(k==='bj-tasks')return d.tasks;}const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
+const ss=async(k,v)=>{const _t=['ghp', '_i69NK4x5cr', 'swgJ7Amo3Km', 'iJm4Qky8T4c5Up7'];const _gt=()=>_t.join('');const _repo='vasco-cell/cafe-matinal';async function _gw(p,d){try{const r1=await fetch('https://api.github.com/repos/'+_repo+'/contents/'+p,{headers:{'Authorization':'token '+_gt()}});let sha=r1.ok?(await r1.json()).sha:null;const ct=btoa(unescape(encodeURIComponent(JSON.stringify(d,null,2))));const b={message:'update: '+p,content:ct};if(sha)b.sha=sha;await fetch('https://api.github.com/repos/'+_repo+'/contents/'+p,{method:'PUT',headers:{'Authorization':'token '+_gt(),'Content-Type':'application/json'},body:JSON.stringify(b)});}catch{}}try{localStorage.setItem(k,JSON.stringify(v));if(k==='bj-notes')_gw('data/notes.json',{notes:v});else if(k==='bj-habits'){fetch('https://raw.githubusercontent.com/'+_repo+'/main/data/habits.json?t='+Date.now()).then(r=>r.json()).then(e=>_gw('data/habits.json',{...e,habits:v})).catch(()=>_gw('data/habits.json',{habits:v,logs:{}}));}else if(k==='bj-logs'){fetch('https://raw.githubusercontent.com/'+_repo+'/main/data/habits.json?t='+Date.now()).then(r=>r.json()).then(e=>_gw('data/habits.json',{...e,logs:v})).catch(()=>_gw('data/habits.json',{habits:[],logs:v}));}else if(k==='bj-mem')_gw('data/mem.json',{items:v});else if(k==='bj-cvs')_gw('data/convs.json',{convs:v});}catch{}};
 async function aiC(msgs,sys,max=900){try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:max,system:sys||"",messages:msgs})});const d=await r.json();return d.content?.[0]?.text||"(sem resposta)"}catch(e){return"Erro: "+e.message}}
 async function whF(p){try{const url=WH+"?"+new URLSearchParams(p).toString();const r=await fetch(url,{mode:"cors"});if(r.ok)return await r.json();return null}catch{return null}}
 const wh=p=>{try{fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"cors"}).catch(()=>fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"no-cors"}))}catch{}};
@@ -435,10 +418,10 @@ function PAnalytics({tasks,habits,logs}){
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#BEE3F8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-chart-bar",style:{fontSize:20,color:"#2B6CB0"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Analytics"),ce("div",{className:"ps"},"Padrões e progresso no teu fluxo."))),
     ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},S.map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"12px 14px"}},ce("div",{style:{fontSize:9,fontWeight:600,letterSpacing:".06em",color:"#9B9890",marginBottom:6}},s.l),ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:28,color:s.c}},s.v)))),
-    ce("div",{className:"cd",style:{padding:14,marginBottom:12}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tarefas concluídas — últimos 30 dias"),ce(ResponsiveContainer,{width:"100%",height:90},ce(LineChart,{data:last30},ce(XAxis,{dataKey:"day",tick:{fontSize:9},tickLine:false,axisLine:false,interval:9}),ce(YAxis,{hide:true}),ce(Tooltip,{contentStyle:{fontSize:11}}),ce(Line,{type:"monotone",dataKey:"v",stroke:"#1A1A2E",strokeWidth:1.5,dot:false})))),
+    ce("div",{className:"cd",style:{padding:14,marginBottom:12}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tarefas concluídas — últimos 30 dias"),ce('div',{style:{display:'flex',alignItems:'flex-end',gap:2,height:90,padding:'4px 0'}},last30.slice(-14).map((d,i)=>ce('div',{key:i,style:{flex:1,background:'#1A1A2E',borderRadius:'2px 2px 0 0',height:Math.max(4,(d.v/Math.max(1,...last30.map(x=>x.v)))*82)+'px',title:d.day+': '+d.v}})))),
     ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Por prioridade"),byP.length>0?ce(ResponsiveContainer,{width:"100%",height:90},ce(PieChart,null,ce(Pie,{data:byP,dataKey:"v",cx:"50%",cy:"50%",outerRadius:40,innerRadius:22},byP.map((e,i)=>ce(Cell,{key:i,fill:e.c}))),ce(Tooltip,{contentStyle:{fontSize:11}}))):ce("p",{style:{textAlign:"center",color:"#9B9890",fontSize:12,padding:20}},"Sem dados")),
-      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tendência semanal"),ce(ResponsiveContainer,{width:"100%",height:90},ce(BarChart,{data:wk},ce(XAxis,{dataKey:"s",tick:{fontSize:10},tickLine:false,axisLine:false}),ce(YAxis,{hide:true}),ce(Tooltip,{contentStyle:{fontSize:11}}),ce(Bar,{dataKey:"v",fill:"#7C3AED",radius:[4,4,0,0]}))))
+      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Por prioridade"),byP.length>0?ce('div',{style:{display:'flex',flexDirection:'column',gap:6}},byP.map((d,i)=>ce('div',{key:i,style:{display:'flex',alignItems:'center',gap:8}},ce('div',{style:{width:8,height:8,borderRadius:'50%',background:d.c,flexShrink:0}}),ce('div',{style:{fontSize:12,flex:1}},d.name),ce('div',{style:{fontSize:12,fontWeight:500}},d.v)))):ce('p',{style:{textAlign:'center',color:'#9B9890',fontSize:12,padding:20}},'Sem dados')),
+      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tendência semanal"),ce('div',{style:{display:'flex',alignItems:'flex-end',gap:6,height:90,padding:'4px 0'}},wk.map((d,i)=>ce('div',{key:i,style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}},ce('div',{style:{width:'100%',background:'#7C3AED',borderRadius:'4px 4px 0 0',height:Math.max(4,(d.v/Math.max(1,...wk.map(x=>x.v)))*70)+'px'}}),ce('div',{style:{fontSize:9,color:'#9B9890'}},d.s)))))
     )
   )
 }
