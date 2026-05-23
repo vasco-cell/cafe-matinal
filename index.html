@@ -295,44 +295,89 @@ function PAssist({tasks,calEvents}){
 }
 
 // ── TAREFAS ──────────────────────────────────────────────────────────────────
-function PTarefas({tasks,addTask,updateTask,toast,setAT}){
-  const[f,setF]=useState("abertas");const[newT,setNT]=useState("");const[nP,setNP]=useState("normal");
-  const act=tasks.filter(t=>t.status!=="done");const late=act.filter(t=>isLate(t.due_date));
-  let list=tasks.filter(t=>f==="abertas"?t.status!=="done":f==="atraso"?t.status!=="done"&&isLate(t.due_date):f==="concluidas"?t.status==="done":true);
-  async function doAdd(){if(!newT.trim())return;await whF({action:"create",task_name:newT});addTask({id:`l${Date.now()}`,name:newT,status:"todo",priority:nP,list:"BBTOP20",due_date:"null"});setNT("");toast("Criada no ClickUp ✓")}
+function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
+  const[status,setStatus]=useState("abertas");
+  const[prio,setPrio]=useState("todas");
+  const[sort,setSort]=useState("data");
+  const[newT,setNT]=useState("");const[nP,setNP]=useState("normal");
+  const act=tasks.filter(t=>t.status!=="done");
+  const late=act.filter(t=>isLate(t.due_date));
+  const PA2=p=>({urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE",low:"#38A169"}[p]||"#CBD5E0");
+  const PL2=p=>({urgent:"Alta importância",high:"Média importância",normal:"Baixa importância",low:"Pouca importância"}[p]||"Sem importância");
+  const PBG=p=>({urgent:"#FFF5F5",high:"#FFFAF0",normal:"#EBF8FF",low:"#F0FFF4"}[p]||"#F7FAFC");
+
+  let list=tasks.filter(t=>{
+    const matchStatus=status==="abertas"?t.status!=="done":status==="atraso"?t.status!=="done"&&isLate(t.due_date):status==="concluidas"?t.status==="done":true;
+    const matchPrio=prio==="todas"||(t.priority||"normal")===prio;
+    return matchStatus&&matchPrio;
+  });
+  if(sort==="data")list=[...list].sort((a,b)=>{const da=a.due_date&&a.due_date!=="null"?+a.due_date:99999999999999;const db=b.due_date&&b.due_date!=="null"?+b.due_date:99999999999999;return da-db;});
+  else if(sort==="prio")list=[...list].sort((a,b)=>{const o={urgent:0,high:1,normal:2,low:3};return(o[a.priority||"normal"]||2)-(o[b.priority||"normal"]||2);});
+
+  async function doAdd(){if(!newT.trim())return;await whF({action:"create",task_name:newT,priority:nP});addTask({id:`l${Date.now()}`,name:newT,status:"todo",priority:nP,list:"BBTOP20",due_date:"null"});setNT("");toast("Criada no ClickUp ✓")}
+
+  const PRIOS=[{v:"todas",l:"Todas as importâncias"},{v:"urgent",l:"Alta importância"},{v:"high",l:"Média importância"},{v:"normal",l:"Baixa importância"},{v:"low",l:"Pouca importância"}];
+  const STATUS=[{v:"abertas",l:"Abertas"},{v:"atraso",l:"Em atraso"},{v:"concluidas",l:"Concluídas"},{v:"todas",l:"Todas"}];
+
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}},
       ce("div",null,ce("div",{className:"pt"},"Tarefas"),ce("div",{className:"ps"},"Captura o que importa e liberta a mente.")),
+      ce("button",{className:"bt dk",onClick:()=>setNT(" "),style:{gap:6}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Nova tarefa")
     ),
-    late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#F5F3FF",border:"1px solid #DDD6FE",color:"#6D28D9",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8,cursor:"pointer"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:14}}),`Analisar ${late.length} tarefas em atraso com IA`),
-    ce("div",{style:{display:"flex",gap:8,marginBottom:12}},
+    late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},
+      ce("i",{className:"ti ti-alert-triangle",style:{fontSize:14}}),`${late.length} tarefa${late.length!==1?"s":""} em atraso`
+    ),
+    ce("div",{style:{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center",justifyContent:"space-between"}},
       ce("div",{style:{display:"flex",border:"1px solid #E5E3DC",borderRadius:8,overflow:"hidden"}},
-        ["abertas","atraso","concluidas","todas"].map(fl=>ce("button",{key:fl,onClick:()=>setF(fl),style:{padding:"6px 11px",border:"none",borderRight:fl!=="todas"?"1px solid #E5E3DC":"none",background:f===fl?"#1A1A2E":"transparent",color:f===fl?"#fff":"#6B6860",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},{abertas:"Abertas",atraso:"Em atraso",concluidas:"Concluídas",todas:"Todas"}[fl]))
+        STATUS.map(s=>ce("button",{key:s.v,onClick:()=>setStatus(s.v),style:{padding:"6px 11px",border:"none",borderRight:s.v!=="todas"?"1px solid #E5E3DC":"none",background:status===s.v?"#1A1A2E":"transparent",color:status===s.v?"#fff":"#6B6860",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},s.l))
+      ),
+      ce("div",{style:{display:"flex",gap:6,alignItems:"center"}},
+        ce("select",{value:prio,onChange:e=>setPrio(e.target.value),style:{fontSize:12,padding:"6px 10px",border:"1px solid #E5E3DC",borderRadius:8,fontFamily:"inherit",background:"#fff",color:prio!=="todas"?PA2(prio):"#1A1A2E",fontWeight:prio!=="todas"?600:400,cursor:"pointer"}},
+          PRIOS.map(p=>ce("option",{key:p.v,value:p.v},p.l))
+        ),
+        ce("select",{value:sort,onChange:e=>setSort(e.target.value),style:{fontSize:12,padding:"6px 10px",border:"1px solid #E5E3DC",borderRadius:8,fontFamily:"inherit",background:"#fff",cursor:"pointer"}},
+          ce("option",{value:"data"},"Data mais próxima"),
+          ce("option",{value:"prio"},"Por importância"),
+          ce("option",{value:"none"},"Por ordem")
+        )
       )
     ),
     ce("div",{style:{display:"flex",gap:8,marginBottom:14,padding:"8px 12px",borderRadius:8,background:"#fff",border:"1px solid #E5E3DC"}},
       ce("input",{className:"ip",value:newT,onChange:e=>setNT(e.target.value),onKeyDown:e=>e.key==="Enter"&&doAdd(),placeholder:"Adicionar tarefa rapidamente... (Enter)",style:{flex:1,border:"none",padding:0}}),
-      ce("select",{value:nP,onChange:e=>setNP(e.target.value),style:{fontSize:12,padding:"4px 8px",border:"1px solid #E5E3DC",borderRadius:6,fontFamily:"inherit",background:"#FAF9F7"}},ce("option",{value:"urgent"},"Alta"),ce("option",{value:"high"},"Média"),ce("option",{value:"normal"},"Baixa")),
+      ce("select",{value:nP,onChange:e=>setNP(e.target.value),style:{fontSize:12,padding:"4px 8px",border:"1px solid #E5E3DC",borderRadius:6,fontFamily:"inherit",background:"#FAF9F7"}},
+        ce("option",{value:"urgent"},"Alta"),ce("option",{value:"high"},"Média"),ce("option",{value:"normal"},"Baixa"),ce("option",{value:"low"},"Pouca")
+      ),
       ce("button",{className:"bt dk",onClick:doAdd,disabled:!newT.trim()},ce("i",{className:"ti ti-plus",style:{fontSize:13}}))
     ),
-    ce("p",{style:{fontSize:11,color:"#9B9890",marginBottom:8}},list.length+" tarefa"+(list.length!==1?"s":"")),
-    list.map(t=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,background:"#fff",border:"1px solid #E5E3DC",marginBottom:6,opacity:t.status==="done"?.45:1}},
-      ce("button",{onClick:async()=>{if(t.status!=="done"){await whF({action:"close",task_id:t.id});updateTask({...t,status:"done"})}},style:{width:18,height:18,borderRadius:"50%",border:`2px solid ${t.status==="done"?"#38A169":PA(t.priority)}`,background:t.status==="done"?"#38A169":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},t.status==="done"&&ce("i",{className:"ti ti-check",style:{fontSize:10,color:"#fff"}})),
+    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}},
+      ce("p",{style:{fontSize:11,color:"#9B9890"}},list.length+" tarefa"+(list.length!==1?"s":"")+(prio!=="todas"?" · "+PRIOS.find(p=>p.v===prio)?.l:"")),
+      prio!=="todas"&&ce("button",{onClick:()=>setPrio("todas"),style:{fontSize:11,color:"#7C3AED",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}},"✕ Limpar filtro")
+    ),
+    list.length===0?ce("div",{style:{textAlign:"center",padding:"48px 20px",color:"#9B9890"}},
+      ce("i",{className:"ti ti-"+(prio!=="todas"?"filter-off":"checkbox"),style:{fontSize:36,display:"block",marginBottom:10,opacity:.4}}),
+      ce("p",{style:{fontSize:14,marginBottom:4}},prio!=="todas"?"Nenhuma tarefa com esta prioridade":"Nenhuma tarefa nesta categoria."),
+      prio!=="todas"&&ce("button",{className:"bt",onClick:()=>setPrio("todas"),style:{marginTop:8}},"Ver todas as tarefas")
+    ):
+    list.map(t=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:"#fff",border:"1px solid #E5E3DC",borderLeft:"3px solid "+PA2(t.priority||"normal"),marginBottom:6,opacity:t.status==="done"?.45:1}},
+      ce("button",{onClick:async()=>{if(t.status!=="done"){await whF({action:"close",task_id:t.id});updateTask({...t,status:"done"});}},style:{width:18,height:18,borderRadius:"50%",border:`2px solid ${t.status==="done"?"#38A169":PA2(t.priority||"normal")}`,background:t.status==="done"?"#38A169":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},
+        t.status==="done"&&ce("i",{className:"ti ti-check",style:{fontSize:10,color:"#fff"}})
+      ),
       ce("div",{style:{flex:1,minWidth:0}},
         ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:t.status==="done"?"#9B9890":"#1A1A2E",textDecoration:t.status==="done"?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
-        ce("div",{style:{display:"flex",gap:8,marginTop:2}},isLate(t.due_date)&&t.status!=="done"&&ce("span",{style:{fontSize:10,color:"#E53E3E"}},"Em atraso · "+fmtD(t.due_date)),t.list&&ce("span",{style:{fontSize:10,color:"#9B9890"}},t.list))
+        ce("div",{style:{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}},
+          isLate(t.due_date)&&t.status!=="done"&&ce("span",{style:{fontSize:10,color:"#E53E3E",fontWeight:600}},"⚠ "+fmtD(t.due_date)),
+          !isLate(t.due_date)&&t.due_date&&t.due_date!=="null"&&ce("span",{style:{fontSize:10,color:"#9B9890"}},"prazo "+fmtD(t.due_date)),
+          t.list&&ce("span",{style:{fontSize:10,color:"#9B9890",background:"#F5F2EC",padding:"1px 6px",borderRadius:8,border:"1px solid #E5E3DC"}},t.list)
+        )
       ),
-      ce("span",{style:{fontSize:10,padding:"2px 7px",borderRadius:20,background:PA(t.priority)+"18",color:PA(t.priority),border:`1px solid ${PA(t.priority)}40`,flexShrink:0}},PL(t.priority)),
-      t.status!=="done"&&ce("div",{style:{display:"flex",gap:4}},
-        ce("button",{className:"bt",onClick:async()=>{await whF({action:"delay",task_id:t.id});toast("+1 dia ✓")},style:{fontSize:10,padding:"3px 7px"}},"+1 dia"),
-        ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 7px"}},"✦ Agente"),
-        ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",className:"bt",style:{fontSize:10,padding:"3px 7px",color:"#1A4A7A"}},"↗ ClickUp")
+      ce("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:12,background:PBG(t.priority||"normal"),color:PA2(t.priority||"normal"),border:`1px solid ${PA2(t.priority||"normal")}40`,flexShrink:0,fontWeight:500}},PL2(t.priority||"normal")),
+      t.status!=="done"&&ce("div",{style:{display:"flex",gap:4,flexShrink:0}},
+        ce("button",{className:"bt",onClick:async()=>{await whF({action:"delay",task_id:t.id});toast("+1 dia ✓");},style:{fontSize:10,padding:"3px 7px"}},"+1 dia"),
+        ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 7px"}},"✦ Agente")
       )
     ))
-  )
+  );
 }
-
-// ── INBOX ────────────────────────────────────────────────────────────────────
 function PInbox({tasks,addTask,notes,saveNotes,mem,saveMem,toast}){
   const[tab,setTb]=useState("tarefa");const[inp,setInp]=useState("");
   function cap(){if(!inp.trim())return;if(tab==="tarefa"){addTask({id:`l${Date.now()}`,name:inp,status:"todo",priority:"normal",list:"BBTOP20",due_date:"null"});wh({action:"create",task_name:inp})}else if(tab==="nota"){saveNotes([{id:`n${Date.now()}`,content:inp,created:Date.now()},...notes])}else{saveMem([{id:`m${Date.now()}`,content:inp,tag:"Lembrete",source:"inbox",created:Date.now()},...(mem||[])])}setInp("");toast({tarefa:"Tarefa criada ✓",nota:"Nota guardada ✓",memoria:"Memória guardada ✓"}[tab])}
