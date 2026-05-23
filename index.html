@@ -123,7 +123,7 @@ function TC({t,onUpdate,onAgent,showQ}){
 }
 
 // ── HOJE ─────────────────────────────────────────────────────────────────────
-function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask}){
+function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief}){
   const n=new Date();const h=n.getHours();
   const gr=h<12?"Bom dia.":h<17?"Boa tarde.":"Boa noite.";
   const act=tasks.filter(t=>t.status!=="done");
@@ -171,7 +171,32 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
       )
     ),
     ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},SB.map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"11px 14px"}},ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:26,color:s.c,lineHeight:1,marginBottom:3}},s.n),ce("div",{style:{fontSize:10,color:"#9B9890",letterSpacing:".04em"}},s.l)))),
-    late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-alert-circle",style:{fontSize:16}}),`Tens ${late.length} tarefa${late.length!==1?"s":""} em atraso`),
+    // ── DAILY BRIEF ──
+    dailyBrief&&dailyBrief.date===new Date().toDateString()&&ce("div",{style:{background:"#1A1A2E",borderRadius:10,padding:"14px 16px",marginBottom:14}},
+      ce("div",{style:{fontSize:10,fontWeight:600,letterSpacing:".08em",color:"#7C8DB5",marginBottom:10}},"☀ BRIEF DO DIA · IA"),
+      dailyBrief.motivacao&&ce("p",{style:{color:"#C8D0E0",fontSize:13,lineHeight:1.55,marginBottom:10,fontStyle:"italic"}},'"'+dailyBrief.motivacao+'"'),
+      ce("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+        (dailyBrief.top3||[]).map((t,i)=>ce("div",{key:i,style:{display:"flex",gap:10,alignItems:"flex-start"}},
+          ce("div",{style:{width:20,height:20,borderRadius:"50%",background:"#7C3AED",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",flexShrink:0,marginTop:1}},i+1),
+          ce("div",null,
+            ce("div",{style:{fontSize:13,fontWeight:500,color:"#fff"}},typeof t==="string"?t:t.name),
+            typeof t!=="string"&&t.reason&&ce("div",{style:{fontSize:11,color:"#7C8DB5",marginTop:1}},t.reason)
+          )
+        ))
+      ),
+      ce("button",{onClick:()=>genBrief&&genBrief([]),style:{marginTop:10,fontSize:11,color:"#7C8DB5",background:"transparent",border:"1px solid rgba(255,255,255,.1)",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontFamily:"inherit"}},"↻ Gerar novo brief")
+    ),
+    // ── RECENT ACTIVITY ──
+    recentTasks&&recentTasks.length>0&&ce("div",{style:{marginBottom:14}},
+      ce("div",{style:{fontSize:11,fontWeight:600,letterSpacing:".06em",color:"#3182CE",marginBottom:8}},"🔵 ACTIVIDADE RECENTE · 48h"),
+      ce("div",{className:"cd"},recentTasks.slice(0,8).map((t,i)=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"7px 12px",borderBottom:i<7?"1px solid #F0EEE8":"none"}},
+        ce("div",{style:{width:6,height:6,borderRadius:"50%",background:{urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE"}[t.priority]||"#CBD5E0",flexShrink:0}}),
+        ce("a",{href:t.url,target:"_blank",rel:"noreferrer",style:{flex:1,fontSize:12,color:"#1A1A2E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
+        ce("span",{style:{fontSize:10,color:"#9B9890",fontFamily:"monospace",flexShrink:0}},t.list),
+        ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 7px",flexShrink:0}},"✦")
+      )))
+    ),
+        late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-alert-circle",style:{fontSize:16}}),`Tens ${late.length} tarefa${late.length!==1?"s":""} em atraso`),
     ce("button",{onClick:gen3,disabled:t3l,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"9px",borderRadius:8,border:"1px solid #DDD6FE",background:"#F5F3FF",color:"#6D28D9",fontSize:13,cursor:"pointer",marginBottom:14,fontFamily:"inherit"}},t3l?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:14}}),t3l?"A gerar...":"Sugerir 3 tarefas prioritárias para hoje (IA)"),
     ce("div",{className:"cd",style:{padding:14,marginBottom:14}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},ce("i",{className:"ti ti-sparkles",style:{fontSize:16,color:"#7C3AED"}}),ce("span",{style:{fontSize:13,fontWeight:500}},"Assistente"),ce("button",{onClick:()=>setPage("assistente"),style:{marginLeft:"auto",fontSize:11,color:"#7C3AED",background:"none",border:"none",cursor:"pointer"}},"Abrir →")),
@@ -505,6 +530,8 @@ function App(){
   if(!localStorage.getItem('cu_key'))localStorage.setItem('cu_key',_ck.join(''));
 
   const[tasks,setTasks]=useState([]);
+  const[recentTasks,setRecentTasks]=useState([]);
+  const[dailyBrief,setDailyBrief]=useState(null);
   const[calEvents,setCal]=useState([]);
   const[notes,setNotes]=useState([]);
   const[habits,setHabits]=useState([]);
@@ -527,24 +554,46 @@ function App(){
   },[]);
 
   const CU_TEAM='24309030',CU_USER='206530598';
+
+  function mapTask(t){return{id:t.id,name:t.name,status:t.status?.status||'open',priority:({1:'urgent',2:'high',3:'normal',4:'low'}[t.priority?.priority]||'normal'),list:t.list?.name||'',due_date:t.due_date||'null',url:t.url||('https://app.clickup.com/t/'+t.id),date_updated:t.date_updated||'0',creator_id:t.creator?.id};}
+
   async function fetchData(){
     setLoading(true);
     const key=localStorage.getItem('cu_key');
     if(key){
       try{
-        const r=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?assignees[]='+CU_USER+'&include_closed=false&subtasks=true&page=0',{headers:{'Authorization':key}});
-        if(r.ok){
-          const d=await r.json();
-          const arr=(d.tasks||[]).map(t=>({id:t.id,name:t.name,status:t.status?.status||'open',priority:({1:'urgent',2:'high',3:'normal',4:'low'}[t.priority?.priority]||'normal'),list:t.list?.name||'',due_date:t.due_date||'null',url:t.url||('https://app.clickup.com/t/'+t.id)}));
-          setTasks(arr);ss('bj-tasks',arr);
-          const t=new Date();setSync(String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));
-        }
+        // Main tasks — assigned to me
+        const r1=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?assignees[]='+CU_USER+'&include_closed=false&subtasks=true&page=0&order_by=updated&reverse=true',{headers:{'Authorization':key}});
+        if(r1.ok){const d=await r1.json();const arr=(d.tasks||[]).map(mapTask);setTasks(arr);ss('bj-tasks',arr);}
+
+        // Recent activity — updated in last 48h (any task in team, not just mine)
+        const since=Date.now()-48*60*60*1000;
+        const r2=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?date_updated_gt='+since+'&include_closed=false&page=0&order_by=updated&reverse=true',{headers:{'Authorization':key}});
+        if(r2.ok){const d=await r2.json();setRecentTasks((d.tasks||[]).map(mapTask).slice(0,20));}
+
+        const t=new Date();setSync(String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));
       }catch(e){const c=await sg('bj-tasks');if(c)setTasks(c);}
-    } else {const c=await sg('bj-tasks');if(c&&c.length)setTasks(c);}
+    }else{const c=await sg('bj-tasks');if(c&&c.length)setTasks(c);}
     setLoading(false);setReady(true);
   }
 
-  useEffect(()=>{fetchData();const iv=setInterval(fetchData,5*60*1000);return()=>clearInterval(iv);},[]);
+  // Generate daily brief once per day via Claude
+  async function genBrief(allTasks){
+    const todayKey=new Date().toDateString();
+    const cached=await sg('bj-brief');
+    if(cached&&cached.date===todayKey){setDailyBrief(cached);return;}
+    const now=new Date();
+    const lines=allTasks.slice(0,25).map(t=>{
+      const overdue=t.due_date&&t.due_date!=='null'&&new Date(+t.due_date)<now;
+      const dueToday=t.due_date&&t.due_date!=='null'&&new Date(+t.due_date).toDateString()===now.toDateString();
+      return t.name+'['+t.priority+']['+t.status+']'+(overdue?'[ATRASADA]':dueToday?'[HOJE]':'');
+    }).join('\n');
+    const res=await aiC([{role:'user',content:'Hoje: '+now.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'})+'.\nTarefas:\n'+lines+'\n\nDevolve APENAS JSON válido sem markdown: {"top3":[{"name":"...","reason":"..."}],"recentes":["nome1","nome2"],"motivacao":"frase curta motivadora"}'}],'Assistente BBTOP20 pt-pt. Responde só com JSON.',500);
+    try{const b={...JSON.parse(res),date:todayKey};setDailyBrief(b);ss('bj-brief',b);}catch{}
+  }
+
+  useEffect(()=>{fetchData();const iv=setInterval(fetchData,60*1000);return()=>clearInterval(iv);},[]);
+  useEffect(()=>{if(ready&&tasks.length>0&&!dailyBrief)genBrief(tasks);},[ready,tasks.length]);
 
   function toast(msg,dur=3000){setToast(msg);setTimeout(()=>setToast(null),dur)}
   function addTask(t){setTasks(p=>{const u=[t,...p.filter(x=>x.id!==t.id)];ss("bj-tasks",u);return u})}
@@ -570,7 +619,7 @@ function App(){
   }
 
   const PageMap={
-    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:setPg,addTask}),
+    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:setPg,addTask,recentTasks,dailyBrief,genBrief}),
     assistente:()=>ce(PAssist,{tasks,calEvents}),
     tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT}),
     inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast}),
