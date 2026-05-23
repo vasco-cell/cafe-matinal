@@ -1,0 +1,16 @@
+{
+  "updated": "2026-05-23T08:30:00",
+  "tasks": [
+    {"id":"demo1","name":"Pagamentos pendentes","priority":"urgent","status":"in progress","list":"CS/CX","due":"2026-05-23","url":"https://app.clickup.com"},
+    {"id":"demo2","name":"RICO EM AÇÕES — Campanha email Feira do Livro","priority":"urgent","status":"open","list":"Operações & Tech","due":"2026-05-30","url":"https://app.clickup.com"},
+    {"id":"demo3","name":"Rever Programa Afiliados BoS","priority":"high","status":"open","list":"Operações & Tech","due":"2026-05-25","url":"https://app.clickup.com"},
+    {"id":"demo4","name":"SISTEMA DE RECOLHA DE FEEDBACK","priority":"high","status":"in progress","list":"CS/CX","due":"2026-06-01","url":"https://app.clickup.com"},
+    {"id":"demo5","name":"Atualizar Disclaimer em todo o site","priority":"normal","status":"open","list":"Operações & Tech","due":null,"url":"https://app.clickup.com"},
+    {"id":"demo6","name":"Enviar newsletter Podcast","priority":"low","status":"open","list":"Recorrentes","due":"2026-05-24","url":"https://app.clickup.com"}
+  ],
+  "calendar": [
+    {"id":"e1","title":"Reunião equipa BOS","time":"09:30","duration":60},
+    {"id":"e2","title":"Call César — estratégia email","time":"14:30","duration":30},
+    {"id":"e3","title":"Review campanha Feira do Livro","time":"16:00","duration":45}
+  ]
+}
