@@ -4,81 +4,167 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Café Matinal</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
-:root{--cream:#F5F2EC;--ink:#1A1916;--ink-soft:#5A5750;--ink-faint:#A8A59E;--border:#E2DDD5;--purple:#4A3A8A;--purple-bg:#F0EEF8;--r:8px}
+:root{--cream:#F5F2EC;--ink:#1A1916;--ink-soft:#5A5750;--ink-faint:#A8A59E;--border:#E2DDD5;--red:#C23B22;--red-bg:#FBF0EE;--amber:#B36B00;--amber-bg:#FBF4E8;--teal:#1A6B55;--teal-bg:#EAF3EE;--blue:#1A4A7A;--blue-bg:#EAF0F8;--purple:#4A3A8A;--purple-bg:#F0EEF8;--r:8px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',Arial,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
 .site-header{border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;background:var(--cream);position:sticky;top:0;z-index:100}
-.logo{font-family:'DM Serif Display',Georgia,serif;font-size:20px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
-.logo-dot{width:7px;height:7px;border-radius:50%;background:#C23B22;flex-shrink:0}
-.header-meta{font-size:12px;color:var(--ink-faint);font-family:'DM Mono','Courier New',monospace}
-.pulse{display:flex;align-items:center;gap:6px;font-size:11px;color:#1A6B55;font-family:'DM Mono','Courier New',monospace}
-.pulse-dot{width:6px;height:6px;border-radius:50%;background:#1A6B55;animation:p 2s ease-in-out infinite}
-@keyframes p{0%,100%{opacity:1}50%{opacity:.4}}
+.logo{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-.3px;color:var(--ink);display:flex;align-items:center;gap:8px}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0}
+.header-meta{font-size:12px;color:var(--ink-faint);font-family:'DM Mono',monospace}
+.header-status{display:flex;align-items:center;gap:20px}
+.pulse{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--teal);font-family:'DM Mono',monospace}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:p 2s ease-in-out infinite}
+@keyframes p{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
 .main{max-width:860px;margin:0 auto;padding:32px 24px 64px}
-.morning-date{font-family:'DM Serif Display',Georgia,serif;font-size:36px;line-height:1.1;letter-spacing:-.5px;margin-bottom:6px}
+.morning-date{font-family:'DM Serif Display',serif;font-size:36px;line-height:1.1;color:var(--ink);margin-bottom:6px;letter-spacing:-.5px}
 .morning-sub{font-size:14px;color:var(--ink-soft);line-height:1.5;margin-bottom:28px}
 .morning-sub strong{color:var(--ink);font-weight:500}
-.cal-section{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:12px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.cal-label{font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--ink-faint);font-family:'DM Mono','Courier New',monospace}
-.cal-event{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);font-size:12px;color:var(--ink-soft);background:var(--cream)}
-.cal-time{font-family:'DM Mono','Courier New',monospace;font-size:11px;color:#1A4A7A;font-weight:600}
-.tasks-wrap{margin-bottom:20px}
-.section-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;margin-bottom:10px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.stat-num{font-family:'DM Serif Display',serif;font-size:28px;line-height:1;margin-bottom:4px}
+.stat-label{font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+.stat-card.red .stat-num{color:var(--red)}.stat-card.amber .stat-num{color:var(--amber)}.stat-card.teal .stat-num{color:var(--teal)}.stat-card.blue .stat-num{color:var(--blue)}
+.cal-section{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cal-label{font-size:10px;font-weight:500;letter-spacing:.1em;color:var(--ink-faint);flex-shrink:0}
+.cal-event{display:flex;align-items:center;gap:7px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;color:var(--ink-soft);background:var(--cream)}
+.cal-time{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);font-weight:500}
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--ink-faint)}
+.section-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.sb-red{background:var(--red-bg);color:var(--red);border:1px solid #EEBBAF}
+.sb-amber{background:var(--amber-bg);color:var(--amber);border:1px solid #EDD598}
+.sb-teal{background:var(--teal-bg);color:var(--teal);border:1px solid #9ECBBF}
+.sb-blue{background:var(--blue-bg);color:var(--blue);border:1px solid #9ABDE0}
+.sb-purple{background:var(--purple-bg);color:var(--purple);border:1px solid #B9AEE0}
 .sb-gray{background:#F0EDE8;color:var(--ink-soft);border:1px solid var(--border)}
+.task-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);margin-bottom:7px;overflow:hidden;transition:box-shadow .15s ease}
+.task-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.task-card.done{opacity:.45}.task-card.done .task-name{text-decoration:line-through}
+.task-main{display:flex;align-items:center;gap:10px;padding:11px 14px}
+.task-accent{width:3px;align-self:stretch;border-radius:3px;flex-shrink:0}
+.acc-red{background:var(--red)}.acc-amber{background:var(--amber)}.acc-teal{background:var(--teal)}.acc-blue{background:var(--blue)}.acc-gray{background:var(--border)}
+.task-body{flex:1;min-width:0}
+.task-name{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-name a{color:inherit;text-decoration:none}.task-name a:hover{color:var(--blue)}
+.task-meta{font-size:11px;color:var(--ink-faint);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.meta-late{color:var(--red)}
+.meta-list{background:var(--cream);border:1px solid var(--border);padding:1px 7px;border-radius:10px;font-size:10px}
+.task-actions{display:flex;gap:5px;flex-shrink:0;align-items:center}
+.btn{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:var(--cream);color:var(--ink-soft);cursor:pointer;white-space:nowrap;transition:all .12s ease;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.btn:hover{background:#EDE9E1}
+.btn-close{border-color:#9ECBBF;background:var(--teal-bg);color:var(--teal)}.btn-close:hover{background:#D0E9E2}
+.btn-open{border-color:var(--border);color:var(--blue)}
+.btn-agent{border-color:#B9AEE0;background:var(--purple-bg);color:var(--purple)}.btn-agent:hover{background:#E4E0F4}
+.btn-yes{background:var(--purple);color:#fff;border-color:var(--purple)}.btn-yes:hover{background:#3A2A7A}
+.agent-strip{border-top:1px solid var(--border);padding:7px 14px;background:#FAFAF8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ag-label{font-size:9px;font-weight:500;letter-spacing:.09em;color:var(--ink-faint);margin-right:3px}
+.q-strip{border-top:1px solid var(--border);padding:9px 14px;background:#FAFAF8;display:flex;align-items:center;gap:10px}
+.q-text{font-size:12px;color:var(--ink-soft);flex:1;line-height:1.4}
+.agent-output{border-top:1px solid #D5CEEE;padding:14px 16px;background:var(--purple-bg);display:none}
+.ao-header{font-size:10px;font-weight:500;letter-spacing:.08em;color:var(--purple);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ao-body{font-size:12px;color:#3A2A6A;line-height:1.7;white-space:pre-wrap;font-family:'DM Mono',monospace;background:rgba(255,255,255,.6);padding:10px 12px;border-radius:6px;border:1px solid #C9C0E8}
+.ao-footer{margin-top:10px;display:flex;gap:7px}
+.btn-use{background:var(--purple);color:#fff;border-color:var(--purple)}
+.notice{font-size:10px;color:var(--ink-faint);font-style:italic;margin-top:6px;display:flex;align-items:center;gap:4px}
+.insight{background:var(--purple-bg);border:1px solid #C9C0E8;border-left:3px solid var(--purple);border-radius:0 var(--r) var(--r) 0;padding:13px 16px;font-size:13px;color:#3A2A6A;line-height:1.6;margin-top:8px}
+.insight strong{color:var(--purple)}
+.radar-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--ink-soft)}
+.radar-row:last-child{border-bottom:none}
+.radar-name{flex:1}.radar-name a{color:var(--ink-soft);text-decoration:none}.radar-name a:hover{color:var(--blue)}
+.radar-due{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink-faint)}
 .create-card{background:#fff;border:1px dashed var(--border);border-radius:var(--r);padding:11px 16px;display:flex;align-items:center;gap:9px;color:var(--ink-faint);font-size:13px;cursor:pointer;transition:all .12s;margin-top:8px}
-.create-card:hover{border-color:var(--ink-soft);color:var(--ink)}
-.site-footer{text-align:center;font-size:11px;color:var(--ink-faint);font-family:'DM Mono','Courier New',monospace;margin-top:40px}
+.create-card:hover{border-color:var(--ink-soft);color:var(--ink);background:var(--cream)}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.site-footer{text-align:center;font-size:11px;color:var(--ink-faint);font-family:'DM Mono',monospace;margin-top:40px}
+.spinner{display:inline-block;width:10px;height:10px;border:1.5px solid #C9C0E8;border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.notice{font-size:10px;color:var(--ink-faint);font-style:italic;margin-top:6px}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:var(--r);font-size:13px;z-index:999;opacity:0;transform:translateY(8px);transition:all .25s ease;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
-/* Agent modal */
+/* Agent Modal */
 #agentModal{display:none;position:fixed;inset:0;background:rgba(26,25,22,.45);z-index:300;align-items:center;justify-content:center}
-.am-box{background:#fff;border-radius:12px;padding:24px;width:480px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.18)}
-.am-title{font-family:'DM Serif Display',Georgia,serif;font-size:18px;margin-bottom:4px}
-.am-task{font-size:12px;color:var(--ink-faint);margin-bottom:16px;font-family:'DM Mono','Courier New',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.am-textarea{width:100%;height:100px;font-size:13px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',Arial;resize:vertical;outline:none;color:var(--ink);line-height:1.6}
-.am-footer{display:flex;gap:8px;margin-top:12px;justify-content:flex-end;align-items:center}
+.am-box{background:#fff;border-radius:12px;padding:24px;width:500px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.18)}
+.am-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px}
+.am-task-name{font-size:12px;color:var(--ink-faint);margin-bottom:16px;font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.am-textarea{width:100%;height:110px;font-size:13px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;color:var(--ink);line-height:1.6;transition:border-color .15s}
+.am-textarea:focus{border-color:var(--purple)}
+.am-examples{margin:10px 0 14px;display:flex;flex-wrap:wrap;gap:6px}
+.am-eg{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--cream);color:var(--ink-soft);cursor:pointer;transition:all .12s}
+.am-eg:hover{background:#EDE9E1;color:var(--ink)}
+.am-footer{display:flex;gap:8px;justify-content:flex-end;align-items:center}
 .am-note{font-size:10px;color:var(--ink-faint);font-style:italic;flex:1}
-.btn{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:var(--cream);color:var(--ink-soft);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
-.btn-primary{background:var(--purple);color:#fff;border-color:var(--purple);font-size:12px;padding:7px 18px}
-.btn-cancel{font-size:12px;padding:7px 14px;border:1px solid var(--border);background:var(--cream);color:var(--ink-soft);cursor:pointer;border-radius:20px}
+.am-cancel{font-size:12px;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--cream);color:var(--ink-soft);cursor:pointer;font-family:'DM Sans',sans-serif}
+.am-submit{font-size:12px;padding:7px 20px;border-radius:20px;border:none;background:var(--purple);color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:6px}
+.am-submit:hover{background:#3A2A7A}
 </style>
 </head>
 <body>
+
 <header class="site-header">
   <div class="logo"><div class="logo-dot"></div>Café Matinal</div>
-  <div style="display:flex;align-items:center;gap:20px">
+  <div class="header-status">
     <span class="pulse"><span class="pulse-dot"></span>sistema activo</span>
-    <span class="header-meta" id="hdate">—</span>
+    <span class="header-meta" id="header-date">—</span>
   </div>
 </header>
 
 <div class="toast" id="toast"></div>
-<div id="agentModal"><div class="am-box">
-  <div class="am-title">Agente Livre</div>
-  <div class="am-task" id="am-task">—</div>
-  <textarea class="am-textarea" id="am-prompt" placeholder="Escreve o que queres fazer...&#10;ex: cria um alerta para daqui a 2 dias&#10;ex: resume o histórico desta tarefa&#10;ex: redige um email de seguimento"></textarea>
-  <div class="am-footer">
-    <span class="am-note">Resultado chega por email em ~30s e fica no ClickUp</span>
-    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-    <button class="btn btn-primary" id="am-btn" onclick="submitAgent()">Executar &#8594;</button>
+
+<!-- AGENTE LIVRE MODAL -->
+<div id="agentModal">
+  <div class="am-box">
+    <div class="am-title">Agente Livre</div>
+    <div class="am-task-name" id="am-task-name">—</div>
+    <textarea class="am-textarea" id="am-prompt" placeholder="Escreve o que queres fazer com esta tarefa..."></textarea>
+    <div class="am-examples">
+      <span class="am-eg" onclick="setPrompt('Resume o histórico desta tarefa e sugere o próximo passo')">≡ Resumo</span>
+      <span class="am-eg" onclick="setPrompt('Redige um email profissional relacionado com esta tarefa')">✉ Email</span>
+      <span class="am-eg" onclick="setPrompt('Cria um guião para Reel de 60s sobre o tema desta tarefa')">▷ Reel</span>
+      <span class="am-eg" onclick="setPrompt('Estrutura um carrossel de 8 slides para Instagram')">⬟ Carrossel</span>
+      <span class="am-eg" onclick="setPrompt('Pesquisa o tema e sugere 3 ângulos de conteúdo')">◈ Pesquisa</span>
+    </div>
+    <div class="am-footer">
+      <span class="am-note">Resultado chega por email (~30s) e fica como comentário no ClickUp</span>
+      <button class="am-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="am-submit" id="am-submit" onclick="submitAgent()">Executar <span id="am-arrow">→</span></button>
+    </div>
+    <div class="notice" style="margin-top:12px;">⚠ Gerado por IA — rever antes de usar</div>
   </div>
-</div></div>
+</div>
 
 <main class="main">
-  <div class="morning-date" id="mdate">Bom dia, Vasco.</div>
-  <div class="morning-sub" id="msub">Dashboard actualizado às 8h30.</div>
 
-  <div class="cal-section" id="cal-section">
-    <span class="cal-label">HOJE</span>
-    <div class='cal-event'><span class='cal-time'>09h30</span> Call equipa BOS</div><div class='cal-event'><span class='cal-time'>14h30</span> Revis&atilde;o conte&uacute;dos IP</div><div class='cal-event'><span class='cal-time'>16h00</span> Bloco de trabalho</div>
+  <div>
+    <div class="morning-date" id="morning-date">Bom dia, Vasco.</div>
+    <div class="morning-sub" id="morning-sub">A carregar tarefas...</div>
   </div>
 
-  <div class="tasks-wrap">
-    <div class="section-badge sb-gray" id="tasks-count">Tarefas de hoje</div>
-    <div id="tasks-html">
-      <div style='text-align:center;padding:32px 20px;color:#A8A59E;font-size:13px;'><div style='font-size:28px;margin-bottom:10px;'>&#9728;</div><div style='font-weight:500;color:#1A1916;margin-bottom:6px;'>Dashboard actualiza às 8h30</div><div>As tarefas do dia aparecem aqui após a actualização matinal.</div></div>
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card red"><div class="stat-num" id="s-urgent">—</div><div class="stat-label">URGENTE</div></div>
+    <div class="stat-card amber"><div class="stat-num" id="s-today">—</div><div class="stat-label">PARA HOJE</div></div>
+    <div class="stat-card teal"><div class="stat-num" id="s-prog">—</div><div class="stat-label">EM PROGRESSO</div></div>
+    <div class="stat-card blue"><div class="stat-num" id="s-week">—</div><div class="stat-label">ESTA SEMANA</div></div>
+  </div>
+
+  <!-- CALENDÁRIO (sempre visível) -->
+  <div class="cal-section" id="cal-section">
+    <span class="cal-label">HOJE</span>
+    <div class="cal-event"><span class="cal-time">09h30</span> Call equipa BOS</div>
+    <div class="cal-event"><span class="cal-time">14h30</span> Revisão conteúdos IP</div>
+    <div class="cal-event"><span class="cal-time">16h00</span> Bloco de trabalho</div>
+  </div>
+
+  <!-- TAREFAS -->
+  <div id="tasks-container">
+    <div style="text-align:center;padding:48px 20px;color:var(--ink-faint);">
+      <div style="font-size:28px;margin-bottom:12px;">☀️</div>
+      <div style="font-weight:500;color:var(--ink);margin-bottom:6px;">A carregar as tuas tarefas...</div>
+      <div style="font-size:12px;">Aguarda um momento.</div>
     </div>
   </div>
 
@@ -86,71 +172,265 @@ body{font-family:'DM Sans',Arial,sans-serif;background:var(--cream);color:var(--
     <span>+</span><span>Adicionar tarefa rápida...</span>
   </div>
 
-  <div class="site-footer">café matinal &middot; sistema autónomo &middot; actualiza às 8h30 &middot; segunda a sexta</div>
+  <div class="site-footer" id="footer-ts">café matinal · sistema autónomo · actualiza às 8h30 · segunda a sexta</div>
+
 </main>
 
 <script>
 const WEBHOOK = 'https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu';
+
+// ── DATAS ──────────────────────────────────────────────────────────────────
 const now = new Date();
-const dias=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-const meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-document.getElementById('hdate').textContent = now.getDate() + ' ' + meses[now.getMonth()].slice(0,3).toLowerCase() + ' · actualizado às 8h30';
-document.getElementById('mdate').textContent = 'Bom dia, Vasco.';
-document.getElementById('msub').innerHTML = '<strong>' + dias[now.getDay()] + ', ' + now.getDate() + ' de ' + meses[now.getMonth()] + '</strong>';
+const DIAS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+document.getElementById('morning-date').textContent = 'Bom dia, Vasco.';
+document.getElementById('header-date').textContent = now.getDate() + ' ' + MESES[now.getMonth()].slice(0,3).toLowerCase() + ' · actualizado às 8h30';
 
-function showToast(msg, dur=3000){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
+// ── TOAST ──────────────────────────────────────────────────────────────────
+function showToast(msg, dur=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
 
-// Fechar e adiar via webhook (links nos cards)
-document.addEventListener('click', async function(e) {
-  const link = e.target.closest('a[href*="action=close"],a[href*="action=delay"]');
-  if(!link) return;
-  e.preventDefault();
-  const url = link.href;
-  await fetch(url, {mode:'no-cors'});
-  const action = url.includes('action=close') ? 'Tarefa fechada ✓' : 'Prazo adiado 1 dia ✓';
-  showToast(action);
-  const card = link.closest('table[style*="border-left"]');
-  if(card && url.includes('action=close')) card.style.opacity = '.4';
+// ── WEBHOOK ────────────────────────────────────────────────────────────────
+function callWebhook(params) {
+  const url = WEBHOOK + '?' + new URLSearchParams(params).toString();
+  return fetch(url, {mode:'no-cors'}).then(() => true).catch(() => true);
+}
+
+// ── FECHAR TAREFA ──────────────────────────────────────────────────────────
+function closeTask(taskId, cardId, btn) {
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  callWebhook({action:'close', task_id:taskId}).then(() => {
+    document.getElementById(cardId)?.classList.add('done');
+    btn.textContent = '✓ Fechada';
+    showToast('Tarefa fechada no ClickUp ✓');
+  });
+}
+
+// ── ADIAR ──────────────────────────────────────────────────────────────────
+function delayTask(taskId, btn) {
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  callWebhook({action:'delay', task_id:taskId}).then(() => {
+    btn.textContent = '+1 dia';
+    btn.disabled = false;
+    showToast('Prazo adiado 1 dia ✓');
+  });
+}
+
+// ── RESPOSTA CONCLUÍDA? ────────────────────────────────────────────────────
+function answerQ(taskId, cardId, ans) {
+  const q = document.getElementById('q-' + cardId);
+  if (ans === 'yes') {
+    callWebhook({action:'close', task_id:taskId});
+    document.getElementById(cardId)?.classList.add('done');
+    if(q) q.innerHTML = '<span style="font-size:11px;color:var(--teal)">✓ Tarefa fechada no ClickUp</span>';
+    showToast('Tarefa fechada ✓');
+  } else {
+    if(q) q.innerHTML = '<span style="font-size:11px;color:var(--ink-faint)">Mantida em aberto · voltamos amanhã</span>';
+  }
+}
+
+// ── CRIAR TAREFA ───────────────────────────────────────────────────────────
+function createTask() {
+  const name = prompt('Nome da nova tarefa:');
+  if (!name) return;
+  callWebhook({action:'create', task_name:name}).then(() => showToast('Tarefa criada no ClickUp ✓'));
+}
+
+// ── AGENTE LIVRE MODAL ─────────────────────────────────────────────────────
+let _agentTaskId = null;
+
+function openAgent(taskId, taskName) {
+  _agentTaskId = taskId;
+  document.getElementById('am-task-name').textContent = decodeURIComponent(taskName || taskId);
+  document.getElementById('am-prompt').value = '';
+  document.getElementById('am-prompt').style.borderColor = '';
+  document.getElementById('am-submit').disabled = false;
+  document.getElementById('am-arrow').textContent = '→';
+  document.getElementById('agentModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('am-prompt').focus(), 80);
+}
+function closeModal() {
+  document.getElementById('agentModal').style.display = 'none';
+}
+function setPrompt(text) {
+  document.getElementById('am-prompt').value = text;
+  document.getElementById('am-prompt').focus();
+}
+function submitAgent() {
+  const prompt = document.getElementById('am-prompt').value.trim();
+  if (!prompt) { document.getElementById('am-prompt').style.borderColor = 'var(--red)'; return; }
+  const btn = document.getElementById('am-submit');
+  btn.innerHTML = '<span class="spinner"></span> A enviar...';
+  btn.disabled = true;
+  callWebhook({action:'agent', agent_type:'libre', task_id:_agentTaskId, prompt}).then(() => {
+    closeModal();
+    showToast('✓ Agente em processamento — resultado chega por email em ~30s', 4500);
+  });
+}
+document.getElementById('agentModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('agentModal')) closeModal();
 });
 
-// Agente livre modal
-let _tid = null;
-function openAgent(tid, tname) {
-  _tid = tid;
-  document.getElementById('am-task').textContent = decodeURIComponent(tname || tid);
-  document.getElementById('am-prompt').value = '';
-  document.getElementById('am-btn').textContent = 'Executar →';
-  document.getElementById('am-btn').disabled = false;
-  document.getElementById('agentModal').style.display = 'flex';
-  setTimeout(()=>document.getElementById('am-prompt').focus(), 80);
-}
-function closeModal(){document.getElementById('agentModal').style.display='none'}
-async function submitAgent(){
-  const prompt = document.getElementById('am-prompt').value.trim();
-  if(!prompt){document.getElementById('am-prompt').style.borderColor='#C23B22';return}
-  document.getElementById('am-btn').textContent='A enviar...';
-  document.getElementById('am-btn').disabled=true;
-  await fetch(WEBHOOK+'?action=agent&agent_type=libre&task_id='+_tid+'&prompt='+encodeURIComponent(prompt),{mode:'no-cors'});
-  closeModal();
-  showToast('✓ Agente em processamento — resultado chega por email em ~30s', 4500);
-}
-function createTask(){
-  const name=prompt('Nome da nova tarefa:');
-  if(!name)return;
-  fetch(WEBHOOK+'?action=create&task_name='+encodeURIComponent(name),{mode:'no-cors'});
-  showToast('Tarefa criada no ClickUp ✓');
+// ── RENDER TAREFAS ─────────────────────────────────────────────────────────
+function renderTasks(tasks) {
+  if (!tasks || !tasks.length) {
+    document.getElementById('tasks-container').innerHTML = '<div style="text-align:center;padding:40px;color:var(--ink-faint);">Sem tarefas activas. 🎉</div>';
+    document.getElementById('morning-sub').innerHTML = '<strong>' + DIAS[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()] + '</strong> · Sem tarefas activas hoje';
+    return;
+  }
+
+  const todayEnd = new Date(); todayEnd.setHours(23,59,59,999);
+  const urgent = [], today = [], progress = [], week = [], other = [];
+
+  tasks.forEach(t => {
+    const due = t.due_date ? new Date(parseInt(t.due_date)) : null;
+    const st = (t.status?.status || t.status || '').toLowerCase();
+    if (t.priority?.priority === 'urgent') urgent.push(t);
+    else if (due && due <= todayEnd) today.push(t);
+    else if (st === 'in progress' || st === 'a trabalhar' || st === 'em progresso') progress.push(t);
+    else other.push(t);
+  });
+
+  document.getElementById('s-urgent').textContent = urgent.length;
+  document.getElementById('s-today').textContent = today.length;
+  document.getElementById('s-prog').textContent = progress.length;
+  document.getElementById('s-week').textContent = other.length;
+  document.getElementById('morning-sub').innerHTML =
+    '<strong>' + DIAS[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()] + '</strong>' +
+    ' · ' + tasks.length + ' tarefa' + (tasks.length !== 1 ? 's' : '') + ' activa' + (tasks.length !== 1 ? 's' : '');
+
+  let html = '';
+
+  function taskCard(t, accentClass, showQ) {
+    const id = 'tc-' + t.id;
+    const due = t.due_date ? new Date(parseInt(t.due_date)) : null;
+    const isLate = due && due < now;
+    const dueStr = due ? due.toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+    const st = (t.status?.status || t.status || '');
+    const list = t.list?.name || t.list || '';
+    const tn = (t.name||'').replace(/'/g, '&apos;');
+    const tidEnc = encodeURIComponent(t.name||'');
+
+    return `<div class="task-card" id="${id}">
+      <div class="task-main">
+        <div class="task-accent ${accentClass}"></div>
+        <div class="task-body">
+          <div class="task-name"><a href="https://app.clickup.com/t/${t.id}" target="_blank">${t.name||''}</a></div>
+          <div class="task-meta">
+            ${isLate ? '<span class="meta-late">prazo ultrapassado</span>' : dueStr ? `<span>prazo ${dueStr}</span>` : ''}
+            ${st ? `<span>${st}</span>` : ''}
+            ${list ? `<span class="meta-list">${list}</span>` : ''}
+          </div>
+        </div>
+        <div class="task-actions">
+          <button class="btn btn-close" onclick="closeTask('${t.id}','${id}',this)">✓ Fechar</button>
+          <button class="btn" onclick="delayTask('${t.id}',this)">+1 dia</button>
+          <a class="btn btn-open" href="https://app.clickup.com/t/${t.id}" target="_blank">↗ ClickUp</a>
+        </div>
+      </div>
+      ${showQ
+        ? `<div class="q-strip" id="q-${id}">
+            <span class="q-text">Está concluída?</span>
+            <button class="btn btn-yes" onclick="answerQ('${t.id}','${id}','yes')">Sim, fechar</button>
+            <button class="btn" onclick="answerQ('${t.id}','${id}','no')">Ainda não</button>
+           </div>`
+        : `<div class="agent-strip">
+            <span class="ag-label">AGENTE LIVRE</span>
+            <button class="btn btn-agent" onclick="openAgent('${t.id}','${tidEnc}')">✦ Escreve o que queres fazer →</button>
+           </div>`
+      }
+    </div>`;
+  }
+
+  function section(list, badgeClass, label, accentClass, showQ) {
+    if (!list.length) return '';
+    return `<div class="section">
+      <div class="section-header"><div class="section-title"><span class="section-badge ${badgeClass}">${list.length} ${label}</span></div></div>
+      ${list.map(t => taskCard(t, accentClass, showQ)).join('')}
+    </div>`;
+  }
+
+  html += section(urgent, 'sb-red', 'urgente' + (urgent.length !== 1 ? 's' : ''), 'acc-red', false);
+  html += section(today, 'sb-amber', 'para hoje', 'acc-amber', false);
+
+  if (progress.length) {
+    html += `<div class="divider"></div>`;
+    html += section(progress, 'sb-teal', 'em progresso — estão concluídas?', 'acc-teal', true);
+  }
+
+  if (other.length) {
+    html += `<div class="divider"></div>`;
+    // Render "esta semana" as compact radar list
+    html += `<div class="section">
+      <div class="section-header"><div class="section-title"><span class="section-badge sb-blue">${other.length} esta semana · radar</span></div></div>
+      <div class="task-card">
+        ${other.map(t => {
+          const due = t.due_date ? new Date(parseInt(t.due_date)).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'}) : 'sem prazo';
+          const list = t.list?.name || t.list || '';
+          const tidEnc = encodeURIComponent(t.name||'');
+          return `<div class="radar-row">
+            <span class="radar-name"><a href="https://app.clickup.com/t/${t.id}" target="_blank">${t.name||''}</a></span>
+            ${list ? `<span class="meta-list">${list}</span>` : ''}
+            <span class="radar-due">${due}</span>
+            <button class="btn btn-agent" style="font-size:10px;padding:3px 9px;" onclick="openAgent('${t.id}','${tidEnc}')">✦ Agente</button>
+            <a class="btn" href="https://app.clickup.com/t/${t.id}" target="_blank">↗</a>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Insight
+  const noPriority = tasks.filter(t => !t.priority?.priority || t.priority?.priority === 'none').length;
+  if (noPriority > 0) {
+    html += `<div class="insight">
+      <strong>Nota do sistema:</strong> ${noPriority} tarefa${noPriority !== 1 ? 's' : ''} sem prioridade definida.
+      Para uma leitura mais precisa, define a prioridade directamente no ClickUp.
+    </div>`;
+  }
+
+  document.getElementById('tasks-container').innerHTML = html;
 }
 
-// Auto-open agent modal from email link
-(function(){
-  const p=new URLSearchParams(location.search);
-  const tid=p.get('task_id'), tname=p.get('task')||'';
-  if(tid) {
-    setTimeout(()=>{
-      const cards=document.querySelectorAll('a[href*="/t/'+tid+'"]');
-      if(cards[0]) {const card=cards[0].closest('table');if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.style.outline='2px solid #4A3A8A';setTimeout(()=>card.style.outline='',2500);}}
+// ── CARREGAR TAREFAS VIA CLICKUP API ───────────────────────────────────────
+// Não podemos chamar a API ClickUp directamente (CORS) — as tarefas são
+// injectadas pelo Make no commit diário OU carregadas via TASKS_DATA global
+if (typeof TASKS_DATA !== 'undefined' && TASKS_DATA.length) {
+  renderTasks(TASKS_DATA);
+} else {
+  // Fallback: mostrar mensagem com link para o email
+  document.getElementById('morning-sub').innerHTML =
+    '<strong>' + DIAS[now.getDay()] + ', ' + now.getDate() + ' de ' + MESES[now.getMonth()] + '</strong>' +
+    ' · Dashboard actualiza às 8h30';
+  document.getElementById('tasks-container').innerHTML = `
+    <div style="text-align:center;padding:48px 20px;color:var(--ink-faint);">
+      <div style="font-size:28px;margin-bottom:12px;">☀️</div>
+      <div style="font-weight:500;color:var(--ink);margin-bottom:8px;">Tarefas actualizadas às 8h30</div>
+      <div style="font-size:13px;">Consulta o email matinal para a lista completa de hoje.</div>
+      <div style="margin-top:16px;font-size:12px;color:var(--ink-soft);">Os botões de acção continuam activos — usa os links do email para aceder directamente a cada tarefa.</div>
+    </div>`;
+  document.getElementById('s-urgent').textContent = '—';
+  document.getElementById('s-today').textContent = '—';
+  document.getElementById('s-prog').textContent = '—';
+  document.getElementById('s-week').textContent = '—';
+}
+
+// ── URL PARAMS → AUTO-ABRIR AGENTE ─────────────────────────────────────────
+(function() {
+  const p = new URLSearchParams(location.search);
+  const tid = p.get('task_id'), tname = p.get('task') || '';
+  if (tid) {
+    setTimeout(() => {
+      const card = document.getElementById('tc-' + tid);
+      if (card) { card.scrollIntoView({behavior:'smooth',block:'center'}); card.style.outline = '2px solid var(--purple)'; setTimeout(() => card.style.outline = '', 2500); }
       openAgent(tid, tname);
-    }, 600);
+    }, 800);
   }
 })();
 </script>
