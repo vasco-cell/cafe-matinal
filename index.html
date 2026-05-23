@@ -2,9 +2,21 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Café Matinal — BBTOP20</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀</text></svg>">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Café Matinal — Vasco</title>
+<script>
+// localStorage shim for window.storage API
+window.storage = {
+  get: async (k) => { try { const v = localStorage.getItem(k); return v ? {key:k,value:v} : null; } catch { return null; } },
+  set: async (k, v) => { try { localStorage.setItem(k, v); return {key:k,value:v}; } catch { return null; } },
+  delete: async (k) => { try { localStorage.removeItem(k); return {key:k,deleted:true}; } catch { return null; } },
+  list: async (prefix) => { try { const keys = Object.keys(localStorage).filter(k => !prefix || k.startsWith(prefix)); return {keys}; } catch { return {keys:[]}; } }
+};
+</script>
+</head>
+<body style="margin:0;padding:0;background:#FAF9F7">
+
+<div id="bjr" style="height:100vh;display:flex;font-family:system-ui,sans-serif;overflow:hidden"></div>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
@@ -12,65 +24,62 @@
 <script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body,#root{height:100%;overflow:hidden}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#E5E3DC;border-radius:2px}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#E5E3DC;border-radius:2px}
 button,input,textarea,select{font-family:inherit;outline:none}
 a{text-decoration:none}
-body{font-family:'DM Sans',system-ui,sans-serif;background:#FAF9F7}
 @keyframes fU{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @keyframes sp{to{transform:rotate(360deg)}}
 @keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
-.bn{display:flex;align-items:center;gap:9px;padding:7px 12px;border:none;background:transparent;color:#6B6860;font-size:13px;text-align:left;cursor:pointer;width:100%;transition:all .1s;border-radius:6px;white-space:nowrap}
-.bn:hover{background:#F0EEE8;color:#1A1A2E}.bn.on{background:#1A1A2E;color:#fff}
+.bn{display:flex;align-items:center;gap:9px;padding:7px 12px;border:none;background:transparent;color:#6B6860;font-size:12.5px;text-align:left;cursor:pointer;width:100%;transition:all .1s;border-radius:6px;white-space:nowrap}
+.bn:hover{background:#F0EEE8;color:#1A1A2E}
+.bn.on{background:#1A1A2E;color:#fff}
 .cd{background:#fff;border:1px solid #E5E3DC;border-radius:10px;overflow:hidden}
-.bt{font-size:12px;padding:5px 12px;border-radius:7px;border:1px solid #E5E3DC;background:#FAF9F7;color:#1A1A2E;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .1s;white-space:nowrap}
+.bt{font-size:11.5px;padding:5px 12px;border-radius:7px;border:1px solid #E5E3DC;background:#FAF9F7;color:#1A1A2E;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .1s;white-space:nowrap}
 .bt:hover{background:#F0EEE8}.bt.dk{background:#1A1A2E;color:#fff;border-color:#1A1A2E}.bt.dk:hover{background:#2D2D45}
 .bt.gn{background:#F0FFF4;color:#276749;border-color:#9AE6B4}.bt.pu2{background:#F5F3FF;color:#6D28D9;border-color:#DDD6FE}
 .bt:disabled{opacity:.4;cursor:not-allowed}
 .ip{width:100%;padding:8px 11px;border:1px solid #E5E3DC;border-radius:8px;font-size:13px;color:#1A1A2E;background:#fff;transition:border .15s}
 .ip:focus{border-color:#7C3AED}
-.sp{display:inline-block;width:12px;height:12px;border:2px solid #C4B5FD;border-top-color:#7C3AED;border-radius:50%;animation:sp .7s linear infinite}
-.ld{width:7px;height:7px;border-radius:50%;background:#38A169;animation:pu 2s infinite;display:inline-block}
+.sp{display:inline-block;width:11px;height:11px;border:1.5px solid #C4B5FD;border-top-color:#7C3AED;border-radius:50%;animation:sp .7s linear infinite}
+.ld{width:6px;height:6px;border-radius:50%;background:#38A169;animation:pu 2s infinite;display:inline-block}
 .pt{font-family:'DM Serif Display',Georgia,serif;font-size:34px;font-weight:400;color:#1A1A2E;letter-spacing:-.5px}
 .ps{font-size:13px;color:#6B6860;margin-top:3px}
 .po{transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1s linear}
 </style>
-</head>
-<body>
-<div id="root" style="display:flex;height:100%"></div>
 <script>
-const{useState,useEffect,useRef,useCallback}=React;
+const {useState,useEffect,useRef,useCallback}=React;
 const ce=React.createElement;
-const{LineChart,Line,BarChart,Bar,PieChart,Pie,Cell,XAxis,YAxis,Tooltip,ResponsiveContainer}=Recharts;
+const {LineChart,Line,BarChart,Bar,PieChart,Pie,Cell,XAxis,YAxis,Tooltip,ResponsiveContainer}=Recharts;
 const WH="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
 const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 const DIAS=["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
 const DC=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const PA=p=>({urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE"}[p]||"#CBD5E0");
-const PL=p=>({urgent:"Alta importância",high:"Média importância",normal:"Baixa importância"}[p]||"Sem importância");
+const PL=p=>({urgent:"Alta importância",high:"Média importância",normal:"Baixa importância",none:"Sem importância"}[p]||"Sem importância");
 const isLate=ms=>ms&&ms!=="null"&&new Date(+ms)<new Date(new Date().setHours(0,0,0,0));
 const isToday_=ms=>{if(!ms||ms==="null")return false;return new Date(+ms).toDateString()===new Date().toDateString()};
 const fmtD=ms=>{if(!ms||ms==="null")return"";const d=new Date(+ms);return`${d.getDate()} ${MC[d.getMonth()]}`};
 const fmtT=dt=>{if(!dt)return"";try{return new Date(dt).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"})}catch{return""}};
-const sg=k=>{try{const v=localStorage.getItem("cm_"+k);return v?JSON.parse(v):null}catch{return null}};
-const ss=(k,v)=>{try{localStorage.setItem("cm_"+k,JSON.stringify(v))}catch{}};
+const sg=async k=>{try{const r=await window.storage.get(k);return r?JSON.parse(r.value):null}catch{return null}};
+const ss=async(k,v)=>{try{await window.storage.set(k,JSON.stringify(v))}catch{}};
 async function aiC(msgs,sys,max=900){try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:max,system:sys||"",messages:msgs})});const d=await r.json();return d.content?.[0]?.text||"(sem resposta)"}catch(e){return"Erro: "+e.message}}
 async function whF(p){try{const url=WH+"?"+new URLSearchParams(p).toString();const r=await fetch(url,{mode:"cors"});if(r.ok)return await r.json();return null}catch{return null}}
 const wh=p=>{try{fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"cors"}).catch(()=>fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"no-cors"}))}catch{}};
 function Sp(){return ce("span",{className:"sp"})}
 function Ld(){return ce("span",{className:"ld"})}
 
+// ── AGENT MODAL ──────────────────────────────────────────────────────────────
 function AgentModal({task,onClose,toast}){
   const[p,setP]=useState("");const[ld,setLd]=useState(false);
-  const Q=["Resume e sugere próximo passo","Redige email profissional","Guião Reel 60s","Carrossel 8 slides","Pesquisa: 3 ângulos de conteúdo"];
+  const Q=["Resume e sugere próximo passo","Redige email profissional","Guião Reel 60s","Carrossel 8 slides","Pesquisa: 3 ângulos conteúdo"];
   async function sub(){if(!p.trim())return;setLd(true);await whF({action:"agent",agent_type:"libre",task_id:task.id,prompt:p});setLd(false);onClose();toast("✓ Resultado chega por email em ~30s");}
   return ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center"},onClick:e=>e.target===e.currentTarget&&onClose()},
     ce("div",{style:{background:"#fff",borderRadius:14,padding:24,width:460,maxWidth:"92vw",boxShadow:"0 20px 50px rgba(0,0,0,.2)"}},
       ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:20,marginBottom:4}},"Agente Livre"),
       ce("div",{style:{fontSize:11,color:"#9B9890",marginBottom:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},task.name),
       ce("div",{style:{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}},Q.map(q=>ce("button",{key:q,className:"bt",onClick:()=>setP(q),style:{fontSize:10,padding:"3px 8px"}},q))),
-      ce("textarea",{className:"ip",value:p,onChange:e=>setP(e.target.value),placeholder:"Escreve o que queres fazer com esta tarefa...\nex: cria um alerta para daqui a 2 dias\nex: resume o histórico desta tarefa",rows:4,style:{resize:"vertical",marginBottom:10}}),
+      ce("textarea",{className:"ip",value:p,onChange:e=>setP(e.target.value),placeholder:"Escreve o que queres fazer...",rows:4,style:{resize:"vertical",marginBottom:10}}),
       ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end",alignItems:"center"}},
         ce("span",{style:{fontSize:10,color:"#9B9890",flex:1,fontStyle:"italic"}},"Resultado por email ~30s · fica no ClickUp"),
         ce("button",{className:"bt",onClick:onClose},"Cancelar"),
@@ -80,11 +89,12 @@ function AgentModal({task,onClose,toast}){
   )
 }
 
-function TC({t,onClose,onDelay,onAgent,showQ}){
+// ── TASK CARD ────────────────────────────────────────────────────────────────
+function TC({t,onUpdate,onAgent,showQ}){
   const[cl,setCl]=useState(t.status==="done");const[cl_,setCl_]=useState(false);const[dl,setDl]=useState(false);const[qa,setQa]=useState(null);
-  async function doClose(){setCl_(true);const r=await whF({action:"close",task_id:t.id});setCl(true);setCl_(false);if(onClose)onClose(t.id)}
-  async function doDelay(){setDl(true);await whF({action:"delay",task_id:t.id});setDl(false);if(onDelay)onDelay(t.id)}
-  return ce("div",{style:{background:"#fff",border:"1px solid #E5E3DC",borderLeft:`4px solid ${PA(t.priority)}`,borderRadius:10,marginBottom:7,opacity:cl?.4:1,overflow:"hidden",transition:"opacity .3s"}},
+  async function doClose(){setCl_(true);await whF({action:"close",task_id:t.id});setCl(true);setCl_(false);if(onUpdate)onUpdate(t.id,"done")}
+  async function doDelay(){setDl(true);await whF({action:"delay",task_id:t.id});setDl(false);if(onUpdate)onUpdate(t.id,"delay")}
+  return ce("div",{style:{background:"#fff",border:"1px solid #E5E3DC",borderLeft:`4px solid ${PA(t.priority)}`,borderRadius:10,marginBottom:7,opacity:cl?.4:1,overflow:"hidden"}},
     ce("div",{style:{padding:"11px 13px",display:"flex",alignItems:"center",gap:10}},
       ce("div",{style:{flex:1,minWidth:0}},
         ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:cl?"#9B9890":"#1A1A2E",textDecoration:cl?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
@@ -94,11 +104,11 @@ function TC({t,onClose,onDelay,onAgent,showQ}){
           t.list&&ce("span",{style:{fontSize:10,color:"#9B9890",background:"#F5F2EC",padding:"1px 6px",borderRadius:8,border:"1px solid #E5E3DC"}},t.list)
         )
       ),
-      !cl&&ce("div",{style:{display:"flex",gap:5,flexShrink:0,flexWrap:"wrap",justifyContent:"flex-end"}},
+      !cl&&ce("div",{style:{display:"flex",gap:5,flexShrink:0}},
         ce("button",{className:"bt gn",onClick:doClose,disabled:cl_,style:{fontSize:11,padding:"4px 9px"}},cl_?ce(Sp):"✓ Fechar"),
         ce("button",{className:"bt",onClick:doDelay,disabled:dl,style:{fontSize:11,padding:"4px 9px"}},dl?ce(Sp):"+1 dia"),
         ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",className:"bt",style:{fontSize:11,padding:"4px 9px",color:"#1A4A7A"}},"↗ ClickUp"),
-        ce("button",{className:"bt pu2",onClick:()=>onAgent&&onAgent(t),style:{fontSize:11,padding:"4px 9px"}},"✦ Agente")
+        ce("button",{className:"bt pu2",onClick:()=>onAgent&&onAgent(t),style:{fontSize:11,padding:"4px 9px"}},"✦")
       )
     ),
     !cl&&showQ&&qa===null&&ce("div",{style:{borderTop:"1px solid #E5E3DC",padding:"8px 13px",background:"#FAFAF8",display:"flex",alignItems:"center",gap:10}},
@@ -109,7 +119,7 @@ function TC({t,onClose,onDelay,onAgent,showQ}){
   )
 }
 
-// HOJE
+// ── HOJE ─────────────────────────────────────────────────────────────────────
 function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask}){
   const n=new Date();const h=n.getHours();
   const gr=h<12?"Bom dia.":h<17?"Boa tarde.":"Boa noite.";
@@ -118,106 +128,106 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
   const tod=act.filter(t=>t.priority!=="urgent"&&(isToday_(t.due_date)||isLate(t.due_date)));
   const prg=act.filter(t=>{const s=(t.status||"").toLowerCase();return(s.includes("progress")||s.includes("trabalh")||s.includes("progresso"))&&!urg.includes(t)&&!tod.includes(t)});
   const oth=act.filter(t=>!urg.includes(t)&&!tod.includes(t)&&!prg.includes(t));
-  const late_=act.filter(t=>isLate(t.due_date));
+  const late=act.filter(t=>isLate(t.due_date));
   const[top3,setT3]=useState([]);const[t3l,setT3l]=useState(false);const[plan,setPlan]=useState(false);
   const[aMsg,setAM]=useState("");const[aLd,setAl]=useState(false);const[aRep,setAR]=useState("");const[newT,setNT]=useState("");
   const wd=Array.from({length:7},(_,i)=>{const d=new Date(n);d.setDate(n.getDate()-n.getDay()+(n.getDay()===0?-6:1)+i);return d});
-  useEffect(()=>{const b=sg("top3");if(b?.d===n.toDateString())setT3(b.t||[]);},[]);
-  async function gen3(){setT3l(true);const lst=act.slice(0,15).map(t=>`${t.name}[${t.priority}]`).join(", ");const r=await aiC([{role:"user",content:`Tarefas: ${lst||"nenhuma"}. Sugere as 3 mais prioritárias para hoje (${DIAS[n.getDay()]} ${n.getDate()} ${MC[n.getMonth()]}). Só os nomes, um por linha, sem numeração.`}],"Assistente BBTOP20. Pt-pt.");const s=r.trim().split("\n").filter(Boolean).slice(0,3);setT3(s);ss("top3",{d:n.toDateString(),t:s});setT3l(false)}
-  async function sendA(){if(!aMsg.trim()||aLd)return;setAl(true);const sys=`Assistente do Vasco (BBTOP20 — Borja on Stocks + Investidor Prudente). Tarefas: ${act.slice(0,10).map(t=>t.name).join(", ")||"nenhuma"}. Eventos hoje: ${calEvents.map(e=>e.summary).join(", ")||"nenhum"}. Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MESES[n.getMonth()]} ${n.getFullYear()}. Pt-pt. Tom directo e útil.`;const r=await aiC([{role:"user",content:aMsg}],sys);setAR(r);setAl(false)}
+  useEffect(()=>{sg("bj-t3").then(b=>{if(b?.d===n.toDateString())setT3(b.t||[])});},[]);
+  async function gen3(){setT3l(true);const lst=act.slice(0,15).map(t=>`${t.name}[${t.priority}]`).join(", ");const r=await aiC([{role:"user",content:`Tarefas: ${lst||"nenhuma"}. Sugere as 3 mais prioritárias para hoje (${DIAS[n.getDay()]} ${n.getDate()} ${MC[n.getMonth()]}). Só os nomes, um por linha.`}],"Assistente BBTOP20. Pt-pt.");const s=r.trim().split("\n").filter(Boolean).slice(0,3);setT3(s);ss("bj-t3",{d:n.toDateString(),t:s});setT3l(false)}
+  async function sendA(){if(!aMsg.trim()||aLd)return;setAl(true);const sys=`Assistente do Vasco (BBTOP20). Tarefas: ${act.slice(0,10).map(t=>t.name).join(", ")||"nenhuma"}. Eventos hoje: ${calEvents.map(e=>e.summary).join(", ")||"nenhum"}. Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MESES[n.getMonth()]} ${n.getFullYear()}. Pt-pt.`;const r=await aiC([{role:"user",content:aMsg}],sys);setAR(r);setAl(false)}
   async function doAdd(){if(!newT.trim())return;await whF({action:"create",task_name:newT});addTask({id:`l${Date.now()}`,name:newT,status:"todo",priority:"normal",list:"BBTOP20",due_date:"null"});setNT("");toast("Tarefa criada no ClickUp ✓")}
   const SB=[{c:"#E53E3E",n:urg.length,l:"URGENTE"},{c:"#DD6B20",n:tod.length,l:"PARA HOJE"},{c:"#38A169",n:prg.length,l:"EM PROGRESSO"},{c:"#3182CE",n:oth.length,l:"ESTA SEMANA"}];
-  return ce("div",{style:{animation:"fU .25s",maxWidth:900,margin:"0 auto"}},
+  return ce("div",{style:{animation:"fU .25s"}},
     ce("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:18}},
       ce("div",null,ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:32,color:"#1A1A2E",letterSpacing:"-.5px"}},gr),ce("div",{style:{fontSize:12,color:"#6B6860",marginTop:2}},`${DIAS[n.getDay()]}, ${n.getDate()} de ${MESES[n.getMonth()]} de ${n.getFullYear()}`)),
-      ce("div",{style:{display:"flex",alignItems:"center",gap:8,fontSize:11,color:"#9B9890"}},loading?ce(Sp):ce(Ld),loading?"A sincronizar...":lastSync?"sync "+lastSync:"",ce("button",{className:"bt",onClick:refresh,disabled:loading,style:{fontSize:10,padding:"4px 9px"}},ce("i",{className:"ti ti-refresh",style:{fontSize:12}})))
+      ce("div",{style:{display:"flex",alignItems:"center",gap:6,fontSize:11,color:"#9B9890"}},loading?ce(Sp):ce(Ld),loading?"A sincronizar...":lastSync?"sync "+lastSync:"",ce("button",{className:"bt",onClick:refresh,disabled:loading,style:{fontSize:10,padding:"4px 8px"}},ce("i",{className:"ti ti-refresh",style:{fontSize:12}})))
     ),
     ce("button",{onClick:()=>setPlan(!plan),style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"11px 15px",borderRadius:10,border:"1px solid #BEE3F8",background:"#EBF8FF",color:"#2C5282",marginBottom:14,cursor:"pointer",fontSize:13,fontFamily:"inherit"}},
       ce("span",{style:{display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-sparkles",style:{fontSize:16}}),"Planeamento do dia"),ce("i",{className:"ti ti-chevron-"+(plan?"up":"right"),style:{fontSize:13}})
     ),
     plan&&ce("div",{className:"cd",style:{padding:14,marginBottom:14}},
-      top3.length>0?ce("div",null,top3.map((t,i)=>ce("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<2?"1px solid #F0EEE8":"none"}},ce("div",{style:{width:22,height:22,borderRadius:"50%",background:"#EDE9FE",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",color:"#7C3AED",flexShrink:0}},i+1),ce("span",{style:{fontSize:13}},t)))):ce("p",{style:{fontSize:12,color:"#9B9890",textAlign:"center",padding:8}},"Clica em Gerar para sugerir as 3 tarefas"),
+      top3.length>0?ce("div",null,top3.map((t,i)=>ce("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:i<2?"1px solid #F0EEE8":"none"}},ce("div",{style:{width:20,height:20,borderRadius:"50%",background:"#EDE9FE",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",color:"#7C3AED"}},i+1),ce("span",{style:{fontSize:13}},t)))):ce("p",{style:{fontSize:12,color:"#9B9890",textAlign:"center",padding:"8px 0"}},"Clica para gerar"),
       ce("button",{className:"bt",onClick:gen3,disabled:t3l,style:{marginTop:10,fontSize:11}},t3l?ce(Sp):null," ✦ Gerar com IA")
     ),
     ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}},
       ce("div",{className:"cd",style:{padding:13}},
         ce("div",{style:{fontSize:9,fontWeight:600,letterSpacing:".08em",color:"#9B9890",marginBottom:8}},"ESTA SEMANA"),
         ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}},
-          wd.map((d,i)=>{const isT=d.toDateString()===n.toDateString();const dt=tasks.filter(t=>t.due_date&&t.due_date!=="null"&&new Date(+t.due_date).toDateString()===d.toDateString());return ce("div",{key:i,style:{textAlign:"center"}},ce("div",{style:{fontSize:9,color:isT?"#7C3AED":"#9B9890",marginBottom:2,fontWeight:isT?600:400}},DC[d.getDay()]),ce("div",{style:{width:28,height:28,borderRadius:"50%",background:isT?"#1A1A2E":"transparent",border:isT?"none":"1px solid #E5E3DC",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",fontSize:11,color:isT?"#fff":"#1A1A2E",position:"relative"}},d.getDate(),dt.length>0&&ce("div",{style:{position:"absolute",bottom:-1,right:-1,width:6,height:6,borderRadius:"50%",background:"#3182CE",border:"1px solid #fff"}})))})
-        )
+          wd.map((d,i)=>{const isT=d.toDateString()===n.toDateString();const dt=tasks.filter(t=>t.due_date&&new Date(+t.due_date).toDateString()===d.toDateString());return ce("div",{key:i,style:{textAlign:"center"}},ce("div",{style:{fontSize:9,color:isT?"#7C3AED":"#9B9890",marginBottom:2,fontWeight:isT?600:400}},DC[d.getDay()]),ce("div",{style:{width:26,height:26,borderRadius:"50%",background:isT?"#1A1A2E":"transparent",border:isT?"none":"1px solid #E5E3DC",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",fontSize:11,color:isT?"#fff":"#1A1A2E",position:"relative"}},d.getDate(),dt.length>0&&ce("div",{style:{position:"absolute",bottom:-1,right:-1,width:5,height:5,borderRadius:"50%",background:"#3182CE"}})))}))
       ),
       ce("div",{className:"cd",style:{padding:13}},
         ce("div",{style:{fontSize:9,fontWeight:600,letterSpacing:".08em",color:"#9B9890",marginBottom:8}},"AGENDA DE HOJE"),
-        calEvents.length>0?calEvents.slice(0,5).map((e,i)=>ce("div",{key:i,style:{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderLeft:"2px solid #7C3AED",paddingLeft:8,marginBottom:4}},
-          ce("span",{style:{fontSize:11,fontWeight:600,color:"#7C3AED",minWidth:36,fontFamily:"monospace"}},fmtT(e.start?.dateTime||e.start?.date)),
+        calEvents.length>0?calEvents.slice(0,4).map((e,i)=>ce("div",{key:i,style:{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderLeft:"2px solid #7C3AED",paddingLeft:8,marginBottom:4}},
+          ce("span",{style:{fontSize:10,fontWeight:600,color:"#7C3AED",minWidth:34,fontFamily:"monospace"}},fmtT(e.start?.dateTime||e.start?.date)),
           ce("span",{style:{fontSize:12,color:"#1A1A2E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.summary||"(sem título)")
-        )):ce("p",{style:{fontSize:12,color:"#9B9890",textAlign:"center",padding:"10px 0"}},"Sem eventos hoje · Google Calendar ligado")
+        )):
+        [{t:"09h30",l:"Call equipa BOS"},{t:"14h30",l:"Revisão IP"},{t:"16h00",l:"Bloco trabalho"}].map((e,i)=>ce("div",{key:i,style:{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderLeft:"2px solid #E5E3DC",paddingLeft:8,marginBottom:4}},
+          ce("span",{style:{fontSize:10,fontWeight:600,color:"#9B9890",minWidth:34,fontFamily:"monospace"}},e.t),
+          ce("span",{style:{fontSize:12,color:"#9B9890",fontStyle:"italic"}},e.l+" (simulado)")
+        ))
       )
     ),
     ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},SB.map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"11px 14px"}},ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:26,color:s.c,lineHeight:1,marginBottom:3}},s.n),ce("div",{style:{fontSize:10,color:"#9B9890",letterSpacing:".04em"}},s.l)))),
-    late_.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-alert-circle",style:{fontSize:16}}),`Tens ${late_.length} tarefa${late_.length!==1?"s":""} em atraso`),
+    late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-alert-circle",style:{fontSize:16}}),`Tens ${late.length} tarefa${late.length!==1?"s":""} em atraso`),
     ce("button",{onClick:gen3,disabled:t3l,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"9px",borderRadius:8,border:"1px solid #DDD6FE",background:"#F5F3FF",color:"#6D28D9",fontSize:13,cursor:"pointer",marginBottom:14,fontFamily:"inherit"}},t3l?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:14}}),t3l?"A gerar...":"Sugerir 3 tarefas prioritárias para hoje (IA)"),
     ce("div",{className:"cd",style:{padding:14,marginBottom:14}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},ce("i",{className:"ti ti-sparkles",style:{fontSize:16,color:"#7C3AED"}}),ce("span",{style:{fontSize:13,fontWeight:500}},"Assistente"),ce("button",{onClick:()=>setPage("assistente"),style:{marginLeft:"auto",fontSize:11,color:"#7C3AED",background:"none",border:"none",cursor:"pointer"}},"Abrir →")),
-      aRep?ce("div",{style:{fontSize:12,color:"#1A1A2E",lineHeight:1.7,padding:"8px 10px",background:"#F5F3FF",borderRadius:6,marginBottom:8,whiteSpace:"pre-wrap"}},aRep):ce("p",{style:{fontSize:12,color:"#6B6860",marginBottom:8}},"Estou aqui sempre que precisares."),
+      aRep?ce("div",{style:{fontSize:12,color:"#1A1A2E",lineHeight:1.7,padding:"8px 10px",background:"#F5F3FF",borderRadius:6,marginBottom:8,whiteSpace:"pre-wrap"}},aRep):ce("p",{style:{fontSize:12,color:"#6B6860",marginBottom:8}},"Estou aqui sempre que precisares. Queres que faça um check-in do teu dia?"),
       !aRep&&ce("div",{style:{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}},["✨ Sim, ver o meu dia","Tarefas atrasadas?","O que fazer agora?"].map(s=>ce("button",{key:s,className:"bt",onClick:()=>setAM(s),style:{fontSize:11}},s))),
       ce("div",{style:{display:"flex",gap:6}},ce("input",{className:"ip",value:aMsg,onChange:e=>setAM(e.target.value),onKeyDown:e=>e.key==="Enter"&&sendA(),placeholder:"Escreve uma mensagem...",style:{flex:1}}),ce("button",{className:"bt dk",onClick:sendA,disabled:aLd||!aMsg.trim()},aLd?ce(Sp):ce("i",{className:"ti ti-send",style:{fontSize:13}})))
     ),
-    urg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#E53E3E",letterSpacing:".06em",marginBottom:8}},"🔴 URGENTE"),urg.map(t=>ce(TC,{key:t.id,t,onClose:id=>{},onDelay:()=>{},onAgent:setAT,showQ:false}))),
-    tod.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#DD6B20",letterSpacing:".06em",marginBottom:8}},"🟠 PARA HOJE"),tod.map(t=>ce(TC,{key:t.id,t,onClose:id=>{},onDelay:()=>{},onAgent:setAT,showQ:false}))),
-    prg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),ce("div",{style:{fontSize:11,fontWeight:600,color:"#38A169",letterSpacing:".06em",marginBottom:8}},"🟢 EM PROGRESSO — concluídas?"),prg.map(t=>ce(TC,{key:t.id,t,onClose:id=>{},onDelay:()=>{},onAgent:setAT,showQ:true}))),
-    oth.length>0&&ce("div",{style:{marginBottom:12}},
-      ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),
-      ce("div",{style:{fontSize:11,fontWeight:600,color:"#3182CE",letterSpacing:".06em",marginBottom:8}},"🔵 ESTA SEMANA · RADAR"),
-      ce("div",{className:"cd"},oth.slice(0,12).map((t,i)=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",borderBottom:i<oth.length-1?"1px solid #F0EEE8":"none",fontSize:12}},
+    urg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#E53E3E",letterSpacing:".06em",marginBottom:8}},"🔴 URGENTE"),urg.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:false}))),
+    tod.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#DD6B20",letterSpacing:".06em",marginBottom:8}},"🟠 PARA HOJE"),tod.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:false}))),
+    prg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),ce("div",{style:{fontSize:11,fontWeight:600,color:"#38A169",letterSpacing:".06em",marginBottom:8}},"🟢 EM PROGRESSO — concluídas?"),prg.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:true}))),
+    oth.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),ce("div",{style:{fontSize:11,fontWeight:600,color:"#3182CE",letterSpacing:".06em",marginBottom:8}},"🔵 ESTA SEMANA · RADAR"),
+      ce("div",{className:"cd"},oth.slice(0,10).map((t,i)=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",borderBottom:i<oth.length-1?"1px solid #F0EEE8":"none",fontSize:12}},
         ce("div",{style:{width:6,height:6,borderRadius:"50%",background:PA(t.priority),flexShrink:0}}),
         ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",style:{flex:1,color:"#5A5750",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
         t.list&&ce("span",{style:{fontSize:10,color:"#9B9890",background:"#F5F2EC",padding:"1px 6px",borderRadius:8}},t.list),
         ce("span",{style:{fontSize:10,color:"#9B9890",fontFamily:"monospace",flexShrink:0}},fmtD(t.due_date)||"sem prazo"),
-        ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 7px"}},"✦ Agente"),
+        ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 7px"}},"✦"),
         ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",className:"bt",style:{fontSize:10,padding:"3px 7px",color:"#1A4A7A"}},"↗")
       )))
     ),
-    !act.length&&!loading&&ce("div",{style:{textAlign:"center",padding:"40px 20px",color:"#9B9890"}},ce("div",{style:{fontSize:36,marginBottom:10}},"☀"),ce("div",{style:{fontWeight:500,color:"#1A1A2E",marginBottom:6}},"Sem tarefas activas"),ce("button",{className:"bt dk",onClick:refresh,style:{marginTop:10}},"Sincronizar ClickUp")),
-    ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginTop:12,padding:"7px 10px",borderRadius:8,border:"1px dashed #E5E3DC",background:"#FAF9F7"}},
-      ce("input",{className:"ip",value:newT,onChange:e=>setNT(e.target.value),onKeyDown:e=>e.key==="Enter"&&doAdd(),placeholder:"Adicionar tarefa rápida... (Enter para criar no ClickUp)",style:{flex:1,border:"none",padding:0,fontSize:13}}),
+    ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginTop:10,padding:"7px 10px",borderRadius:8,border:"1px dashed #E5E3DC",background:"#FAF9F7"}},
+      ce("input",{className:"ip",value:newT,onChange:e=>setNT(e.target.value),onKeyDown:e=>e.key==="Enter"&&doAdd(),placeholder:"Adicionar tarefa rápida... (Enter)",style:{flex:1,border:"none",padding:0,fontSize:12}}),
       newT&&ce("button",{className:"bt dk",onClick:doAdd,style:{fontSize:11}},ce("i",{className:"ti ti-check",style:{fontSize:12}}))
     )
   )
 }
 
-// ASSISTENTE
+// ── ASSISTENTE ───────────────────────────────────────────────────────────────
 function PAssist({tasks,calEvents}){
   const[convs,setCvs]=useState([]);const[cur,setCur]=useState(null);const[inp,setInp]=useState("");const[ld,setLd]=useState(false);const end=useRef(null);const n=new Date();
-  useEffect(()=>{const c=sg("convs");if(c?.length){setCvs(c);setCur(c[0])}else nC();},[]);
+  useEffect(()=>{sg("bj-cvs").then(c=>{if(c?.length){setCvs(c);setCur(c[0])}else nC()});},[]);
   useEffect(()=>{end.current?.scrollIntoView({behavior:"smooth"});},[cur?.messages]);
-  const SYS=`Assistente pessoal do Vasco (BBTOP20 — Borja on Stocks + Investidor Prudente com César Borja). BOS: dinâmico/assertivo, 197 €/497 €/ano. IP: sereno/ponderado, 149 €/397 €/ano. Tarefas activas: ${tasks.filter(t=>t.status!=="done").slice(0,12).map(t=>t.name).join(", ")||"nenhuma"}. Eventos hoje: ${calEvents.map(e=>e.summary).join(", ")||"nenhum"}. Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MESES[n.getMonth()]} ${n.getFullYear()}. Pt-pt. Age directamente sem pedir confirmação excessiva. Cria tarefas via webhook quando pedido.`;
-  function nC(){const c={id:`c${Date.now()}`,title:"Nova conversa",messages:[]};const u=[c,...convs];setCvs(u);setCur(c);ss("convs",u)}
-  function dC(id){const u=convs.filter(c=>c.id!==id);setCvs(u);ss("convs",u);if(cur?.id===id){if(u.length)setCur(u[0]);else nC()}}
-  async function send(){if(!inp.trim()||ld||!cur)return;const um={role:"user",content:inp.trim()};const upd={...cur,messages:[...cur.messages,um],title:cur.messages.length===0?inp.trim().slice(0,36):cur.title};setCur(upd);setInp("");setLd(true);const all=convs.map(c=>c.id===upd.id?upd:c);setCvs(all);ss("convs",all);const r=await aiC(upd.messages,SYS);const fin={...upd,messages:[...upd.messages,{role:"assistant",content:r}]};setCur(fin);const all2=all.map(c=>c.id===fin.id?fin:c);setCvs(all2);ss("convs",all2);setLd(false)}
+  const SYS=`Assistente pessoal do Vasco (BBTOP20 — Borja on Stocks + Investidor Prudente com César Borja). BOS: dinâmico/assertivo, 197 €/497 €/ano. IP: sereno/ponderado, 149 €/397 €/ano. Tarefas activas: ${tasks.filter(t=>t.status!=="done").slice(0,12).map(t=>t.name).join(", ")||"nenhuma"}. Eventos hoje: ${calEvents.map(e=>e.summary).join(", ")||"nenhum"}. Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MESES[n.getMonth()]} ${n.getFullYear()}. Pt-pt. Age directamente sem pedir confirmação excessiva.`;
+  function nC(){const c={id:`c${Date.now()}`,title:"Nova conversa",messages:[],ts:Date.now()};const u=[c,...convs];setCvs(u);setCur(c);ss("bj-cvs",u)}
+  function dC(id){const u=convs.filter(c=>c.id!==id);setCvs(u);ss("bj-cvs",u);if(cur?.id===id){if(u.length)setCur(u[0]);else nC()}}
+  async function send(){if(!inp.trim()||ld||!cur)return;const um={role:"user",content:inp.trim()};const upd={...cur,messages:[...cur.messages,um],title:cur.messages.length===0?inp.trim().slice(0,36):cur.title};setCur(upd);setInp("");setLd(true);const all=convs.map(c=>c.id===upd.id?upd:c);setCvs(all);ss("bj-cvs",all);const r=await aiC(upd.messages,SYS);const fin={...upd,messages:[...upd.messages,{role:"assistant",content:r}]};setCur(fin);const all2=all.map(c=>c.id===fin.id?fin:c);setCvs(all2);ss("bj-cvs",all2);setLd(false)}
   return ce("div",{style:{display:"flex",height:"100%",animation:"fU .2s"}},
-    ce("div",{style:{width:190,flexShrink:0,borderRight:"1px solid #E5E3DC",display:"flex",flexDirection:"column",paddingTop:6}},
+    ce("div",{style:{width:185,flexShrink:0,borderRight:"1px solid #E5E3DC",display:"flex",flexDirection:"column",paddingTop:6}},
       ce("button",{className:"bt dk",onClick:nC,style:{margin:"0 10px 10px",justifyContent:"center"}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Nova conversa"),
       ce("div",{style:{flex:1,overflowY:"auto",padding:"0 6px"}},
-        convs.length===0&&ce("p",{style:{fontSize:12,color:"#9B9890",textAlign:"center",padding:"20px 8px"}},"Sem conversas."),
+        convs.length===0&&ce("p",{style:{fontSize:12,color:"#9B9890",textAlign:"center",padding:"20px 8px"}},"Sem conversas ativas."),
         convs.map(c=>ce("div",{key:c.id,style:{display:"flex",alignItems:"center",gap:4,marginBottom:3}},
-          ce("button",{onClick:()=>setCur(c),style:{flex:1,textAlign:"left",padding:"7px 10px",borderRadius:8,border:"none",background:cur?.id===c.id?"#1A1A2E":"transparent",color:cur?.id===c.id?"#fff":"#6B6860",fontSize:12,cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"inherit"}},c.title||"Conversa"),
-          ce("button",{onClick:()=>dC(c.id),style:{border:"none",background:"transparent",cursor:"pointer",color:"#9B9890",padding:"3px",fontSize:14}},ce("i",{className:"ti ti-x",style:{fontSize:11}}))
+          ce("button",{onClick:()=>setCur(c),style:{flex:1,textAlign:"left",padding:"7px 10px",borderRadius:8,border:"none",background:cur?.id===c.id?"#1A1A2E":"transparent",color:cur?.id===c.id?"#fff":"#6B6860",fontSize:12,cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"inherit"}},c.title),
+          ce("button",{onClick:()=>dC(c.id),style:{border:"none",background:"transparent",cursor:"pointer",color:"#9B9890",padding:"3px"}},ce("i",{className:"ti ti-x",style:{fontSize:11}}))
         ))
       )
     ),
     ce("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
-      ce("div",{style:{padding:"13px 16px",borderBottom:"1px solid #E5E3DC",display:"flex",alignItems:"center",gap:10}},
-        ce("div",{style:{width:34,height:34,borderRadius:"50%",background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:17,color:"#7C3AED"}})),
+      ce("div",{style:{padding:"12px 16px",borderBottom:"1px solid #E5E3DC",display:"flex",alignItems:"center",gap:10}},
+        ce("div",{style:{width:32,height:32,borderRadius:"50%",background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:16,color:"#7C3AED"}})),
         ce("div",null,ce("div",{style:{fontWeight:500,fontSize:13}},"Assistente BBTOP20"),ce("div",{style:{fontSize:11,color:"#9B9890"}},"Claude · contexto real das tuas tarefas"))
       ),
       ce("div",{style:{flex:1,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:12}},
-        !cur?.messages?.length&&ce("div",{style:{textAlign:"center",padding:"32px 20px"}},
-          ce("div",{style:{width:54,height:54,borderRadius:14,background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:26,color:"#7C3AED"}})),
-          ce("h3",{style:{fontFamily:"DM Serif Display,serif",fontSize:22,marginBottom:6,color:"#1A1A2E"}},"Olá! Estou aqui sempre que precisares."),
-          ce("p",{style:{fontSize:13,color:"#6B6860",marginBottom:16}},"Queres que faça um check-in do teu dia, ou preferes seguir o teu caminho?"),
-          ce("div",{style:{display:"flex",flexDirection:"column",gap:8,maxWidth:340,margin:"0 auto"}},
-            ["✨ Sim, fazer check-in do dia","Tenho tarefas atrasadas?","Ajuda-me a organizar hoje","Quais são as minhas tarefas em aberto?"].map(q=>ce("button",{key:q,className:"bt",onClick:()=>{setInp(q);setTimeout(send,80)},style:{justifyContent:"center",padding:"10px",fontSize:13,borderRadius:10}},q))
+        !cur?.messages?.length&&ce("div",{style:{textAlign:"center",padding:"28px 20px"}},
+          ce("div",{style:{width:52,height:52,borderRadius:12,background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:24,color:"#7C3AED"}})),
+          ce("h3",{style:{fontFamily:"DM Serif Display,serif",fontSize:20,marginBottom:6,color:"#1A1A2E"}},"Olá! Estou aqui sempre que precisares."),
+          ce("p",{style:{fontSize:13,color:"#6B6860",marginBottom:14}},"Queres que faça um check-in do teu dia, ou preferes seguir o teu caminho?"),
+          ce("div",{style:{display:"flex",flexDirection:"column",gap:7,maxWidth:320,margin:"0 auto"}},
+            ["✨ Sim, fazer check-in do dia","Tenho tarefas atrasadas?","Ajuda-me a organizar hoje","Quais são as minhas tarefas?"].map(q=>ce("button",{key:q,className:"bt",onClick:()=>{setInp(q);setTimeout(send,80)},style:{justifyContent:"center",padding:"9px",fontSize:12,borderRadius:10}},q))
           )
         ),
         cur?.messages?.map((m,i)=>ce("div",{key:i,style:{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}},
@@ -234,24 +244,30 @@ function PAssist({tasks,calEvents}){
   )
 }
 
-// TAREFAS
+// ── TAREFAS ──────────────────────────────────────────────────────────────────
 function PTarefas({tasks,addTask,updateTask,toast,setAT}){
   const[f,setF]=useState("abertas");const[newT,setNT]=useState("");const[nP,setNP]=useState("normal");
   const act=tasks.filter(t=>t.status!=="done");const late=act.filter(t=>isLate(t.due_date));
   let list=tasks.filter(t=>f==="abertas"?t.status!=="done":f==="atraso"?t.status!=="done"&&isLate(t.due_date):f==="concluidas"?t.status==="done":true);
   async function doAdd(){if(!newT.trim())return;await whF({action:"create",task_name:newT});addTask({id:`l${Date.now()}`,name:newT,status:"todo",priority:nP,list:"BBTOP20",due_date:"null"});setNT("");toast("Criada no ClickUp ✓")}
-  return ce("div",{style:{animation:"fU .2s",maxWidth:900,margin:"0 auto"}},
-    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}},ce("div",null,ce("div",{className:"pt"},"Tarefas"),ce("div",{className:"ps"},"Captura o que importa e liberta a mente."))),
-    late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#F5F3FF",border:"1px solid #DDD6FE",color:"#6D28D9",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-sparkles",style:{fontSize:14}}),`${late.length} tarefas em atraso`),
-    ce("div",{style:{display:"flex",gap:8,marginBottom:12}},ce("div",{style:{display:"flex",border:"1px solid #E5E3DC",borderRadius:8,overflow:"hidden"}},["abertas","atraso","concluidas","todas"].map(fl=>ce("button",{key:fl,onClick:()=>setF(fl),style:{padding:"6px 11px",border:"none",borderRight:fl!=="todas"?"1px solid #E5E3DC":"none",background:f===fl?"#1A1A2E":"transparent",color:f===fl?"#fff":"#6B6860",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},{abertas:"Abertas",atraso:"Em atraso",concluidas:"Concluídas",todas:"Todas"}[fl])))),
+  return ce("div",{style:{animation:"fU .2s"}},
+    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}},
+      ce("div",null,ce("div",{className:"pt"},"Tarefas"),ce("div",{className:"ps"},"Captura o que importa e liberta a mente.")),
+    ),
+    late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#F5F3FF",border:"1px solid #DDD6FE",color:"#6D28D9",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8,cursor:"pointer"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:14}}),`Analisar ${late.length} tarefas em atraso com IA`),
+    ce("div",{style:{display:"flex",gap:8,marginBottom:12}},
+      ce("div",{style:{display:"flex",border:"1px solid #E5E3DC",borderRadius:8,overflow:"hidden"}},
+        ["abertas","atraso","concluidas","todas"].map(fl=>ce("button",{key:fl,onClick:()=>setF(fl),style:{padding:"6px 11px",border:"none",borderRight:fl!=="todas"?"1px solid #E5E3DC":"none",background:f===fl?"#1A1A2E":"transparent",color:f===fl?"#fff":"#6B6860",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},{abertas:"Abertas",atraso:"Em atraso",concluidas:"Concluídas",todas:"Todas"}[fl]))
+      )
+    ),
     ce("div",{style:{display:"flex",gap:8,marginBottom:14,padding:"8px 12px",borderRadius:8,background:"#fff",border:"1px solid #E5E3DC"}},
-      ce("input",{className:"ip",value:newT,onChange:e=>setNT(e.target.value),onKeyDown:e=>e.key==="Enter"&&doAdd(),placeholder:"Adicionar tarefa... (Enter para criar no ClickUp)",style:{flex:1,border:"none",padding:0}}),
+      ce("input",{className:"ip",value:newT,onChange:e=>setNT(e.target.value),onKeyDown:e=>e.key==="Enter"&&doAdd(),placeholder:"Adicionar tarefa rapidamente... (Enter)",style:{flex:1,border:"none",padding:0}}),
       ce("select",{value:nP,onChange:e=>setNP(e.target.value),style:{fontSize:12,padding:"4px 8px",border:"1px solid #E5E3DC",borderRadius:6,fontFamily:"inherit",background:"#FAF9F7"}},ce("option",{value:"urgent"},"Alta"),ce("option",{value:"high"},"Média"),ce("option",{value:"normal"},"Baixa")),
       ce("button",{className:"bt dk",onClick:doAdd,disabled:!newT.trim()},ce("i",{className:"ti ti-plus",style:{fontSize:13}}))
     ),
     ce("p",{style:{fontSize:11,color:"#9B9890",marginBottom:8}},list.length+" tarefa"+(list.length!==1?"s":"")),
-    list.map(t=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 13px",borderRadius:9,background:"#fff",border:"1px solid #E5E3DC",marginBottom:6,opacity:t.status==="done"?.45:1}},
-      ce("button",{onClick:async()=>{if(t.status!=="done"){await whF({action:"close",task_id:t.id});updateTask({...t,status:"done"})}},style:{width:19,height:19,borderRadius:"50%",border:`2px solid ${t.status==="done"?"#38A169":PA(t.priority)}`,background:t.status==="done"?"#38A169":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},t.status==="done"&&ce("i",{className:"ti ti-check",style:{fontSize:10,color:"#fff"}})),
+    list.map(t=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,background:"#fff",border:"1px solid #E5E3DC",marginBottom:6,opacity:t.status==="done"?.45:1}},
+      ce("button",{onClick:async()=>{if(t.status!=="done"){await whF({action:"close",task_id:t.id});updateTask({...t,status:"done"})}},style:{width:18,height:18,borderRadius:"50%",border:`2px solid ${t.status==="done"?"#38A169":PA(t.priority)}`,background:t.status==="done"?"#38A169":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},t.status==="done"&&ce("i",{className:"ti ti-check",style:{fontSize:10,color:"#fff"}})),
       ce("div",{style:{flex:1,minWidth:0}},
         ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:t.status==="done"?"#9B9890":"#1A1A2E",textDecoration:t.status==="done"?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
         ce("div",{style:{display:"flex",gap:8,marginTop:2}},isLate(t.due_date)&&t.status!=="done"&&ce("span",{style:{fontSize:10,color:"#E53E3E"}},"Em atraso · "+fmtD(t.due_date)),t.list&&ce("span",{style:{fontSize:10,color:"#9B9890"}},t.list))
@@ -266,39 +282,57 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT}){
   )
 }
 
-// FOCO
+// ── INBOX ────────────────────────────────────────────────────────────────────
+function PInbox({tasks,addTask,notes,saveNotes,mem,saveMem,toast}){
+  const[tab,setTb]=useState("tarefa");const[inp,setInp]=useState("");
+  function cap(){if(!inp.trim())return;if(tab==="tarefa"){addTask({id:`l${Date.now()}`,name:inp,status:"todo",priority:"normal",list:"BBTOP20",due_date:"null"});wh({action:"create",task_name:inp})}else if(tab==="nota"){saveNotes([{id:`n${Date.now()}`,content:inp,created:Date.now()},...notes])}else{saveMem([{id:`m${Date.now()}`,content:inp,tag:"Lembrete",source:"inbox",created:Date.now()},...(mem||[])])}setInp("");toast({tarefa:"Tarefa criada ✓",nota:"Nota guardada ✓",memoria:"Memória guardada ✓"}[tab])}
+  const items=(mem||[]).filter(m=>m.source==="inbox").sort((a,b)=>b.created-a.created);
+  return ce("div",{style:{animation:"fU .2s"}},
+    ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-inbox",style:{fontSize:20,color:"#7C3AED"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Inbox"),ce("div",{className:"ps"},"Captura tudo sem pensar. Processa depois."))),
+    ce("div",{className:"cd",style:{padding:14,marginBottom:20}},
+      ce("div",{style:{display:"flex",gap:6,marginBottom:10}},["tarefa","nota","memoria"].map(t=>ce("button",{key:t,onClick:()=>setTb(t),style:{padding:"5px 11px",borderRadius:20,border:"1px solid #E5E3DC",background:tab===t?"#1A1A2E":"transparent",color:tab===t?"#fff":"#6B6860",fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5}},ce("i",{className:{tarefa:"ti ti-checkbox",nota:"ti ti-note",memoria:"ti ti-brain"}[t],style:{fontSize:13}}),{tarefa:"Tarefa",nota:"Nota",memoria:"Memória"}[t]))),
+      ce("div",{style:{display:"flex",gap:8}},ce("input",{className:"ip",value:inp,onChange:e=>setInp(e.target.value),onKeyDown:e=>e.key==="Enter"&&cap(),placeholder:`Capturar ${tab}... (Enter para guardar)`,style:{flex:1}}),ce("button",{className:"bt dk",onClick:cap,disabled:!inp.trim()},ce("i",{className:"ti ti-send",style:{fontSize:14}})))
+    ),
+    items.length===0?ce("div",{style:{textAlign:"center",padding:"40px",color:"#9B9890"}},ce("i",{className:"ti ti-inbox",style:{fontSize:36,display:"block",marginBottom:10}}),"Inbox vazia. Captura um pensamento acima."):
+    items.map(m=>ce("div",{key:m.id,style:{padding:"9px 13px",borderRadius:8,background:"#fff",border:"1px solid #E5E3DC",marginBottom:6,display:"flex",alignItems:"center",gap:10}},ce("span",{style:{fontSize:11,padding:"2px 7px",borderRadius:20,background:"#FEFCBF",color:"#744210",border:"1px solid #FAF089",flexShrink:0}},m.tag||"Lembrete"),ce("span",{style:{fontSize:13,color:"#1A1A2E",flex:1}},m.content)))
+  )
+}
+
+// ── FOCO ─────────────────────────────────────────────────────────────────────
 function PFoco({tasks}){
   const M=[{l:"Foco",s:25*60},{l:"Pausa curta",s:5*60},{l:"Pausa longa",s:15*60}];
   const[m,setM]=useState(0);const[sec,setSec]=useState(25*60);const[run,setRun]=useState(false);const[sess,setSess]=useState(0);const[dur,setDur]=useState(25);const[sel,setSel]=useState("");const[snd,setSnd]=useState("Silêncio");
   const iv=useRef(null);const tot=dur*60;const pct=sec/tot;const R=88,CL=2*Math.PI*R;
   useEffect(()=>{if(run){iv.current=setInterval(()=>setSec(s=>{if(s<=1){clearInterval(iv.current);setRun(false);setSess(n=>n+1);return tot}return s-1}),1000)}else clearInterval(iv.current);return()=>clearInterval(iv.current)},[run,tot]);
+  function sM(i){setM(i);setSec(M[i].s);setRun(false);setDur(Math.floor(M[i].s/60))}
+  function sD(d){setDur(d);setSec(d*60);setRun(false)}
   const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss_=String(sec%60).padStart(2,"0");
   return ce("div",{style:{height:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,color:"#fff"}},
-    ce("div",{style:{display:"flex",background:"rgba(255,255,255,.1)",borderRadius:30,padding:3,marginBottom:28}},M.map((md,i)=>ce("button",{key:md.l,onClick:()=>{setM(i);setSec(M[i].s);setRun(false);setDur(Math.floor(M[i].s/60))},style:{padding:"7px 16px",borderRadius:24,border:"none",background:m===i?"#fff":"transparent",color:m===i?"#1A1A2E":"rgba(255,255,255,.7)",fontSize:13,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},md.l))),
-    ce("div",{style:{position:"relative",width:220,height:220,marginBottom:24}},
-      ce("svg",{viewBox:"0 0 220 220",style:{width:"100%",height:"100%"}},
-        ce("circle",{cx:110,cy:110,r:R,fill:"none",stroke:"rgba(255,255,255,.1)",strokeWidth:10}),
-        ce("circle",{cx:110,cy:110,r:R,fill:"none",stroke:"#7C3AED",strokeWidth:10,strokeDasharray:CL,strokeDashoffset:CL*(1-pct),strokeLinecap:"round",className:"po"})
+    ce("div",{style:{display:"flex",background:"rgba(255,255,255,.1)",borderRadius:30,padding:3,marginBottom:28}},M.map((md,i)=>ce("button",{key:md.l,onClick:()=>sM(i),style:{padding:"7px 16px",borderRadius:24,border:"none",background:m===i?"#fff":"transparent",color:m===i?"#1A1A2E":"rgba(255,255,255,.7)",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},md.l))),
+    ce("div",{style:{position:"relative",width:210,height:210,marginBottom:24}},
+      ce("svg",{viewBox:"0 0 210 210",style:{width:"100%",height:"100%"}},
+        ce("circle",{cx:105,cy:105,r:R,fill:"none",stroke:"rgba(255,255,255,.1)",strokeWidth:10}),
+        ce("circle",{cx:105,cy:105,r:R,fill:"none",stroke:"#7C3AED",strokeWidth:10,strokeDasharray:CL,strokeDashoffset:CL*(1-pct),strokeLinecap:"round",className:"po",style:{transform:"rotate(-90deg)",transformOrigin:"50% 50%",transition:"stroke-dashoffset .9s linear"}})
       ),
-      ce("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},ce("div",{style:{fontFamily:"monospace",fontSize:52,fontWeight:500,letterSpacing:3}},mm+":"+ss_),ce("div",{style:{fontSize:13,color:"#A78BFA",marginTop:4}},M[m].l+(sess>0?" · "+sess+"ˢ":"")))
+      ce("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},ce("div",{style:{fontFamily:"monospace",fontSize:48,fontWeight:500,letterSpacing:3}},mm+":"+ss_),ce("div",{style:{fontSize:12,color:"#A78BFA",marginTop:4}},M[m].l+(sess>0?" · "+sess+"ˢ":"")))
     ),
-    ce("div",{style:{display:"flex",gap:8,marginBottom:20}},[25,60,90].map(d=>ce("button",{key:d,onClick:()=>{setDur(d);setSec(d*60);setRun(false)},style:{padding:"6px 16px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:dur===d?"#7C3AED":"transparent",color:"#fff",fontSize:13,cursor:"pointer",fontFamily:"inherit"}},d+"min"))),
-    ce("div",{style:{display:"flex",gap:10,marginBottom:24}},
-      ce("button",{onClick:()=>setRun(r=>!r),style:{padding:"11px 30px",borderRadius:12,border:"none",background:"#7C3AED",color:"#fff",fontSize:15,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8}},ce("i",{className:`ti ti-${run?"player-pause":"player-play"}`,style:{fontSize:18}}),run?"Pausar":"Iniciar foco"),
-      ce("button",{onClick:()=>{setRun(false);setSec(dur*60)},style:{width:44,height:44,borderRadius:12,border:"1px solid rgba(255,255,255,.2)",background:"transparent",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-refresh",style:{fontSize:16}}))
+    ce("div",{style:{display:"flex",gap:8,marginBottom:20}},[25,60,90].map(d=>ce("button",{key:d,onClick:()=>sD(d),style:{padding:"5px 14px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:dur===d?"#7C3AED":"transparent",color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},d+"min"))),
+    ce("div",{style:{display:"flex",gap:10,marginBottom:20}},
+      ce("button",{onClick:()=>setRun(r=>!r),style:{padding:"10px 28px",borderRadius:12,border:"none",background:"#7C3AED",color:"#fff",fontSize:14,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8}},ce("i",{className:`ti ti-${run?"player-pause":"player-play"}`,style:{fontSize:16}}),run?"Pausar":"Iniciar foco"),
+      ce("button",{onClick:()=>{setRun(false);setSec(dur*60)},style:{width:42,height:42,borderRadius:12,border:"1px solid rgba(255,255,255,.2)",background:"transparent",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-refresh",style:{fontSize:15}}))
     ),
-    tasks.filter(t=>t.status!=="done").length>0&&ce("select",{value:sel,onChange:e=>setSel(e.target.value),style:{padding:"9px 14px",borderRadius:10,border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:13,fontFamily:"inherit",marginBottom:16,width:"100%",maxWidth:400}},ce("option",{value:""},"Escolher tarefa para focar..."),tasks.filter(t=>t.status!=="done").slice(0,20).map(t=>ce("option",{key:t.id,value:t.id},t.name))),
-    ce("div",{style:{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center",maxWidth:420}},["Silêncio","Chuva","Floresta","Pássaros","Café","Lo-fi Beats"].map(s=>ce("button",{key:s,onClick:()=>setSnd(s),style:{padding:"5px 13px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:snd===s?"rgba(255,255,255,.2)":"transparent",color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},s)))
+    tasks.filter(t=>t.status!=="done").length>0&&ce("select",{value:sel,onChange:e=>setSel(e.target.value),style:{padding:"8px 14px",borderRadius:10,border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:13,fontFamily:"inherit",marginBottom:14,width:"100%",maxWidth:360}},ce("option",{value:""},"Escolher tarefa para focar..."),tasks.filter(t=>t.status!=="done").slice(0,20).map(t=>ce("option",{key:t.id,value:t.id},t.name))),
+    ce("div",{style:{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"center",maxWidth:400}},["Silêncio","Chuva","Floresta","Pássaros","Café","Lo-fi Beats"].map(s=>ce("button",{key:s,onClick:()=>setSnd(s),style:{padding:"4px 11px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:snd===s?"rgba(255,255,255,.2)":"transparent",color:"#fff",fontSize:11,cursor:"pointer",fontFamily:"inherit"}},s)))
   )
 }
 
-// NOTAS
+// ── NOTAS ─────────────────────────────────────────────────────────────────────
 function PNotas({notes,saveNotes,toast}){
   const[inp,setInp]=useState("");const[title,setTitle]=useState("");const[show,setShow]=useState(false);const[ais,setAis]=useState({});
   function add(){if(!inp.trim())return;saveNotes([{id:`n${Date.now()}`,title:title||inp.slice(0,30),content:inp,created:Date.now()},...notes]);setInp("");setTitle("");setShow(false);toast("Nota guardada ✓")}
-  async function doAI(id,a,c){setAis(s=>({...s,[id+a]:"ld"}));const P={resumir:"Resume em 2-3 frases concisas.",expandir:"Expande com mais detalhe e contexto.",extrair:"Lista as tarefas e acções concretas implícitas."};const r=await aiC([{role:"user",content:`${P[a]}\n\nTexto:\n${c}`}],"Assistente BBTOP20. Pt-pt. Directo.");setAis(s=>({...s,[id+a]:r}))}
+  async function doAI(id,a,c){setAis(s=>({...s,[id+a]:"ld"}));const P={resumir:"Resume em 2-3 frases.",expandir:"Expande com mais detalhe.",extrair:"Lista as tarefas e acções concretas."};const r=await aiC([{role:"user",content:`${P[a]}\n\nTexto:\n${c}`}],"Assistente BBTOP20. Pt-pt.");setAis(s=>({...s,[id+a]:r}))}
   const fmt=ms=>{const d=new Date(ms);return`${d.getDate()} ${MC[d.getMonth()]}, ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`};
-  return ce("div",{style:{animation:"fU .2s",maxWidth:900,margin:"0 auto"}},
+  return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:14}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#FED7AA",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-note",style:{fontSize:20,color:"#C05621"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Notas"),ce("div",{className:"ps"},"Pensamentos, ideias, fragmentos."))),
       ce("button",{className:"bt dk",onClick:()=>setShow(!show)},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Nova nota")
@@ -308,11 +342,11 @@ function PNotas({notes,saveNotes,toast}){
       ce("textarea",{className:"ip",value:inp,onChange:e=>setInp(e.target.value),placeholder:"Escreve a tua nota...",rows:4,style:{resize:"vertical",marginBottom:8}}),
       ce("div",{style:{display:"flex",gap:6,justifyContent:"flex-end"}},ce("button",{className:"bt",onClick:()=>setShow(false)},"Cancelar"),ce("button",{className:"bt dk",onClick:add,disabled:!inp.trim()},"Guardar"))
     ),
-    notes.length===0?ce("p",{style:{textAlign:"center",color:"#9B9890",fontSize:13,padding:40}},"Sem notas ainda. Adiciona a primeira!"):
-    ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}},
+    notes.length===0?ce("p",{style:{textAlign:"center",color:"#9B9890",fontSize:13,padding:40}},"Sem notas ainda."):
+    ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}},
       notes.map(n=>ce("div",{key:n.id,className:"cd",style:{padding:14,display:"flex",flexDirection:"column"}},
         n.title&&ce("h4",{style:{fontSize:13,fontWeight:600,color:"#1A1A2E",marginBottom:6}},n.title),
-        ce("p",{style:{fontSize:12,color:"#6B6860",lineHeight:1.6,flex:1,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:5,WebkitBoxOrient:"vertical"}},n.content),
+        ce("p",{style:{fontSize:12,color:"#6B6860",lineHeight:1.6,flex:1,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:4,WebkitBoxOrient:"vertical"}},n.content),
         ce("div",{style:{marginTop:10,display:"flex",gap:6,flexWrap:"wrap"}},
           ["resumir","expandir","extrair"].map(a=>ce("button",{key:a,onClick:()=>doAI(n.id,a,n.content),style:{fontSize:10,color:"#7C3AED",background:"transparent",border:"none",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:3}},ais[n.id+a]==="ld"?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:11}}),{resumir:"Resumir",expandir:"Expandir",extrair:"Extrair tarefas"}[a]))
         ),
@@ -326,7 +360,7 @@ function PNotas({notes,saveNotes,toast}){
   )
 }
 
-// HÁBITOS
+// ── HÁBITOS ──────────────────────────────────────────────────────────────────
 function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
   const[show,setShow]=useState(false);const[newH,setNewH]=useState("");const[emoji,setEmoji]=useState("⭐");
   const td=new Date().toDateString();const tdL=logs[td]||{};
@@ -334,115 +368,143 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
   const COLS=["#E97C0A","#7C3AED","#3182CE","#38A169","#D53F8C","#DD6B20"];
   function add(){if(!newH.trim())return;saveHabits([...habits,{id:`h${Date.now()}`,name:newH,emoji,color:COLS[habits.length%COLS.length],created:Date.now()}]);setNewH("");setShow(false);toast("Hábito adicionado ✓")}
   function tog(id){saveLogs({...logs,[td]:{...tdL,[id]:!tdL[id]}})}
-  function streak(id){let n=0,d=new Date();while(n<100){const k=d.toDateString();if(!(logs[k]&&logs[k][id]))break;n++;d=new Date(+d-86400000)}return n}
+  function streak(id){let n=0,d=new Date();while(true){const k=d.toDateString();if(!(logs[k]&&logs[k][id]))break;n++;d=new Date(+d-86400000)}return n}
   const dn=habits.filter(h=>tdL[h.id]).length;const pct=habits.length?Math.round(dn/habits.length*100):0;
-  const grid=(id,color)=>{const days=Array.from({length:35},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(34-i));return d});return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginTop:10}},DC.map(d=>ce("div",{key:d,style:{fontSize:8,color:"#9B9890",textAlign:"center",marginBottom:2}},d)),days.map((d,i)=>{const k=d.toDateString();const done=logs[k]&&logs[k][id];const isT=k===td;return ce("div",{key:i,style:{width:"100%",paddingBottom:"100%",position:"relative",borderRadius:5}},ce("div",{style:{position:"absolute",inset:0,borderRadius:5,background:done?color:color+"22",border:isT?`2px solid ${color}`:"1px solid transparent"}}))}))};
-  return ce("div",{style:{animation:"fU .2s",maxWidth:900,margin:"0 auto"}},
+  const grid=(id,color)=>{const days=Array.from({length:35},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(34-i));return d});return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginTop:8}},DC.map(d=>ce("div",{key:d,style:{fontSize:8,color:"#9B9890",textAlign:"center",marginBottom:2}},d)),days.map((d,i)=>{const k=d.toDateString();const done=logs[k]&&logs[k][id];const isT=k===td;return ce("div",{key:i,style:{width:"100%",paddingBottom:"100%",position:"relative",borderRadius:4}},ce("div",{style:{position:"absolute",inset:0,borderRadius:4,background:done?color:color+"22",border:isT?`1.5px solid ${color}`:"1px solid transparent"}}))}))};
+  return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:14}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#FEEBC8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-activity",style:{fontSize:20,color:"#C05621"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Hábitos"),ce("div",{className:"ps"},"Constrói consistência dia após dia."))),
       ce("button",{className:"bt dk",onClick:()=>setShow(!show)},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Novo hábito")
     ),
-    ce("div",{className:"cd",style:{padding:"11px 16px",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between"}},
+    ce("div",{className:"cd",style:{padding:"10px 16px",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between"}},
       ce("div",null,ce("div",{style:{fontSize:11,color:"#9B9890",marginBottom:2}},"Hoje"),ce("div",{style:{fontSize:22,fontFamily:"DM Serif Display,serif",color:"#1A1A2E"}},`${dn} / ${habits.length} hábitos`)),
-      ce("div",{style:{width:48,height:48,borderRadius:"50%",background:`conic-gradient(#38A169 ${pct*3.6}deg, #E5E3DC 0deg)`,display:"flex",alignItems:"center",justifyContent:"center"}},ce("div",{style:{width:36,height:36,borderRadius:"50%",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600}},pct+"%"))
+      ce("div",{style:{width:46,height:46,borderRadius:"50%",background:`conic-gradient(#38A169 ${pct*3.6}deg, #E5E3DC 0deg)`,display:"flex",alignItems:"center",justifyContent:"center"}},ce("div",{style:{width:34,height:34,borderRadius:"50%",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600}},pct+"%"))
     ),
     show&&ce("div",{className:"cd",style:{padding:14,marginBottom:12}},
-      ce("div",{style:{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}},EMOJIS.map(e=>ce("button",{key:e,onClick:()=>setEmoji(e),style:{width:32,height:32,borderRadius:8,border:`2px solid ${emoji===e?"#7C3AED":"#E5E3DC"}`,background:"transparent",fontSize:17,cursor:"pointer"}},e))),
+      ce("div",{style:{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}},EMOJIS.map(e=>ce("button",{key:e,onClick:()=>setEmoji(e),style:{width:30,height:30,borderRadius:7,border:`2px solid ${emoji===e?"#7C3AED":"#E5E3DC"}`,background:"transparent",fontSize:16,cursor:"pointer"}},e))),
       ce("div",{style:{display:"flex",gap:8}},ce("input",{className:"ip",value:newH,onChange:e=>setNewH(e.target.value),onKeyDown:e=>e.key==="Enter"&&add(),placeholder:"Nome do hábito...",style:{flex:1}}),ce("button",{className:"bt dk",onClick:add,disabled:!newH.trim()},"Adicionar"),ce("button",{className:"bt",onClick:()=>setShow(false)},"✕"))
     ),
     habits.length===0?ce("p",{style:{textAlign:"center",color:"#9B9890",fontSize:13,padding:40}},"Adiciona o teu primeiro hábito."):
-    habits.map(h=>ce("div",{key:h.id,className:"cd",style:{padding:16,marginBottom:14}},
-      ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
-        ce("div",{style:{display:"flex",alignItems:"center",gap:10}},ce("span",{style:{fontSize:24}},h.emoji||"⭐"),ce("div",null,ce("div",{style:{fontSize:14,fontWeight:500,color:"#1A1A2E"}},h.name),streak(h.id)>0&&ce("div",{style:{fontSize:11,color:"#9B9890"}},streak(h.id)+" dia"+(streak(h.id)!==1?"s":"")+" consecutivo"+(streak(h.id)!==1?"s":"")))),
-        ce("div",{style:{display:"flex",gap:6}},
-          ce("button",{onClick:()=>tog(h.id),style:{padding:"6px 14px",borderRadius:8,border:"none",background:tdL[h.id]?"#38A169":"#E5E3DC",color:tdL[h.id]?"#fff":"#6B6860",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},tdL[h.id]?"✓ Marcado hoje":"Marcar hoje"),
-          ce("button",{onClick:()=>saveHabits(habits.filter(x=>x.id!==h.id)),style:{border:"none",background:"transparent",cursor:"pointer",color:"#CBD5E0"}},ce("i",{className:"ti ti-trash",style:{fontSize:14}}))
+    habits.map(h=>ce("div",{key:h.id,className:"cd",style:{padding:16,marginBottom:12}},
+      ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}},
+        ce("div",{style:{display:"flex",alignItems:"center",gap:10}},ce("span",{style:{fontSize:22}},h.emoji||"⭐"),ce("div",null,ce("div",{style:{fontSize:14,fontWeight:500,color:"#1A1A2E"}},h.name),streak(h.id)>0&&ce("div",{style:{fontSize:11,color:"#9B9890"}},streak(h.id)+" dia"+(streak(h.id)!==1?"s":"")+" consecutivo"+(streak(h.id)!==1?"s":"")))),
+        ce("div",{style:{display:"flex",gap:6,alignItems:"center"}},
+          ce("button",{onClick:()=>tog(h.id),style:{padding:"5px 12px",borderRadius:8,border:"none",background:tdL[h.id]?"#38A169":"#E5E3DC",color:tdL[h.id]?"#fff":"#6B6860",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},tdL[h.id]?"✓ Marcado":"Marcar hoje"),
+          ce("button",{onClick:()=>saveHabits(habits.filter(x=>x.id!==h.id)),style:{border:"none",background:"transparent",cursor:"pointer",color:"#CBD5E0"}},ce("i",{className:"ti ti-trash",style:{fontSize:13}}))
         )
       ),grid(h.id,h.color||"#E97C0A")
     ))
   )
 }
 
-// ANALYTICS
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
 function PAnalytics({tasks,habits,logs}){
   const act=tasks.filter(t=>t.status!=="done");const dn=tasks.filter(t=>t.status==="done");const td=new Date().toDateString();const tdL=logs[td]||{};const hDn=habits.filter(h=>tdL[h.id]).length;
   const last30=Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(29-i));return{day:d.getDate()+"/"+MC[d.getMonth()],v:tasks.filter(t=>t.status==="done"&&t.due_date&&t.due_date!=="null"&&new Date(+t.due_date).toDateString()===d.toDateString()).length}});
   const byP=[{name:"Alta",v:act.filter(t=>t.priority==="urgent").length,c:"#E53E3E"},{name:"Média",v:act.filter(t=>t.priority==="high").length,c:"#DD6B20"},{name:"Baixa",v:act.filter(t=>t.priority==="normal").length,c:"#38A169"}].filter(x=>x.v>0);
   const wk=Array.from({length:4},(_,i)=>({s:"S"+(4-i),v:tasks.filter(t=>t.status==="done"&&t.due_date&&t.due_date!=="null"&&Math.abs(new Date(+t.due_date)-new Date())/(7*86400000)<(4-i)).length}));
-  return ce("div",{style:{animation:"fU .2s",maxWidth:900,margin:"0 auto"}},
+  const S=[{l:"ABERTAS",v:act.length,c:"#D69E2E"},{l:"CONCLUÍDAS",v:dn.length,c:"#38A169"},{l:"HÁBITOS ACTIVOS",v:habits.length,c:"#7C3AED"},{l:"% HÁBITOS HOJE",v:habits.length?Math.round(hDn/habits.length*100)+"%":"0%",c:"#DD6B20"}];
+  return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#BEE3F8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-chart-bar",style:{fontSize:20,color:"#2B6CB0"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Analytics"),ce("div",{className:"ps"},"Padrões e progresso no teu fluxo."))),
-    ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},[{l:"ABERTAS",v:act.length,c:"#D69E2E"},{l:"CONCLUÍDAS",v:dn.length,c:"#38A169"},{l:"HÁBITOS ACTIVOS",v:habits.length,c:"#7C3AED"},{l:"% HOJE",v:habits.length?Math.round(hDn/habits.length*100)+"%":"—",c:"#DD6B20"}].map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"12px 14px"}},ce("div",{style:{fontSize:9,fontWeight:600,letterSpacing:".06em",color:"#9B9890",marginBottom:6}},s.l),ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:28,color:s.c}},s.v)))),
+    ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},S.map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"12px 14px"}},ce("div",{style:{fontSize:9,fontWeight:600,letterSpacing:".06em",color:"#9B9890",marginBottom:6}},s.l),ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:28,color:s.c}},s.v)))),
     ce("div",{className:"cd",style:{padding:14,marginBottom:12}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tarefas concluídas — últimos 30 dias"),ce(ResponsiveContainer,{width:"100%",height:90},ce(LineChart,{data:last30},ce(XAxis,{dataKey:"day",tick:{fontSize:9},tickLine:false,axisLine:false,interval:9}),ce(YAxis,{hide:true}),ce(Tooltip,{contentStyle:{fontSize:11}}),ce(Line,{type:"monotone",dataKey:"v",stroke:"#1A1A2E",strokeWidth:1.5,dot:false})))),
     ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Por prioridade"),byP.length>0?ce(ResponsiveContainer,{width:"100%",height:90},ce(PieChart,null,ce(Pie,{data:byP,dataKey:"v",cx:"50%",cy:"50%",outerRadius:38,innerRadius:20},byP.map((e,i)=>ce(Cell,{key:i,fill:e.c}))),ce(Tooltip,{contentStyle:{fontSize:11}}))):ce("p",{style:{textAlign:"center",color:"#9B9890",fontSize:12,padding:20}},"Sem dados")),
-      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tendência semanal"),ce(ResponsiveContainer,{width:"100%",height:90},ce(BarChart,{data:wk},ce(XAxis,{dataKey:"s",tick:{fontSize:11},tickLine:false,axisLine:false}),ce(YAxis,{hide:true}),ce(Tooltip,{contentStyle:{fontSize:11}}),ce(Bar,{dataKey:"v",fill:"#7C3AED",radius:[4,4,0,0]}))))
+      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Por prioridade"),byP.length>0?ce(ResponsiveContainer,{width:"100%",height:90},ce(PieChart,null,ce(Pie,{data:byP,dataKey:"v",cx:"50%",cy:"50%",outerRadius:40,innerRadius:22},byP.map((e,i)=>ce(Cell,{key:i,fill:e.c}))),ce(Tooltip,{contentStyle:{fontSize:11}}))):ce("p",{style:{textAlign:"center",color:"#9B9890",fontSize:12,padding:20}},"Sem dados")),
+      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tendência semanal"),ce(ResponsiveContainer,{width:"100%",height:90},ce(BarChart,{data:wk},ce(XAxis,{dataKey:"s",tick:{fontSize:10},tickLine:false,axisLine:false}),ce(YAxis,{hide:true}),ce(Tooltip,{contentStyle:{fontSize:11}}),ce(Bar,{dataKey:"v",fill:"#7C3AED",radius:[4,4,0,0]}))))
     )
   )
 }
 
-// DEFINIÇÕES
-function PDefs({tasks,calEvents,loading,lastSync,refresh}){
-  return ce("div",{style:{animation:"fU .2s",maxWidth:700,margin:"0 auto"}},
+// ── RELATÓRIOS ────────────────────────────────────────────────────────────────
+function PRelatorios({tasks,toast}){
+  const[tab,setTab]=useState("semana");const[reps,setReps]=useState([]);const[ld,setLd]=useState(false);
+  useEffect(()=>{sg("bj-reps").then(r=>{if(r)setReps(r)});},[]);
+  async function gen(){setLd(true);const n=new Date();const dn=tasks.filter(t=>t.status==="done").slice(0,8).map(t=>t.name).join(", ");const op=tasks.filter(t=>t.status!=="done").slice(0,8).map(t=>t.name).join(", ");const period=tab==="semana"?"semanal ("+n.getDate()+" "+MC[n.getMonth()]+")":"mensal ("+MESES[n.getMonth()]+" "+n.getFullYear()+")";const txt=await aiC([{role:"user",content:`Relatório ${period} do Vasco (BBTOP20). Concluídas: ${dn||"nenhuma"}. Em aberto: ${op||"nenhuma"}. Formato: resumo executivo, conquistas, desafios, próxima semana. Pt-pt.`}],"Assistente BBTOP20.",900);const r={id:`r${Date.now()}`,title:`Relatório ${period}`,content:txt,date:new Date().toDateString()};const u=[r,...reps].slice(0,8);setReps(u);ss("bj-reps",u);setLd(false);toast("Gerado ✓")}
+  return ce("div",{style:{animation:"fU .2s"}},
+    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:14}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#BEE3F8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-chart-line",style:{fontSize:20,color:"#2B6CB0"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Relatórios"),ce("div",{className:"ps"},"Narrativas sobre o teu trabalho."))),
+      ce("div",{style:{display:"flex",gap:6}},["semana","mes"].map(t=>ce("button",{key:t,className:"bt",onClick:()=>setTab(t),style:{background:tab===t?"#1A1A2E":"transparent",color:tab===t?"#fff":"#6B6860"}},{semana:"Semana",mes:"Mês"}[t])),ce("button",{className:"bt dk",onClick:gen,disabled:ld,style:{gap:5}},ld?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:13}})," Gerar"))
+    ),
+    reps.length===0?ce("p",{style:{textAlign:"center",color:"#9B9890",fontSize:13,padding:40}},"Clica em Gerar para criar o primeiro relatório."):
+    reps.map(r=>ce("div",{key:r.id,className:"cd",style:{padding:14,marginBottom:10}},ce("div",{style:{fontSize:13,fontWeight:500,marginBottom:4}},r.title),ce("p",{style:{fontSize:12,color:"#6B6860",whiteSpace:"pre-wrap",lineHeight:1.6}},r.content)))
+  )
+}
+
+// ── DEFINIÇÕES ────────────────────────────────────────────────────────────────
+function PDefs({tasks,calEvents,loading,lastSync}){
+  return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#E5E3DC",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-settings",style:{fontSize:20,color:"#6B6860"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Definições"),ce("div",{className:"ps"},"A tua conta e preferências."))),
     ce("div",{className:"cd",style:{padding:20,marginBottom:14}},
-      ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:16}},ce("div",{style:{width:48,height:48,borderRadius:"50%",background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,fontSize:18,color:"#6B46C1"}},"VN"),ce("div",null,ce("div",{style:{fontSize:15,fontWeight:500}},"Vasco Neves"),ce("div",{style:{fontSize:13,color:"#9B9890"}},"vasco@borjaonstocks.com"))),
-      [["Nome","Vasco Neves"],["Email","vasco@borjaonstocks.com"],["Workspace","BBTOP20 — Borja on Stocks + Investidor Prudente"]].map(([k,v])=>ce("div",{key:k,style:{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid #F0EEE8",fontSize:13}},ce("span",{style:{color:"#9B9890"}},k),ce("span",null,v)))
+      ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:16}},ce("div",{style:{width:44,height:44,borderRadius:"50%",background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,fontSize:16,color:"#6B46C1"}},"VN"),ce("div",null,ce("div",{style:{fontSize:15,fontWeight:500}},"Vasco Neves"),ce("div",{style:{fontSize:13,color:"#9B9890"}},"vasco@borjaonstocks.com"))),
+      [["Nome","Vasco Neves"],["Email","vasco@borjaonstocks.com"],["Workspace","BBTOP20"]].map(([k,v])=>ce("div",{key:k,style:{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid #F0EEE8",fontSize:13}},ce("span",{style:{color:"#9B9890"}},k),ce("span",null,v)))
     ),
     ce("div",{className:"cd",style:{padding:20,marginBottom:14}},
-      ce("h3",{style:{fontSize:15,fontWeight:500,marginBottom:14}},"Integrações activas"),
+      ce("h3",{style:{fontSize:15,fontWeight:500,marginBottom:12}},"Estado das integrações"),
       ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-        ce("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:9,background:tasks.length>0?"#F0FFF4":"#FFF5F5",border:`1px solid ${tasks.length>0?"#9AE6B4":"#FEB2B2"}`}},
-          ce("i",{className:"ti ti-brand-clickup",style:{fontSize:20,color:"#7B68EE"}}),
-          ce("div",{style:{flex:1}},ce("div",{style:{fontSize:13,fontWeight:500}},"ClickUp BBTOP20"),ce("div",{style:{fontSize:11,color:"#9B9890"}},"Workspace 24309030 · assignee 206530598")),
-          ce("span",{style:{fontSize:12,color:tasks.length>0?"#38A169":"#E53E3E",fontWeight:500}},tasks.length>0?`✓ ${tasks.length} tarefas`:"Offline")
-        ),
-        ce("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:9,background:calEvents.length>0?"#EBF8FF":"#F5F5F5",border:`1px solid ${calEvents.length>0?"#90CDF4":"#E5E3DC"}`}},
-          ce("i",{className:"ti ti-calendar",style:{fontSize:20,color:"#4285F4"}}),
-          ce("div",{style:{flex:1}},ce("div",{style:{fontSize:13,fontWeight:500}},"Google Calendar"),ce("div",{style:{fontSize:11,color:"#9B9890"}},"vasco@borjaonstocks.com · calendário primário")),
-          ce("span",{style:{fontSize:12,color:calEvents.length>0?"#3182CE":"#9B9890",fontWeight:500}},calEvents.length>0?`✓ ${calEvents.length} eventos hoje`:"✓ Ligado (sem eventos hoje)")
-        ),
-        ce("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:9,background:"#F5F3FF",border:"1px solid #DDD6FE"}},
-          ce("i",{className:"ti ti-mail",style:{fontSize:20,color:"#7C3AED"}}),
-          ce("div",{style:{flex:1}},ce("div",{style:{fontSize:13,fontWeight:500}},"Microsoft Outlook"),ce("div",{style:{fontSize:11,color:"#9B9890"}},"vasco@borjaonstocks.com · email matinal às 8h30")),
-          ce("span",{style:{fontSize:12,color:"#6D28D9",fontWeight:500}},"✓ Activo")
-        ),
-        ce("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:9,background:"#F0FFF4",border:"1px solid #9AE6B4"}},
-          ce("div",{style:{width:22,height:22,borderRadius:6,background:"#ff7817",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",fontWeight:700}},"M"),
-          ce("div",{style:{flex:1}},ce("div",{style:{fontSize:13,fontWeight:500}},"Make.com"),ce("div",{style:{fontSize:11,color:"#9B9890"}},"2 cenários activos · webhook handler + email matinal")),
-          ce("span",{style:{fontSize:12,color:"#38A169",fontWeight:500}},"✓ Activo")
+        ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:tasks.length>0?"#F0FFF4":"#FFF5F5",border:`1px solid ${tasks.length>0?"#9AE6B4":"#FEB2B2"}`}},
+          ce("i",{className:"ti ti-brand-clickup",style:{fontSize:18,color:"#7B68EE"}}),
+          ce("div",{style:{flex:1}}),ce("div",{style:{fontWeight:500,fontSize:13}},"ClickUp BBTOP20"),ce("div",{style:{fontSize:11,color:"#9B9890"}}),),
+          ce("div",{style:{fontSize:12,color:tasks.length>0?"#276749":"#C53030"}}),
+          ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:tasks.length>0?"#F0FFF4":"#FFF5F5",border:`1px solid ${tasks.length>0?"#9AE6B4":"#FEB2B2"}`}},
+            ce("i",{className:"ti ti-brand-clickup",style:{fontSize:18,color:"#7B68EE"}}),
+            ce("span",{style:{flex:1,fontSize:13,fontWeight:500}},"ClickUp — "+tasks.length+" tarefas"),
+            ce("span",{style:{fontSize:11,color:tasks.length>0?"#38A169":"#E53E3E"}},tasks.length>0?"✓ Ligado":"Offline")
+          ),
+          ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:calEvents.length>0?"#EBF8FF":"#F5F5F5",border:`1px solid ${calEvents.length>0?"#90CDF4":"#E5E3DC"}`}},
+            ce("i",{className:"ti ti-calendar",style:{fontSize:18,color:"#4285F4"}}),
+            ce("span",{style:{flex:1,fontSize:13,fontWeight:500}},"Google Calendar — "+calEvents.length+" eventos hoje"),
+            ce("span",{style:{fontSize:11,color:calEvents.length>0?"#2B6CB0":"#9B9890"}},calEvents.length>0?"✓ Ligado":"Sem eventos hoje")
+          ),
+          ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:"#F5F3FF",border:"1px solid #DDD6FE"}},
+            ce("i",{className:"ti ti-mail",style:{fontSize:18,color:"#7C3AED"}}),
+            ce("span",{style:{flex:1,fontSize:13,fontWeight:500}},"Microsoft Email (Outlook)"),
+            ce("span",{style:{fontSize:11,color:"#6D28D9"}},"✓ Ligado — vasco@borjaonstocks.com")
+          )
         )
-      ),
-      ce("div",{style:{marginTop:14,display:"flex",gap:8}},
-        ce("button",{className:"bt dk",onClick:refresh,disabled:loading,style:{gap:5}},loading?ce(Sp):ce("i",{className:"ti ti-refresh",style:{fontSize:13}}),"Sincronizar agora"),
-        lastSync&&ce("span",{style:{fontSize:12,color:"#9B9890",alignSelf:"center"}},"Última sync: "+lastSync)
-      )
     ),
     ce("div",{className:"cd",style:{padding:20}},
       ce("h3",{style:{fontSize:15,fontWeight:500,marginBottom:8}},"Sobre Café Matinal"),
-      ce("p",{style:{fontSize:13,color:"#6B6860",lineHeight:1.7}},"Sistema de produtividade do Vasco para gerir as marcas BBTOP20. Dados reais do ClickUp e Google Calendar via Make.com. Actualização automática a cada 5 minutos. Agente IA integrado."),
-      ce("div",{style:{marginTop:12,fontSize:11,color:"#9B9890"}},`v2.1 · last sync ${lastSync||"—"} · github.com/vasco-cell/cafe-matinal`)
+      ce("p",{style:{fontSize:13,color:"#6B6860",lineHeight:1.6}},"Sistema de produtividade do Vasco para as marcas BBTOP20 (Borja on Stocks + Investidor Prudente). Dados reais do ClickUp via Make.com. Actualização automática a cada 5 minutos."),
+      ce("div",{style:{marginTop:12,fontSize:11,color:"#9B9890"}},`v2.1 · sync ${lastSync||"—"} · feito com calma`)
     )
   )
 }
 
+// ── NAV ───────────────────────────────────────────────────────────────────────
 const NAV=[
   {id:"hoje",icon:"ti-sun",label:"Hoje",c:"#3182CE"},
+  {id:"prioridades",icon:"ti-star",label:"Prioridades",c:"#D69E2E"},
   {id:"assistente",icon:"ti-sparkles",label:"Assistente",c:"#7C3AED"},
   {id:"tarefas",icon:"ti-checkbox",label:"Tarefas",c:"#38A169"},
+  {id:"calendario",icon:"ti-calendar",label:"Calendário",c:"#3182CE"},
+  {id:"inbox",icon:"ti-inbox",label:"Inbox",c:"#7C3AED"},
   {id:"foco",icon:"ti-bolt",label:"Foco",c:"#D69E2E"},
   {id:"notas",icon:"ti-note",label:"Notas",c:"#DD6B20"},
+  {id:"memoria",icon:"ti-brain",label:"Memória",c:"#D53F8C"},
+  {id:"revisao",icon:"ti-clipboard-check",label:"Revisão Semanal",c:"#6B46C1"},
+  {id:"relatorios",icon:"ti-chart-line",label:"Relatórios",c:"#3182CE"},
+  {id:"previsoes",icon:"ti-telescope",label:"Previsões",c:"#7C3AED"},
+  {id:"templates",icon:"ti-target",label:"Templates",c:"#E53E3E"},
+  {id:"rotinas",icon:"ti-rotate-clockwise",label:"Rotinas",c:"#38A169"},
+  {id:"pessoal",icon:"ti-heart",label:"Pessoal",c:"#D53F8C"},
+  {id:"financas",icon:"ti-layout-grid",label:"Finanças",c:"#38A169"},
   {id:"habitos",icon:"ti-activity",label:"Hábitos",c:"#DD6B20"},
   {id:"analytics",icon:"ti-chart-bar",label:"Analytics",c:"#3182CE"},
   {id:"definicoes",icon:"ti-settings",label:"Definições",c:"#6B6860"},
 ];
 
+// ── APP ───────────────────────────────────────────────────────────────────────
 function App(){
   const[pg,setPg]=useState("hoje");
   const[tasks,setTasks]=useState([]);
   const[calEvents,setCal]=useState([]);
-  const[notes,setNotes]=useState(sg("notes")||[]);
-  const[habits,setHabits]=useState(sg("habits")||[]);
-  const[logs,setLogs]=useState(sg("logs")||{});
+  const[notes,setNotes]=useState([]);
+  const[habits,setHabits]=useState([]);
+  const[logs,setLogs]=useState({});
+  const[prios,setPrios]=useState([]);
+  const[mem,setMem]=useState([]);
+  const[pessoal,setPessoal]=useState([]);
+  const[fin,setFin]=useState([]);
   const[loading,setLoading]=useState(true);
   const[lastSync,setSync]=useState("");
   const[toast_,setToast]=useState(null);
@@ -450,6 +512,13 @@ function App(){
   const[ready,setReady]=useState(false);
   const n=new Date();
 
+  // Load local data
+  useEffect(()=>{
+    Promise.all([sg("bj-notes"),sg("bj-habits"),sg("bj-logs"),sg("bj-prios"),sg("bj-mem"),sg("bj-pessoal"),sg("bj-fin")])
+      .then(([no,h,l,p,m,pe,f])=>{if(no)setNotes(no);if(h)setHabits(h);if(l)setLogs(l);if(p)setPrios(p);if(m)setMem(m);if(pe)setPessoal(pe);if(f)setFin(f);});
+  },[]);
+
+  // Fetch real data from Make
   async function fetchData(){
     setLoading(true);
     try{
@@ -458,88 +527,119 @@ function App(){
         if(d.tasks){
           try{
             const raw=typeof d.tasks==="string"?d.tasks:JSON.stringify(d.tasks);
-            const arr=JSON.parse(raw.startsWith("[")?raw:"["+raw+"]");
-            if(Array.isArray(arr)&&arr.length>0){setTasks(arr);ss("tasks",arr);}
-            else{const c=sg("tasks");if(c)setTasks(c);}
-          }catch{const c=sg("tasks");if(c)setTasks(c);}
+            // Remove trailing commas and parse
+            const cleaned=raw.trim().replace(/,\s*$|,\s*]/g,m=>m.includes("]")?"]":"");
+            const arr=JSON.parse(cleaned.startsWith("[")?cleaned:"["+cleaned+"]");
+            if(Array.isArray(arr)&&arr.length>0){setTasks(arr);ss("bj-tasks",arr);}
+            else{const c=await sg("bj-tasks");if(c)setTasks(c);}
+          }catch{const c=await sg("bj-tasks");if(c)setTasks(c);}
         }
-        if(d.events){try{const ev=typeof d.events==="string"?JSON.parse(d.events):d.events;if(Array.isArray(ev))setCal(ev);}catch{}}
-        setSync(new Date().toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"}));
-      }else{const c=sg("tasks");if(c)setTasks(c);}
-    }catch{const c=sg("tasks");if(c)setTasks(c);}
+        if(d.events){
+          try{const ev=typeof d.events==="string"?JSON.parse(d.events):d.events;if(Array.isArray(ev))setCal(ev);}catch{}
+        }
+        const t=new Date();setSync(`${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`);
+      } else {const c=await sg("bj-tasks");if(c)setTasks(c);}
+    }catch{const c=await sg("bj-tasks");if(c)setTasks(c);}
     setLoading(false);setReady(true);
   }
 
   useEffect(()=>{fetchData();const iv=setInterval(fetchData,5*60*1000);return()=>clearInterval(iv);},[]);
 
   function toast(msg,dur=3000){setToast(msg);setTimeout(()=>setToast(null),dur)}
-  function addTask(t){setTasks(p=>{const u=[t,...p.filter(x=>x.id!==t.id)];ss("tasks",u);return u})}
-  function updateTask(t){setTasks(p=>{const u=p.map(x=>x.id===t.id?{...x,...t}:x);ss("tasks",u);return u})}
-  const saveNotes=v=>{setNotes(v);ss("notes",v)};
-  const saveHabits=v=>{setHabits(v);ss("habits",v)};
-  const saveLogs=v=>{setLogs(v);ss("logs",v)};
+  function addTask(t){setTasks(p=>{const u=[t,...p.filter(x=>x.id!==t.id)];ss("bj-tasks",u);return u})}
+  function updateTask(t){setTasks(p=>{const u=p.map(x=>x.id===t.id?{...x,...t}:x);ss("bj-tasks",u);return u})}
+  const saveNotes=v=>{setNotes(v);ss("bj-notes",v)};
+  const saveHabits=v=>{setHabits(v);ss("bj-habits",v)};
+  const saveLogs=v=>{setLogs(v);ss("bj-logs",v)};
+  const savePrios=v=>{setPrios(v);ss("bj-prios",v)};
+  const saveMem=v=>{setMem(v);ss("bj-mem",v)};
+  const savePessoal=v=>{setPessoal(v);ss("bj-pessoal",v)};
+  const saveFin=v=>{setFin(v);ss("bj-fin",v)};
 
   const act=tasks.filter(t=>t.status!=="done").length;
+  const inbox_c=(mem||[]).filter(m=>m.source==="inbox").length;
   const h_=n.getHours();
+
+  // Simple stub pages for less-critical sections
+  function stub(title,icon,color,desc){
+    return ce("div",{style:{animation:"fU .2s"}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:color+"22",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti "+icon,style:{fontSize:20,color}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},title),ce("div",{className:"ps"},desc))),
+      ce("p",{style:{textAlign:"center",color:"#9B9890",fontSize:13,padding:40}},"Em construção — dados reais do ClickUp activos!")
+    )
+  }
 
   const PageMap={
     hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:setPg,addTask}),
     assistente:()=>ce(PAssist,{tasks,calEvents}),
     tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT}),
+    inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast}),
     foco:()=>ce(PFoco,{tasks}),
     notas:()=>ce(PNotas,{notes,saveNotes,toast}),
     habitos:()=>ce(PHabitos,{habits,saveHabits,logs,saveLogs,toast}),
     analytics:()=>ce(PAnalytics,{tasks,habits,logs}),
-    definicoes:()=>ce(PDefs,{tasks,calEvents,loading,lastSync,refresh:fetchData}),
+    relatorios:()=>ce(PRelatorios,{tasks,toast}),
+    definicoes:()=>ce(PDefs,{tasks,calEvents,loading,lastSync}),
+    memoria:()=>stub("Memória","ti-brain","#D53F8C","Guarda aquilo que não queres esquecer."),
+    prioridades:()=>stub("Prioridades","ti-star","#D69E2E","As grandes apostas que guiam o teu foco."),
+    calendario:()=>stub("Calendário","ti-calendar","#3182CE","maio 2026"),
+    revisao:()=>stub("Revisão Semanal","ti-clipboard-check","#6B46C1","18 mai – 24 mai 2026"),
+    previsoes:()=>stub("Previsões","ti-telescope","#7C3AED","Um olhar sobre os próximos dias."),
+    templates:()=>stub("Templates","ti-target","#E53E3E","Modelos reutilizáveis para acelerar o teu dia."),
+    rotinas:()=>stub("Rotinas","ti-rotate-clockwise","#38A169","Pequenos gestos diários que constroem o todo."),
+    pessoal:()=>stub("Pessoal","ti-heart","#D53F8C","Os teus objetivos de longo prazo."),
+    financas:()=>stub("Finanças","ti-layout-grid","#38A169","Receitas, despesas e orçamentos."),
   };
 
-  const PgC=PageMap[pg]||PageMap.hoje;
+  const PgComp=PageMap[pg]||PageMap.hoje;
 
-  return ce("div",{style:{display:"flex",height:"100%",background:"#FAF9F7",overflow:"hidden"}},
-    ce("nav",{style:{width:195,borderRight:"1px solid #E5E3DC",background:"#fff",display:"flex",flexDirection:"column",flexShrink:0}},
-      ce("div",{style:{padding:"15px 14px 12px",borderBottom:"1px solid #E5E3DC"}},
+  return ce("div",{style:{display:"flex",height:"100%",background:"#FAF9F7",overflow:"hidden",borderRadius:"inherit"}},
+    ce("nav",{style:{width:186,borderRight:"1px solid #E5E3DC",background:"#fff",display:"flex",flexDirection:"column",flexShrink:0}},
+      ce("div",{style:{padding:"13px 13px 11px",borderBottom:"1px solid #E5E3DC"}},
         ce("div",{style:{display:"flex",alignItems:"center",gap:9}},
-          ce("div",{style:{width:30,height:30,borderRadius:8,background:"#1A1A2E",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:15}},loading?ce(Sp):"☀"),
-          ce("div",null,ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:14,color:"#1A1A2E"}},h_<12?"Café Matinal":h_<17?"Boa tarde":"Boa noite"),ce("div",{style:{fontSize:9,color:"#9B9890",fontFamily:"monospace"}},n.getDate()+" "+MC[n.getMonth()]+" "+n.getFullYear()))
+          ce("div",{style:{width:28,height:28,borderRadius:8,background:"#1A1A2E",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14}},
+            loading?ce(Sp):"☀"
+          ),
+          ce("div",null,ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:13,color:"#1A1A2E"}},"Café Matinal"),ce("div",{style:{fontSize:9,color:"#9B9890",fontFamily:"monospace"}},n.getDate()+" "+MC[n.getMonth()]+" "+n.getFullYear()))
         )
       ),
-      ce("div",{style:{flex:1,overflowY:"auto",padding:"8px 8px"}},
+      ce("div",{style:{flex:1,overflowY:"auto",padding:"6px 8px"}},
         NAV.map(nav=>ce("button",{key:nav.id,className:"bn"+(pg===nav.id?" on":""),onClick:()=>setPg(nav.id)},
           ce("i",{className:`ti ${nav.icon}`,style:{fontSize:15,color:pg===nav.id?"#fff":nav.c}}),
           ce("span",{style:{flex:1}},nav.label),
-          nav.id==="hoje"&&act>0&&ce("span",{style:{fontSize:9,background:pg==="hoje"?"rgba(255,255,255,.2)":"#FEE2E2",color:pg==="hoje"?"#fff":"#E53E3E",padding:"1px 6px",borderRadius:10}},act)
+          nav.id==="inbox"&&inbox_c>0&&ce("span",{style:{fontSize:9,background:pg==="inbox"?"rgba(255,255,255,.2)":"#EDE9FE",color:pg==="inbox"?"#fff":"#7C3AED",padding:"1px 5px",borderRadius:10}},inbox_c),
+          nav.id==="hoje"&&act>0&&ce("span",{style:{fontSize:9,background:pg==="hoje"?"rgba(255,255,255,.2)":"#FEE2E2",color:pg==="hoje"?"#fff":"#E53E3E",padding:"1px 5px",borderRadius:10}},act)
         ))
       ),
-      ce("div",{style:{padding:"10px 14px",borderTop:"1px solid #E5E3DC"}},
-        ce("div",{style:{fontSize:10,color:tasks.length>0?"#38A169":"#9B9890",display:"flex",alignItems:"center",gap:5,marginBottom:3}},ce("i",{className:"ti ti-brand-clickup",style:{fontSize:11}}),tasks.length>0?tasks.length+" tarefas":"offline"),
-        ce("div",{style:{fontSize:10,color:calEvents.length>0?"#3182CE":"#9B9890",display:"flex",alignItems:"center",gap:5,marginBottom:3}},ce("i",{className:"ti ti-calendar",style:{fontSize:11}}),calEvents.length>0?calEvents.length+" eventos hoje":"calendar ligado"),
-        ce("div",{style:{fontSize:9,color:"#9B9890"}},"v2.1 · sync "+lastSync)
+      ce("div",{style:{padding:"8px 13px",borderTop:"1px solid #E5E3DC"}},
+        ce("div",{style:{fontSize:10,color:tasks.length>0?"#38A169":"#9B9890",display:"flex",alignItems:"center",gap:5,marginBottom:2}},ce("i",{className:"ti ti-brand-clickup",style:{fontSize:11}}),tasks.length>0?tasks.length+" tarefas":"ClickUp offline"),
+        ce("div",{style:{fontSize:10,color:calEvents.length>0?"#3182CE":"#9B9890",display:"flex",alignItems:"center",gap:5}},ce("i",{className:"ti ti-calendar",style:{fontSize:11}}),calEvents.length>0?calEvents.length+" eventos hoje":"Calendar offline"),
+        ce("div",{style:{fontSize:9,color:"#9B9890",marginTop:4}},"v2.1 · feito com calma")
       )
     ),
     ce("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
-      ce("div",{style:{borderBottom:"1px solid #E5E3DC",padding:"10px 24px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fff",flexShrink:0}},
+      ce("div",{style:{borderBottom:"1px solid #E5E3DC",padding:"9px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fff",flexShrink:0}},
         ce("div",null,ce("div",{style:{fontSize:10,color:"#9B9890"}},h_<12?"Olá":h_<17?"Boa tarde":"Boa noite"),ce("div",{style:{fontSize:15,fontWeight:600,color:"#1A1A2E",lineHeight:1.1}},"vasco")),
         ce("div",{style:{display:"flex",alignItems:"center",gap:10}},
-          loading?ce("div",{style:{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#9B9890"}},ce(Sp),"A sincronizar..."):ce("div",{style:{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"#38A169"}},ce(Ld),"Sincronizado "+lastSync),
-          ce("button",{className:"bt",onClick:fetchData,disabled:loading,style:{fontSize:11,padding:"4px 9px"}},ce("i",{className:"ti ti-refresh",style:{fontSize:12}})," Actualizar"),
-          ce("span",{style:{fontSize:11,color:"#9B9890",fontFamily:"monospace"}},DIAS[n.getDay()].slice(0,3).toLowerCase()+", "+n.getDate()+" "+MC[n.getMonth()])
+          ce("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:20,border:"1px solid #E5E3DC",background:"#FAF9F7",color:"#9B9890",fontSize:11}},ce("i",{className:"ti ti-search",style:{fontSize:13}}),"Pesquisar..."),
+          loading?ce(Sp):ce(Ld),
+          ce("span",{style:{fontSize:11,color:"#9B9890",fontFamily:"monospace"}},"sáb, "+n.getDate()+" "+MC[n.getMonth()])
         )
       ),
-      ce("div",{style:{flex:1,overflowY:"auto",padding:pg==="foco"?"0":"24px 28px",background:pg==="foco"?"transparent":"#FAF9F7"}},
-        !ready?ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:14,color:"#9B9890",fontSize:13}},
+      ce("div",{style:{flex:1,overflowY:"auto",padding:pg==="foco"?"0":"22px 26px",background:pg==="foco"?"transparent":"#FAF9F7"}},
+        !ready?ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:12,color:"#9B9890",fontSize:13}},
           ce(Sp),
-          ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:22,color:"#1A1A2E",marginTop:4}},"A ligar ao sistema..."),
-          ce("div",null,"ClickUp + Google Calendar via Make.com"),
+          ce("div",null,"A ligar ao ClickUp e Google Calendar..."),
           ce("div",{style:{fontSize:11,color:"#CCC"}},"Pode demorar até 15 segundos na primeira vez")
-        ):ce(PgC)
+        ):ce(PgComp)
       )
     ),
-    toast_&&ce("div",{style:{position:"fixed",bottom:16,right:16,background:"#1A1A2E",color:"#fff",padding:"11px 18px",borderRadius:10,fontSize:13,zIndex:9999,animation:"fU .2s",maxWidth:340,lineHeight:1.4,boxShadow:"0 4px 20px rgba(0,0,0,.25)"}},toast_),
+    toast_&&ce("div",{style:{position:"fixed",bottom:14,right:14,background:"#1A1A2E",color:"#fff",padding:"10px 16px",borderRadius:9,fontSize:13,zIndex:9999,animation:"fU .2s",maxWidth:320,lineHeight:1.4}},toast_),
     agentTask&&ce(AgentModal,{task:agentTask,onClose:()=>setAT(null),toast})
   )
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+ReactDOM.createRoot(document.getElementById("bjr")).render(React.createElement(App));
 </script>
+
 </body>
 </html>
