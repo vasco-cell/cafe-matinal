@@ -10,12 +10,10 @@
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
 <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
 <style>
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;padding:0;background:#FAF9F7}
-#bjr{position:fixed;inset:0;display:flex;font-family:'DM Sans',system-ui,sans-serif;overflow:hidden}
-#err{display:none;position:fixed;inset:0;background:#fff;padding:24px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap;z-index:9999;overflow:auto}
-
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#FAF9F7}
+#bjr{position:fixed;inset:0;display:flex;font-family:'DM Sans',system-ui,sans-serif}
+#err{display:none;position:fixed;inset:0;background:#fff;padding:24px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap;z-index:9999;overflow:auto}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#E5E3DC;border-radius:2px}
 button,input,textarea,select{font-family:inherit;outline:none}
 a{text-decoration:none}
@@ -266,7 +264,7 @@ function PAssist({tasks,calEvents}){
         ))
       )
     ),
-    ce("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
+    ce("div",{style:{flex:1,display:"flex",flexDirection:"column",minHeight:0,minWidth:0}},
       ce("div",{style:{padding:"12px 16px",borderBottom:"1px solid #E5E3DC",display:"flex",alignItems:"center",gap:10}},
         ce("div",{style:{width:32,height:32,borderRadius:"50%",background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:16,color:"#7C3AED"}})),
         ce("div",null,ce("div",{style:{fontWeight:500,fontSize:13}},"Assistente BBTOP20"),ce("div",{style:{fontSize:11,color:"#9B9890"}},"Claude · contexto real das tuas tarefas"))
@@ -402,7 +400,7 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
   function sM(i){setM(i);setSec(M[i].s);setRun(false);setDur(Math.floor(M[i].s/60))}
   function sD(d){setDur(d);setSec(d*60);setRun(false)}
   const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss_=String(sec%60).padStart(2,"0");
-  return ce("div",{style:{height:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,color:"#fff"}},
+  return ce("div",{style:{height:"100%",minHeight:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,color:"#fff"}},
     ce("div",{style:{display:"flex",background:"rgba(255,255,255,.1)",borderRadius:30,padding:3,marginBottom:28}},M.map((md,i)=>ce("button",{key:md.l,onClick:()=>sM(i),style:{padding:"7px 16px",borderRadius:24,border:"none",background:m===i?"#fff":"transparent",color:m===i?"#1A1A2E":"rgba(255,255,255,.7)",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},md.l))),
     ce("div",{style:{position:"relative",width:210,height:210,marginBottom:24}},
       ce("svg",{viewBox:"0 0 210 210",style:{width:"100%",height:"100%"}},
@@ -1408,8 +1406,8 @@ function App(){
 
   const PgComp=PageMap[pg]||PageMap.hoje;
 
-  return ce("div",{style:{display:"flex",height:"100%",background:"#FAF9F7",overflow:"hidden",borderRadius:"inherit"}},
-    ce("nav",{style:{width:186,borderRight:"1px solid #E5E3DC",background:"#fff",display:"flex",flexDirection:"column",flexShrink:0}},
+  return ce("div",{style:{display:"flex",width:"100%",height:"100%"}},
+    ce("nav",{style:{width:200,borderRight:"1px solid #E5E3DC",background:"#fff",display:"flex",flexDirection:"column",flexShrink:0,height:"100%",overflowY:"hidden"}},
       ce("div",{style:{padding:"13px 13px 11px",borderBottom:"1px solid #E5E3DC"}},
         ce("div",{style:{display:"flex",alignItems:"center",gap:9}},
           ce("div",{style:{width:28,height:28,borderRadius:8,background:"#1A1A2E",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14}},
@@ -1418,7 +1416,7 @@ function App(){
           ce("div",null,ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:13,color:"#1A1A2E"}},"Café Matinal"),ce("div",{style:{fontSize:9,color:"#9B9890",fontFamily:"monospace"}},n.getDate()+" "+MC[n.getMonth()]+" "+n.getFullYear()))
         )
       ),
-      ce("div",{style:{flex:1,overflowY:"auto",padding:"6px 8px"}},
+      ce("div",{style:{flex:1,overflowY:"auto",overflowX:"hidden",padding:"6px 8px",minHeight:0}},
         NAV.map(nav=>ce("button",{key:nav.id,className:"bn"+(pg===nav.id?" on":""),onClick:()=>setPg(nav.id)},
           ce("i",{className:`ti ${nav.icon}`,style:{fontSize:15,color:pg===nav.id?"#fff":nav.c}}),
           ce("span",{style:{flex:1}},nav.label),
@@ -1426,14 +1424,14 @@ function App(){
           nav.id==="hoje"&&act>0&&ce("span",{style:{fontSize:9,background:pg==="hoje"?"rgba(255,255,255,.2)":"#FEE2E2",color:pg==="hoje"?"#fff":"#E53E3E",padding:"1px 5px",borderRadius:10}},act)
         ))
       ),
-      ce("div",{style:{padding:"8px 13px",borderTop:"1px solid #E5E3DC"}},
+      ce("div",{style:{padding:"8px 13px",borderTop:"1px solid #E5E3DC",flexShrink:0}},
         ce("div",{style:{fontSize:10,color:tasks.length>0?"#38A169":"#9B9890",display:"flex",alignItems:"center",gap:5,marginBottom:2}},ce("i",{className:"ti ti-brand-clickup",style:{fontSize:11}}),tasks.length>0?tasks.length+" tarefas":"ClickUp offline"),
         ce("div",{style:{fontSize:10,color:calEvents.length>0?"#3182CE":"#9B9890",display:"flex",alignItems:"center",gap:5}},ce("i",{className:"ti ti-calendar",style:{fontSize:11}}),calEvents.length>0?calEvents.length+" eventos hoje":"Calendar offline"),
         ce("div",{style:{fontSize:9,color:"#9B9890",marginTop:4}},"v2.1 · feito com calma")
       )
     ),
-    ce("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
-      ce("div",{style:{borderBottom:"1px solid #E5E3DC",padding:"9px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fff",flexShrink:0}},
+    ce("div",{style:{flex:1,display:"flex",flexDirection:"column",minHeight:0,minWidth:0}},
+      ce("div",{style:{borderBottom:"1px solid #E5E3DC",padding:"9px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"#fff",flexShrink:0,zIndex:10}},
         ce("div",null,ce("div",{style:{fontSize:10,color:"#9B9890"}},h_<12?"Olá":h_<17?"Boa tarde":"Boa noite"),ce("div",{style:{fontSize:15,fontWeight:600,color:"#1A1A2E",lineHeight:1.1}},"vasco")),
         ce("div",{style:{display:"flex",alignItems:"center",gap:10}},
           ce("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:20,border:"1px solid #E5E3DC",background:"#FAF9F7",color:"#9B9890",fontSize:11}},ce("i",{className:"ti ti-search",style:{fontSize:13}}),"Pesquisar..."),
@@ -1441,7 +1439,7 @@ function App(){
           ce("span",{style:{fontSize:11,color:"#9B9890",fontFamily:"monospace"}},"sáb, "+n.getDate()+" "+MC[n.getMonth()])
         )
       ),
-      ce("div",{style:{flex:1,overflowY:"auto",padding:pg==="foco"?"0":"22px 26px",background:pg==="foco"?"transparent":"#FAF9F7"}},
+      ce("div",{style:{flex:1,overflowY:"auto",minHeight:0,padding:pg==="foco"?"0":"20px 24px",background:pg==="foco"?"transparent":"#FAF9F7"}},
         !ready?ce("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:12,color:"#9B9890",fontSize:13}},
           ce(Sp),
           ce("div",null,"A ligar ao ClickUp e Google Calendar..."),
