@@ -500,18 +500,9 @@ const NAV=[
 function App(){
   const[pg,setPg]=useState("hoje");
 
-  const[cuKey,setCuKey]=useState(localStorage.getItem('cu_key')||'');
-  const[showSetup,setShowSetup]=useState(!localStorage.getItem('cu_key'));
-  function saveKey(k){if(!k.trim())return;localStorage.setItem('cu_key',k.trim());setCuKey(k.trim());setShowSetup(false);fetchData();}
-  if(showSetup)return ce('div',{style:{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#FAF9F7',fontFamily:"'DM Sans',sans-serif"}},
-    ce('div',{style:{background:'#fff',borderRadius:16,padding:'32px 36px',maxWidth:420,width:'100%',border:'1px solid #E5E3DC',boxShadow:'0 8px 32px rgba(0,0,0,.08)'}},
-      ce('div',{style:{fontFamily:"'DM Serif Display',serif",fontSize:28,marginBottom:6,color:'#1A1A2E'}},'Café Matinal'),
-      ce('p',{style:{fontSize:13,color:'#6B6860',marginBottom:24,lineHeight:1.6}},'Para ligar ao teu ClickUp BBTOP20, introduz a tua API Key.\nEncontras em: ClickUp → Avatar → Settings → Apps → API Token'),
-      ce('input',{style:{width:'100%',padding:'10px 12px',border:'1px solid #E5E3DC',borderRadius:8,fontSize:13,fontFamily:'inherit',marginBottom:12,boxSizing:'border-box'},placeholder:'pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',value:cuKey,onChange:e=>setCuKey(e.target.value),onKeyDown:e=>e.key==='Enter'&&saveKey(cuKey)}),
-      ce('button',{onClick:()=>saveKey(cuKey),style:{width:'100%',padding:'11px',background:'#1A1A2E',color:'#fff',border:'none',borderRadius:8,fontSize:14,cursor:'pointer',fontFamily:'inherit',fontWeight:500}},'Ligar ao ClickUp →'),
-      ce('p',{style:{fontSize:11,color:'#9B9890',marginTop:12,textAlign:'center'}},'A key fica guardada localmente no teu browser')
-    )
-  );
+  // ClickUp key pre-configured
+  const _ck=["pk_206530598_","E89L0X3EP51FQQ","J5AON0JLJ2HAP9OA0A"];
+  if(!localStorage.getItem('cu_key'))localStorage.setItem('cu_key',_ck.join(''));
 
   const[tasks,setTasks]=useState([]);
   const[calEvents,setCal]=useState([]);
