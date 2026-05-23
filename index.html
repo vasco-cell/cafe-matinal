@@ -123,7 +123,7 @@ function TC({t,onUpdate,onAgent,showQ}){
 }
 
 // ── HOJE ─────────────────────────────────────────────────────────────────────
-function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief}){
+function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin}){
   const n=new Date();const h=n.getHours();
   const gr=h<12?"Bom dia.":h<17?"Boa tarde.":"Boa noite.";
   const act=tasks.filter(t=>t.status!=="done");
@@ -139,6 +139,11 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
   async function gen3(){setT3l(true);const lst=act.slice(0,15).map(t=>`${t.name}[${t.priority}]`).join(", ");const r=await aiC([{role:"user",content:`Tarefas: ${lst||"nenhuma"}. Sugere as 3 mais prioritárias para hoje (${DIAS[n.getDay()]} ${n.getDate()} ${MC[n.getMonth()]}). Só os nomes, um por linha.`}],"Assistente BBTOP20. Pt-pt.");const s=r.trim().split("\n").filter(Boolean).slice(0,3);setT3(s);ss("bj-t3",{d:n.toDateString(),t:s});setT3l(false)}
   async function sendA(){if(!aMsg.trim()||aLd)return;setAl(true);const sys=`Assistente do Vasco (BBTOP20). Tarefas: ${act.slice(0,10).map(t=>t.name).join(", ")||"nenhuma"}. Eventos hoje: ${calEvents.map(e=>e.summary).join(", ")||"nenhum"}. Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MESES[n.getMonth()]} ${n.getFullYear()}. Pt-pt.`;const r=await aiC([{role:"user",content:aMsg}],sys);setAR(r);setAl(false)}
   async function doAdd(){if(!newT.trim())return;await whF({action:"create",task_name:newT});addTask({id:`l${Date.now()}`,name:newT,status:"todo",priority:"normal",list:"BBTOP20",due_date:"null"});setNT("");toast("Tarefa criada no ClickUp ✓")}
+  var td_=new Date().toDateString();var tdL_=(logs||{})[td_]||{};
+  var habDone=(habits||[]).filter(function(h){return tdL_[h.id];}).length;
+  var habTotal=(habits||[]).length;
+  var moKey_=new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0");
+  var moSaldo=(fin||[]).filter(function(t){return t.month===moKey_;}).reduce(function(s,t){return s+(t.type==="receita"?+t.amount:-+t.amount);},0);
   const SB=[{c:"#E53E3E",n:urg.length,l:"URGENTE"},{c:"#DD6B20",n:tod.length,l:"PARA HOJE"},{c:"#38A169",n:prg.length,l:"EM PROGRESSO"},{c:"#3182CE",n:oth.length,l:"ESTA SEMANA"}];
   return ce("div",{style:{animation:"fU .25s"}},
     ce("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:18}},
@@ -198,6 +203,19 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
             ce("button",{className:"bt pu2",onClick:function(){setAT(t);},style:{fontSize:10,padding:"3px 7px"}},"✦")
           );
         })
+      )
+    ),
+    habTotal>0&&ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}},
+      ce("div",{className:"cd",style:{padding:"11px 14px",cursor:"pointer"},onClick:function(){setPage("habitos");}},
+        ce("div",{style:{fontSize:9,color:"#9B9890",letterSpacing:".06em",marginBottom:4}},"HABITOS HOJE"),
+        ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:22,color:habDone===habTotal&&habTotal>0?"#38A169":"#DD6B20"}},habDone+"/"+habTotal),
+        ce("div",{style:{height:4,borderRadius:2,background:"#F0EEE8",marginTop:6,overflow:"hidden"}},
+          ce("div",{style:{height:"100%",width:(habTotal?Math.round(habDone/habTotal*100):0)+"%",background:"#38A169",borderRadius:2}})
+        )
+      ),
+      (fin||[]).length>0&&ce("div",{className:"cd",style:{padding:"11px 14px",cursor:"pointer"},onClick:function(){setPage("financas");}},
+        ce("div",{style:{fontSize:9,color:"#9B9890",letterSpacing:".06em",marginBottom:4}},"SALDO ESTE MES"),
+        ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:22,color:moSaldo>=0?"#38A169":"#E53E3E"}},(moSaldo>=0?"+":"")+moSaldo.toFixed(0)+" €")
       )
     ),
         late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-alert-circle",style:{fontSize:16}}),`Tens ${late.length} tarefa${late.length!==1?"s":""} em atraso`),
@@ -331,11 +349,11 @@ function PInbox({tasks,addTask,notes,saveNotes,mem,saveMem,toast}){
 }
 
 // ── FOCO ─────────────────────────────────────────────────────────────────────
-function PFoco({tasks}){
+function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
   const M=[{l:"Foco",s:25*60},{l:"Pausa curta",s:5*60},{l:"Pausa longa",s:15*60}];
   const[m,setM]=useState(0);const[sec,setSec]=useState(25*60);const[run,setRun]=useState(false);const[sess,setSess]=useState(0);const[dur,setDur]=useState(25);const[sel,setSel]=useState("");const[snd,setSnd]=useState("Silêncio");
   const iv=useRef(null);const tot=dur*60;const pct=sec/tot;const R=88,CL=2*Math.PI*R;
-  useEffect(()=>{if(run){iv.current=setInterval(()=>setSec(s=>{if(s<=1){clearInterval(iv.current);setRun(false);setSess(n=>n+1);return tot}return s-1}),1000)}else clearInterval(iv.current);return()=>clearInterval(iv.current)},[run,tot]);
+  useEffect(()=>{if(run){iv.current=setInterval(()=>setSec(s=>{if(s<=1){clearInterval(iv.current);setRun(false);setSess(function(n){var ns=n+1;if(saveFocoSessions){var sess={id:'f'+Date.now(),dur:dur,task:sel||null,date:new Date().toDateString()};saveFocoSessions([...(focoSessions||[]),sess]);}return ns;});return tot}return s-1}),1000)}else clearInterval(iv.current);return()=>clearInterval(iv.current)},[run,tot]);
   function sM(i){setM(i);setSec(M[i].s);setRun(false);setDur(Math.floor(M[i].s/60))}
   function sD(d){setDur(d);setSec(d*60);setRun(false)}
   const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss_=String(sec%60).padStart(2,"0");
@@ -359,7 +377,7 @@ function PFoco({tasks}){
 }
 
 // ── NOTAS ─────────────────────────────────────────────────────────────────────
-function PNotas({notes,saveNotes,toast}){
+function PNotas({notes,saveNotes,toast,addTask,setPage}){
   const[inp,setInp]=useState("");const[title,setTitle]=useState("");const[show,setShow]=useState(false);const[ais,setAis]=useState({});
   function add(){if(!inp.trim())return;saveNotes([{id:`n${Date.now()}`,title:title||inp.slice(0,30),content:inp,created:Date.now()},...notes]);setInp("");setTitle("");setShow(false);toast("Nota guardada ✓")}
   async function doAI(id,a,c){setAis(s=>({...s,[id+a]:"ld"}));const P={resumir:"Resume em 2-3 frases.",expandir:"Expande com mais detalhe.",extrair:"Lista as tarefas e acções concretas."};const r=await aiC([{role:"user",content:`${P[a]}\n\nTexto:\n${c}`}],"Assistente BBTOP20. Pt-pt.");setAis(s=>({...s,[id+a]:r}))}
@@ -430,12 +448,15 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
 }
 
 // ── ANALYTICS ─────────────────────────────────────────────────────────────────
-function PAnalytics({tasks,habits,logs}){
+function PAnalytics({tasks,habits,logs,fin,focoSessions,setPage}){
   const act=tasks.filter(t=>t.status!=="done");const dn=tasks.filter(t=>t.status==="done");const td=new Date().toDateString();const tdL=logs[td]||{};const hDn=habits.filter(h=>tdL[h.id]).length;
   const last30=Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(29-i));return{day:d.getDate()+"/"+MC[d.getMonth()],v:tasks.filter(t=>t.status==="done"&&t.due_date&&t.due_date!=="null"&&new Date(+t.due_date).toDateString()===d.toDateString()).length}});
   const byP=[{name:"Alta",v:act.filter(t=>t.priority==="urgent").length,c:"#E53E3E"},{name:"Média",v:act.filter(t=>t.priority==="high").length,c:"#DD6B20"},{name:"Baixa",v:act.filter(t=>t.priority==="normal").length,c:"#38A169"}].filter(x=>x.v>0);
   const wk=Array.from({length:4},(_,i)=>({s:"S"+(4-i),v:tasks.filter(t=>t.status==="done"&&t.due_date&&t.due_date!=="null"&&Math.abs(new Date(+t.due_date)-new Date())/(7*86400000)<(4-i)).length}));
-  const S=[{l:"ABERTAS",v:act.length,c:"#D69E2E"},{l:"CONCLUÍDAS",v:dn.length,c:"#38A169"},{l:"HÁBITOS ACTIVOS",v:habits.length,c:"#7C3AED"},{l:"% HÁBITOS HOJE",v:habits.length?Math.round(hDn/habits.length*100)+"%":"0%",c:"#DD6B20"}];
+  var totalFocoMins=(focoSessions||[]).reduce(function(s,x){return s+(x.dur||25);},0);
+  var moKey__=new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0");
+  var moSaldo__=(fin||[]).filter(function(t){return t.month===moKey__;}).reduce(function(s,t){return s+(t.type==="receita"?+t.amount:-+t.amount);},0);
+  const S=[{l:"ABERTAS",v:act.length,c:"#D69E2E"},{l:"CONCLUIDAS",v:dn.length,c:"#38A169"},{l:"SESSOES FOCO",v:(focoSessions||[]).length,c:"#7C3AED"},{l:"HORAS FOCO",v:Math.floor(totalFocoMins/60)+"h"+String(totalFocoMins%60).padStart(2,"0")+"m",c:"#3182CE"}];
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#BEE3F8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-chart-bar",style:{fontSize:20,color:"#2B6CB0"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Analytics"),ce("div",{className:"ps"},"Padrões e progresso no teu fluxo."))),
     ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},S.map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"12px 14px"}},ce("div",{style:{fontSize:9,fontWeight:600,letterSpacing:".06em",color:"#9B9890",marginBottom:6}},s.l),ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:28,color:s.c}},s.v)))),
@@ -448,10 +469,10 @@ function PAnalytics({tasks,habits,logs}){
 }
 
 // ── RELATÓRIOS ────────────────────────────────────────────────────────────────
-function PRelatorios({tasks,toast}){
+function PRelatorios({tasks,toast,habits,logs}){
   const[tab,setTab]=useState("semana");const[reps,setReps]=useState([]);const[ld,setLd]=useState(false);
   useEffect(()=>{sg("bj-reps").then(r=>{if(r)setReps(r)});},[]);
-  async function gen(){setLd(true);const n=new Date();const dn=tasks.filter(t=>t.status==="done").slice(0,8).map(t=>t.name).join(", ");const op=tasks.filter(t=>t.status!=="done").slice(0,8).map(t=>t.name).join(", ");const period=tab==="semana"?"semanal ("+n.getDate()+" "+MC[n.getMonth()]+")":"mensal ("+MESES[n.getMonth()]+" "+n.getFullYear()+")";const txt=await aiC([{role:"user",content:`Relatório ${period} do Vasco (BBTOP20). Concluídas: ${dn||"nenhuma"}. Em aberto: ${op||"nenhuma"}. Formato: resumo executivo, conquistas, desafios, próxima semana. Pt-pt.`}],"Assistente BBTOP20.",900);const r={id:`r${Date.now()}`,title:`Relatório ${period}`,content:txt,date:new Date().toDateString()};const u=[r,...reps].slice(0,8);setReps(u);ss("bj-reps",u);setLd(false);toast("Gerado ✓")}
+  async function gen(){setLd(true);const n=new Date();const dn=tasks.filter(t=>t.status==="done").slice(0,8).map(t=>t.name).join(", ");const hd=(habits||[]).filter(h=>{const l=(logs||{})[new Date().toDateString()]||{};return l[h.id];}).length;const op=tasks.filter(t=>t.status!=="done").slice(0,8).map(t=>t.name).join(", ");const period=tab==="semana"?"semanal ("+n.getDate()+" "+MC[n.getMonth()]+")":"mensal ("+MESES[n.getMonth()]+" "+n.getFullYear()+")";const txt=await aiC([{role:"user",content:`Relatório ${period} do Vasco (BBTOP20). Concluídas: ${dn||"nenhuma"}. Em aberto: ${op||"nenhuma"}. Formato: resumo executivo, conquistas, desafios, próxima semana. Pt-pt.`}],"Assistente BBTOP20.",900);const r={id:`r${Date.now()}`,title:`Relatório ${period}`,content:txt,date:new Date().toDateString()};const u=[r,...reps].slice(0,8);setReps(u);ss("bj-reps",u);setLd(false);toast("Gerado ✓")}
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:14}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#BEE3F8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-chart-line",style:{fontSize:20,color:"#2B6CB0"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Relatórios"),ce("div",{className:"ps"},"Narrativas sobre o teu trabalho."))),
@@ -566,6 +587,15 @@ function PPrios({prios,savePrios,tasks,toast}){
             ce("button",{onClick:function(e){e.stopPropagation();delP(p.id);},style:{border:"none",background:"transparent",cursor:"pointer",color:"#CBD5E0",marginLeft:4}},ce("i",{className:"ti ti-trash",style:{fontSize:13}}))
           ),
           isOpen&&ce("div",{style:{borderTop:"1px solid #F0EEE8",padding:"8px 16px 12px"}},
+            ce("div",{style:{marginBottom:8}},
+              ce("div",{style:{fontSize:10,color:"#9B9890",letterSpacing:".06em",marginBottom:4}},"TAREFAS RELACIONADAS DO CLICKUP"),
+              (tasks||[]).filter(function(t){return t.name.toLowerCase().indexOf(p.name.toLowerCase().split(' ')[0].toLowerCase())>=0&&t.status!=="done";}).slice(0,3).map(function(t){
+                return ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:8,padding:"4px 0",fontSize:12}},
+                  ce("div",{style:{width:6,height:6,borderRadius:"50%",background:{urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE",low:"#38A169"}[t.priority]||"#CBD5E0"}}),
+                  ce("a",{href:t.url,target:"_blank",rel:"noreferrer",style:{color:"#1A1A2E",flex:1}},t.name)
+                );
+              })
+            ),
             (p.items||[]).map(function(it){
               return ce("div",{key:it.id,style:{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:"1px solid #F8F6F2"}},
                 ce("button",{onClick:function(){toggleItem(p.id,it.id);},style:{width:18,height:18,borderRadius:"50%",border:"2px solid "+(it.done?p.color:"#CBD5E0"),background:it.done?p.color:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},
@@ -583,7 +613,7 @@ function PPrios({prios,savePrios,tasks,toast}){
   );
 }
 
-function PCal({tasks,calEvents}){
+function PCal({tasks,calEvents,habits,logs,setPage}){
   var n=new Date();
   var[yr,setYr]=React.useState(n.getFullYear());
   var[mo,setMo]=React.useState(n.getMonth());
@@ -603,6 +633,11 @@ function PCal({tasks,calEvents}){
   function taskDots(d){
     var dk=new Date(yr,mo,d).toDateString();
     return tasks.filter(function(t){return t.due_date&&t.due_date!=="null"&&new Date(+t.due_date).toDateString()===dk;}).slice(0,3);
+  }
+  function habitDone(d){
+    var dk=new Date(yr,mo,d).toDateString();
+    var dl=(logs||{})[dk]||{};
+    return (habits||[]).filter(function(h){return dl[h.id];}).length;
   }
   function evDots(d){
     var dk=new Date(yr,mo,d).toDateString();
@@ -632,7 +667,8 @@ function PCal({tasks,calEvents}){
               ce("div",{style:{fontSize:14,fontWeight:isSel||isToday?600:400,color:isSel?"#fff":isToday?"#7C3AED":"#1A1A2E",width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}},d),
               ce("div",{style:{display:"flex",gap:2,justifyContent:"center",marginTop:2}},
                 td.map(function(t,idx){return ce("div",{key:idx,style:{width:4,height:4,borderRadius:"50%",background:isSel?"rgba(255,255,255,.7)":PA(t.priority)}});}),
-                ev.map(function(e,idx){return ce("div",{key:"e"+idx,style:{width:4,height:4,borderRadius:"50%",background:isSel?"rgba(255,255,255,.5)":"#7C3AED"}});})
+                ev.map(function(e,idx){return ce("div",{key:"e"+idx,style:{width:4,height:4,borderRadius:"50%",background:isSel?"rgba(255,255,255,.5)":"#7C3AED"}});}),
+                habitDone(d)>0?ce("div",{style:{width:4,height:4,borderRadius:"50%",background:isSel?"rgba(255,255,255,.5)":"#38A169"}}):null
               )
             );
           })
@@ -718,7 +754,7 @@ function PMemoria({mem,saveMem,toast}){
   );
 }
 
-function PRevisao({tasks,toast}){
+function PRevisao({tasks,toast,saveMem,mem,habits,logs}){
   var[step,setStep]=React.useState(0);
   var[answers,setAnswers]=React.useState(["","","",""]);
   var[aiSummary,setAi]=React.useState("");
@@ -737,9 +773,12 @@ function PRevisao({tasks,toast}){
   function setAns(v){var a=[...answers];a[step]=v;setAnswers(a);}
   async function finish(){
     setLd(true);
-    var ctx="Semana "+fmt(weekStart)+" - "+fmt(weekEnd)+". Respostas: "+STEPS.map(function(s,i){return s.q+": "+answers[i];}).join(". ");
-    var res=await aiC([{role:"user",content:"Faz um breve resumo executivo desta revisao semanal: "+ctx}],"Assistente BBTOP20 pt-pt.",400);
-    setAi(res);setLd(false);
+    var habDone_=(habits||[]).filter(function(h){var dl=(logs||{})[new Date().toDateString()]||{};return dl[h.id];}).length;
+    var ctx='Semana '+fmt(weekStart)+' - '+fmt(weekEnd)+'. Habitos cumpridos: '+habDone_+'/'+(habits||[]).length+'. Tarefas concluidas: '+tasks.filter(function(t){return t.status==='done';}).length+'. Respostas: '+STEPS.map(function(s,i){return s.q+': '+answers[i];}).join('. ');
+    var res=await aiC([{role:'user',content:'Faz um resumo executivo desta revisao semanal: '+ctx}],'Assistente BBTOP20 pt-pt.',400);
+    setAi(res);
+    if(saveMem&&res){saveMem([{id:'r'+Date.now(),content:'Revisao '+fmt(weekStart)+' - '+fmt(weekEnd)+': '+res,tag:'Citacao',source:'revisao',created:Date.now()},...(mem||[])]);}
+    setLd(false);
   }
   return ce("div",{style:{maxWidth:680,margin:"0 auto",animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:24}},
@@ -907,7 +946,7 @@ function PRotinas({toast}){
   );
 }
 
-function PPessoal({pessoal,savePessoal,toast}){
+function PPessoal({pessoal,savePessoal,toast,prios,savePrios}){
   var CATS=["Familia","Saude","Carreira","Financas","Pessoal","Outro"];
   var CAT_ICONS={"Familia":"ti-home","Saude":"ti-heart","Carreira":"ti-briefcase","Financas":"ti-currency-euro","Pessoal":"ti-star","Outro":"ti-dots"};
   var CAT_COLORS={"Familia":"#FEB2B2","Saude":"#9AE6B4","Carreira":"#90CDF4","Financas":"#FAF089","Pessoal":"#D6BCFA","Outro":"#E2E8F0"};
@@ -1208,6 +1247,8 @@ function App(){
   const[toast_,setToast]=useState(null);
   const[agentTask,setAT]=useState(null);
   const[ready,setReady]=useState(false);
+  const[focoSessions,setFocoSessions]=useState(function(){try{var v=localStorage.getItem('bj-foco-sess');return v?JSON.parse(v):[]}catch{return[];}});
+  function saveFocoSessions(v){setFocoSessions(v);try{localStorage.setItem('bj-foco-sess',JSON.stringify(v));}catch{}}
   const n=new Date();
 
   // Load local data
@@ -1283,26 +1324,27 @@ function App(){
     )
   }
 
+  const sp=setPg;
   const PageMap={
-    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:setPg,addTask,recentTasks,dailyBrief,genBrief}),
-    assistente:()=>ce(PAssist,{tasks,calEvents}),
-    tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT}),
-    inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast}),
-    foco:()=>ce(PFoco,{tasks}),
-    notas:()=>ce(PNotas,{notes,saveNotes,toast}),
-    habitos:()=>ce(PHabitos,{habits,saveHabits,logs,saveLogs,toast}),
-    analytics:()=>ce(PAnalytics,{tasks,habits,logs}),
-    relatorios:()=>ce(PRelatorios,{tasks,toast}),
-    definicoes:()=>ce(PDefs,{tasks,calEvents,loading,lastSync}),
+    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin}),
+    assistente:()=>ce(PAssist,{tasks,calEvents,setPage:sp}),
+    tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios}),
+    inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast,setPage:sp}),
+    foco:()=>ce(PFoco,{tasks,focoSessions,saveFocoSessions,setPage:sp,toast}),
+    notas:()=>ce(PNotas,{notes,saveNotes,toast,addTask,setPage:sp}),
+    habitos:()=>ce(PHabitos,{habits,saveHabits,logs,saveLogs,toast,tasks}),
+    analytics:()=>ce(PAnalytics,{tasks,habits,logs,fin,focoSessions,setPage:sp}),
+    relatorios:()=>ce(PRelatorios,{tasks,toast,habits,logs}),
+    definicoes:()=>ce(PDefs,{tasks,calEvents,loading,lastSync,setPage:sp}),
     memoria:()=>ce(PMemoria,{mem,saveMem,toast}),
-    prioridades:()=>ce(PPrios,{prios,savePrios,tasks,toast}),
-    calendario:()=>ce(PCal,{tasks,calEvents}),
-    revisao:()=>ce(PRevisao,{tasks,toast}),
-    previsoes:()=>stub("Previsoes","ti-telescope","#7C3AED","Um olhar sobre os proximos dias."),
-    templates:()=>ce(PTemplates,{addTask,toast}),
-    rotinas:()=>ce(PRotinas,{toast}),
-    pessoal:()=>ce(PPessoal,{pessoal,savePessoal,toast}),
-    financas:()=>ce(PFinancas,{fin,saveFin,toast}),
+    prioridades:()=>ce(PPrios,{prios,savePrios,tasks,toast,setPage:sp}),
+    calendario:()=>ce(PCal,{tasks,calEvents,habits,logs,setPage:sp}),
+    revisao:()=>ce(PRevisao,{tasks,toast,saveMem,mem,habits,logs}),
+    previsoes:()=>stub("Previsoes","ti-telescope","#7C3AED","Em breve: previsao AI para os proximos 7 dias."),
+    templates:()=>ce(PTemplates,{addTask,toast,setPage:sp}),
+    rotinas:()=>ce(PRotinas,{toast,setPage:sp}),
+    pessoal:()=>ce(PPessoal,{pessoal,savePessoal,toast,prios,savePrios}),
+    financas:()=>ce(PFinancas,{fin,saveFin,toast,setPage:sp}),
   };
 
   const PgComp=PageMap[pg]||PageMap.hoje;
