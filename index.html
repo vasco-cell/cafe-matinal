@@ -7,10 +7,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
 <style>
-html,body{height:100%;margin:0;padding:0;background:#FAF9F7;overflow:hidden}
-#bjr{height:100vh;display:flex;font-family:'DM Sans',system-ui,sans-serif;overflow:hidden}
-#err{display:none;position:fixed;inset:0;background:#fff;padding:24px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap;z-index:9999;overflow:auto;line-height:1.6}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:#FAF9F7}
+#bjr{position:fixed;inset:0;display:flex;font-family:'DM Sans',system-ui,sans-serif;overflow:hidden}
+#err{display:none;position:fixed;inset:0;background:#fff;padding:24px;font-family:monospace;font-size:13px;color:#c00;white-space:pre-wrap;z-index:9999;overflow:auto}
 
 *{box-sizing:border-box;margin:0;padding:0}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#E5E3DC;border-radius:2px}
@@ -36,31 +39,20 @@ a{text-decoration:none}
 .po{transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1s linear}
 
 </style>
-<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
-<script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
 </head>
 <body>
 <div id="err"></div>
-<div id="bjr"><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Georgia,serif;color:#9B9890;font-size:14px;gap:10px"><span style="display:inline-block;width:14px;height:14px;border:2px solid #ddd;border-top-color:#7C3AED;border-radius:50%;animation:spin 0.8s linear infinite"></span>A carregar...</div></div>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<div id="bjr"></div>
 <script>
-window.onerror=function(msg,src,line,col,err){
-  var d=document.getElementById('err');d.style.display='block';
-  d.textContent='ERRO: '+msg+'\nFicheiro: '+(src||'(inline)')+'\nLinha: '+line+'\n\n'+(err&&err.stack?err.stack:'sem stack');
-};
-window.addEventListener('unhandledrejection',function(e){
-  var d=document.getElementById('err');d.style.display='block';
-  d.textContent=(d.textContent?d.textContent+'\n---\n':'')+'PROMISE: '+(e.reason&&e.reason.stack?e.reason.stack:String(e.reason));
-});
+window.onerror=function(msg,src,line,col,err){var d=document.getElementById('err');d.style.display='block';d.textContent='ERRO: '+msg+'\nFicheiro: '+(src||'inline')+'\nLinha: '+line+'\n\n'+(err&&err.stack?err.stack:'');};
+window.addEventListener('unhandledrejection',function(e){var d=document.getElementById('err');d.style.display='block';d.textContent=(d.textContent?d.textContent+'\n---\n':'')+'PROMISE: '+(e.reason&&e.reason.stack?e.reason.stack:String(e.reason));});
 </script>
 <script>
 
 const {useState,useEffect,useRef,useCallback}=React;
 const ce=React.createElement;
-// Recharts replaced with lightweight CSS bars (no CDN dependency)
-const _ChartStub=({children,style})=>ce('div',{style:{padding:'8px 0',...(style||{})}},children);
-const LineChart=BarChart=PieChart=ResponsiveContainer=_ChartStub;
-const Line=Bar=Pie=Cell=XAxis=YAxis=Tooltip=()=>null;
+const _CS=({children,style})=>ce('div',{style:{padding:'8px 0',...(style||{})}},children);
+const LineChart=BarChart=PieChart=ResponsiveContainer=_CS;const Line=Bar=Pie=Cell=XAxis=YAxis=Tooltip=()=>null;
 const WH="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
 const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
@@ -418,10 +410,10 @@ function PAnalytics({tasks,habits,logs}){
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#BEE3F8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-chart-bar",style:{fontSize:20,color:"#2B6CB0"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Analytics"),ce("div",{className:"ps"},"Padrões e progresso no teu fluxo."))),
     ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},S.map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"12px 14px"}},ce("div",{style:{fontSize:9,fontWeight:600,letterSpacing:".06em",color:"#9B9890",marginBottom:6}},s.l),ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:28,color:s.c}},s.v)))),
-    ce("div",{className:"cd",style:{padding:14,marginBottom:12}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tarefas concluídas — últimos 30 dias"),ce('div',{style:{display:'flex',alignItems:'flex-end',gap:2,height:90,padding:'4px 0'}},last30.slice(-14).map((d,i)=>ce('div',{key:i,style:{flex:1,background:'#1A1A2E',borderRadius:'2px 2px 0 0',height:Math.max(4,(d.v/Math.max(1,...last30.map(x=>x.v)))*82)+'px',title:d.day+': '+d.v}})))),
+    ce("div",{className:"cd",style:{padding:14,marginBottom:12}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tarefas concluídas — últimos 30 dias"),ce('div',{style:{display:'flex',alignItems:'flex-end',gap:2,height:80}},last30.slice(-14).map((d,i)=>ce('div',{key:i,style:{flex:1,background:'#1A1A2E',borderRadius:'2px 2px 0 0',minHeight:2,height:Math.max(2,(d.v/Math.max(1,...last30.map(x=>x.v)))*76)+'px'}})))),
     ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Por prioridade"),byP.length>0?ce('div',{style:{display:'flex',flexDirection:'column',gap:6}},byP.map((d,i)=>ce('div',{key:i,style:{display:'flex',alignItems:'center',gap:8}},ce('div',{style:{width:8,height:8,borderRadius:'50%',background:d.c,flexShrink:0}}),ce('div',{style:{fontSize:12,flex:1}},d.name),ce('div',{style:{fontSize:12,fontWeight:500}},d.v)))):ce('p',{style:{textAlign:'center',color:'#9B9890',fontSize:12,padding:20}},'Sem dados')),
-      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tendência semanal"),ce('div',{style:{display:'flex',alignItems:'flex-end',gap:6,height:90,padding:'4px 0'}},wk.map((d,i)=>ce('div',{key:i,style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}},ce('div',{style:{width:'100%',background:'#7C3AED',borderRadius:'4px 4px 0 0',height:Math.max(4,(d.v/Math.max(1,...wk.map(x=>x.v)))*70)+'px'}}),ce('div',{style:{fontSize:9,color:'#9B9890'}},d.s)))))
+      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Por prioridade"),byP.length>0?ce('div',{style:{display:'flex',flexDirection:'column',gap:5}},byP.map((d,i)=>ce('div',{key:i,style:{display:'flex',alignItems:'center',gap:8}},ce('div',{style:{width:8,height:8,borderRadius:'50%',background:d.c}}),ce('span',{style:{fontSize:12,flex:1}},d.name),ce('span',{style:{fontSize:12,fontWeight:500}},d.v)))):ce('p',{style:{textAlign:'center',color:'#9B9890',fontSize:12,padding:20}},'Sem dados'),
+      ce("div",{className:"cd",style:{padding:14}},ce("div",{style:{fontWeight:500,fontSize:13,marginBottom:10}},"Tendência semanal"),ce('div',{style:{display:'flex',alignItems:'flex-end',gap:4,height:80}},wk.map((d,i)=>ce('div',{key:i,style:{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}},ce('div',{style:{width:'100%',background:'#7C3AED',borderRadius:'3px 3px 0 0',height:Math.max(2,(d.v/Math.max(1,...wk.map(x=>x.v)))*70)+'px'}}),ce('div',{style:{fontSize:9,color:'#9B9890'}},d.s)))))
     )
   )
 }
@@ -507,6 +499,20 @@ const NAV=[
 // ── APP ───────────────────────────────────────────────────────────────────────
 function App(){
   const[pg,setPg]=useState("hoje");
+
+  const[cuKey,setCuKey]=useState(localStorage.getItem('cu_key')||'');
+  const[showSetup,setShowSetup]=useState(!localStorage.getItem('cu_key'));
+  function saveKey(k){if(!k.trim())return;localStorage.setItem('cu_key',k.trim());setCuKey(k.trim());setShowSetup(false);fetchData();}
+  if(showSetup)return ce('div',{style:{height:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#FAF9F7',fontFamily:"'DM Sans',sans-serif"}},
+    ce('div',{style:{background:'#fff',borderRadius:16,padding:'32px 36px',maxWidth:420,width:'100%',border:'1px solid #E5E3DC',boxShadow:'0 8px 32px rgba(0,0,0,.08)'}},
+      ce('div',{style:{fontFamily:"'DM Serif Display',serif",fontSize:28,marginBottom:6,color:'#1A1A2E'}},'Café Matinal'),
+      ce('p',{style:{fontSize:13,color:'#6B6860',marginBottom:24,lineHeight:1.6}},'Para ligar ao teu ClickUp BBTOP20, introduz a tua API Key.\nEncontras em: ClickUp → Avatar → Settings → Apps → API Token'),
+      ce('input',{style:{width:'100%',padding:'10px 12px',border:'1px solid #E5E3DC',borderRadius:8,fontSize:13,fontFamily:'inherit',marginBottom:12,boxSizing:'border-box'},placeholder:'pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',value:cuKey,onChange:e=>setCuKey(e.target.value),onKeyDown:e=>e.key==='Enter'&&saveKey(cuKey)}),
+      ce('button',{onClick:()=>saveKey(cuKey),style:{width:'100%',padding:'11px',background:'#1A1A2E',color:'#fff',border:'none',borderRadius:8,fontSize:14,cursor:'pointer',fontFamily:'inherit',fontWeight:500}},'Ligar ao ClickUp →'),
+      ce('p',{style:{fontSize:11,color:'#9B9890',marginTop:12,textAlign:'center'}},'A key fica guardada localmente no teu browser')
+    )
+  );
+
   const[tasks,setTasks]=useState([]);
   const[calEvents,setCal]=useState([]);
   const[notes,setNotes]=useState([]);
@@ -529,28 +535,21 @@ function App(){
       .then(([no,h,l,p,m,pe,f])=>{if(no)setNotes(no);if(h)setHabits(h);if(l)setLogs(l);if(p)setPrios(p);if(m)setMem(m);if(pe)setPessoal(pe);if(f)setFin(f);});
   },[]);
 
-  // Fetch real data from Make
+  const CU_TEAM='24309030',CU_USER='206530598';
   async function fetchData(){
     setLoading(true);
-    try{
-      const d=await whF({action:"get_data"});
-      if(d){
-        if(d.tasks){
-          try{
-            const raw=typeof d.tasks==="string"?d.tasks:JSON.stringify(d.tasks);
-            // Remove trailing commas and parse
-            const cleaned=raw.trim().replace(/,\s*$|,\s*]/g,m=>m.includes("]")?"]":"");
-            const arr=JSON.parse(cleaned.startsWith("[")?cleaned:"["+cleaned+"]");
-            if(Array.isArray(arr)&&arr.length>0){setTasks(arr);ss("bj-tasks",arr);}
-            else{const c=await sg("bj-tasks");if(c)setTasks(c);}
-          }catch{const c=await sg("bj-tasks");if(c)setTasks(c);}
+    const key=localStorage.getItem('cu_key');
+    if(key){
+      try{
+        const r=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?assignees[]='+CU_USER+'&include_closed=false&subtasks=true&page=0',{headers:{'Authorization':key}});
+        if(r.ok){
+          const d=await r.json();
+          const arr=(d.tasks||[]).map(t=>({id:t.id,name:t.name,status:t.status?.status||'open',priority:({1:'urgent',2:'high',3:'normal',4:'low'}[t.priority?.priority]||'normal'),list:t.list?.name||'',due_date:t.due_date||'null',url:t.url||('https://app.clickup.com/t/'+t.id)}));
+          setTasks(arr);ss('bj-tasks',arr);
+          const t=new Date();setSync(String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'));
         }
-        if(d.events){
-          try{const ev=typeof d.events==="string"?JSON.parse(d.events):d.events;if(Array.isArray(ev))setCal(ev);}catch{}
-        }
-        const t=new Date();setSync(`${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`);
-      } else {const c=await sg("bj-tasks");if(c)setTasks(c);}
-    }catch{const c=await sg("bj-tasks");if(c)setTasks(c);}
+      }catch(e){const c=await sg('bj-tasks');if(c)setTasks(c);}
+    } else {const c=await sg('bj-tasks');if(c&&c.length)setTasks(c);}
     setLoading(false);setReady(true);
   }
 
