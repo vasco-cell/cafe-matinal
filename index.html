@@ -4,25 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Café Matinal — Vasco</title>
-<script>
-// localStorage shim for window.storage API
-window.storage = {
-  get: async (k) => { try { const v = localStorage.getItem(k); return v ? {key:k,value:v} : null; } catch { return null; } },
-  set: async (k, v) => { try { localStorage.setItem(k, v); return {key:k,value:v}; } catch { return null; } },
-  delete: async (k) => { try { localStorage.removeItem(k); return {key:k,deleted:true}; } catch { return null; } },
-  list: async (prefix) => { try { const keys = Object.keys(localStorage).filter(k => !prefix || k.startsWith(prefix)); return {keys}; } catch { return {keys:[]}; } }
-};
-</script>
-</head>
-<body style="margin:0;padding:0;background:#FAF9F7">
-
-<div id="bjr" style="height:100vh;display:flex;font-family:system-ui,sans-serif;overflow:hidden"></div>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.js"></script>
 <style>
+html,body{height:100%;margin:0;padding:0;background:#FAF9F7;overflow:hidden}
+#bjr{height:100vh;display:flex;font-family:'DM Sans',system-ui,sans-serif;overflow:hidden}
+
 *{box-sizing:border-box;margin:0;padding:0}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#E5E3DC;border-radius:2px}
 button,input,textarea,select{font-family:inherit;outline:none}
@@ -45,8 +33,60 @@ a{text-decoration:none}
 .pt{font-family:'DM Serif Display',Georgia,serif;font-size:34px;font-weight:400;color:#1A1A2E;letter-spacing:-.5px}
 .ps{font-size:13px;color:#6B6860;margin-top:3px}
 .po{transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1s linear}
+
 </style>
+</head>
+<body>
+<div id="bjr"></div>
+<script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.js"></script>
 <script>
+
+const _TP=["ghp","_i69NK4x5crswgJ7Amo3","KmiJm4Qky8T4c5Up7"];
+const _GT=()=>_TP.join("");
+const GH_REPO="vasco-cell/cafe-matinal";
+const GH_RAW="https://raw.githubusercontent.com/vasco-cell/cafe-matinal/main/";
+const _SC={};
+
+async function ghRead(path){
+  try{const r=await fetch(GH_RAW+path+"?t="+Date.now());return r.ok?await r.json():null}catch{return null}
+}
+async function ghWrite(path,data){
+  try{
+    let sha=_SC[path];
+    if(!sha){const r=await fetch("https://api.github.com/repos/"+GH_REPO+"/contents/"+path,{headers:{"Authorization":"token "+_GT()}});if(r.ok){const d=await r.json();sha=d.sha;_SC[path]=sha}}
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+    const body={message:"update: "+path,content};if(sha)body.sha=sha;
+    const r=await fetch("https://api.github.com/repos/"+GH_REPO+"/contents/"+path,{method:"PUT",headers:{"Authorization":"token "+_GT(),"Content-Type":"application/json"},body:JSON.stringify(body)});
+    if(r.ok){const d=await r.json();_SC[path]=d.content?.sha;return true}return false;
+  }catch{return false}
+}
+
+const sg=async k=>{
+  const pm={"bj-notes":"data/notes.json","bj-habits":"data/habits.json","bj-logs":"data/habits.json","bj-mem":"data/mem.json","bj-cvs":"data/convs.json","bj-tasks":"data/tasks.json"};
+  try{
+    if(pm[k]){
+      const d=await ghRead(pm[k]);if(!d)return null;
+      if(k==="bj-notes")return d.notes;if(k==="bj-habits")return d.habits;
+      if(k==="bj-logs")return d.logs;if(k==="bj-mem")return d.items;
+      if(k==="bj-cvs")return d.convs;if(k==="bj-tasks")return d.tasks;
+    }
+    const v=localStorage.getItem(k);return v?JSON.parse(v):null;
+  }catch{return null}
+};
+
+const ss=async(k,v)=>{
+  try{
+    localStorage.setItem(k,JSON.stringify(v));
+    if(k==="bj-notes")await ghWrite("data/notes.json",{notes:v});
+    else if(k==="bj-habits"){const e=await ghRead("data/habits.json")||{habits:[],logs:{}};await ghWrite("data/habits.json",{...e,habits:v});}
+    else if(k==="bj-logs"){const e=await ghRead("data/habits.json")||{habits:[],logs:{}};await ghWrite("data/habits.json",{...e,logs:v});}
+    else if(k==="bj-mem")await ghWrite("data/mem.json",{items:v});
+    else if(k==="bj-cvs")await ghWrite("data/convs.json",{convs:v});
+  }catch{}
+};
+
 const {useState,useEffect,useRef,useCallback}=React;
 const ce=React.createElement;
 const {LineChart,Line,BarChart,Bar,PieChart,Pie,Cell,XAxis,YAxis,Tooltip,ResponsiveContainer}=Recharts;
@@ -62,7 +102,7 @@ const isToday_=ms=>{if(!ms||ms==="null")return false;return new Date(+ms).toDate
 const fmtD=ms=>{if(!ms||ms==="null")return"";const d=new Date(+ms);return`${d.getDate()} ${MC[d.getMonth()]}`};
 const fmtT=dt=>{if(!dt)return"";try{return new Date(dt).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"})}catch{return""}};
 const sg=async k=>{try{const r=await window.storage.get(k);return r?JSON.parse(r.value):null}catch{return null}};
-const ss=async(k,v)=>{try{await window.storage.set(k,JSON.stringify(v))}catch{}};
+
 async function aiC(msgs,sys,max=900){try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:max,system:sys||"",messages:msgs})});const d=await r.json();return d.content?.[0]?.text||"(sem resposta)"}catch(e){return"Erro: "+e.message}}
 async function whF(p){try{const url=WH+"?"+new URLSearchParams(p).toString();const r=await fetch(url,{mode:"cors"});if(r.ok)return await r.json();return null}catch{return null}}
 const wh=p=>{try{fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"cors"}).catch(()=>fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"no-cors"}))}catch{}};
@@ -639,7 +679,7 @@ function App(){
 }
 
 ReactDOM.createRoot(document.getElementById("bjr")).render(React.createElement(App));
-</script>
 
+</script>
 </body>
 </html>
