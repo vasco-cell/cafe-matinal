@@ -2,8 +2,13 @@
   "convs": [
     {
       "id": "c1779646396097",
-      "title": "Nova conversa",
-      "messages": [],
+      "title": "O que fazer agora?",
+      "messages": [
+        {
+          "role": "user",
+          "content": "O que fazer agora?"
+        }
+      ],
       "ts": 1779646396097
     }
   ]
