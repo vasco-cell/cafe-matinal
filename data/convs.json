@@ -1,21 +1,6 @@
 {
   "convs": [
     {
-      "id": "c1779648858029",
-      "title": "Quais as tarefas atrasadas?",
-      "messages": [
-        {
-          "role": "user",
-          "content": "Quais as tarefas atrasadas?"
-        },
-        {
-          "role": "assistant",
-          "content": "# ⚠️ TAREFAS ATRASADAS (7)\n\nAqui está o que precisa de atenção **imediata**:\n\n1. **Enviar newsletter Podcast** 📧\n2. **CTAs / links redes** 🔗\n3. **EMAILS PÓS-VENDA KIT** 📬\n4. **Ficha técnica livro** 📄\n5. **EMAIL VENDA DO LIVRO A SUBS E INSCRIÇÕES DO LIVRO CESAR** 📚\n6. (Tarefas com baixa prioridade relativa)\n\n---\n\n## 🎯 O QUE FAZER AGORA?\n\nSendo **domingo**, recomendo:\n\n✅ **Prioridade 1:** Preparar o **email de venda do livro** + newsletter podcast (para enviar amanhã cedo)\n\n✅ **Prioridade 2:** Compilar a **ficha técnica do livro** (suporte para venda)\n\n✅ **Prioridade 3:** Validar **CTAs e links** nas redes (tudo direccionando correctamente)\n\n---\n\nQuer que ajude com alguma destas tarefas ou precisa de orientação para executá-las?"
-        }
-      ],
-      "ts": 1779648858029
-    },
-    {
       "id": "c1779646396097",
       "title": "O que fazer agora?",
       "messages": [
