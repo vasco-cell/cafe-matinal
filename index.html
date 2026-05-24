@@ -138,7 +138,7 @@ function TC({t,onUpdate,onAgent,showQ,aguarda,setAguardaItem}){
 }
 
 // ── HOJE ─────────────────────────────────────────────────────────────────────
-function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage}){
+function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage,darkMode,setDarkMode}){
   const n=new Date();const h=n.getHours();
   const gr=h<12?"Bom dia.":h<17?"Boa tarde.":"Boa noite.";
   const act=tasks.filter(t=>t.status!=="done");
@@ -1848,7 +1848,7 @@ function App(){
 
   const sp=setPg;
   const PageMap={
-    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage:()=>setTriageOpen(true),aguarda,setAguardaItem}),
+    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage:()=>setTriageOpen(true),aguarda,setAguardaItem,darkMode,setDarkMode}),
     assistente:()=>ce(PAssist,{tasks,calEvents,setPage:sp}),
     tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios,aguarda,setAguardaItem}),
     inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast,setPage:sp}),
