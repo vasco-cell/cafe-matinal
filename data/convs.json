@@ -27,6 +27,10 @@
         {
           "role": "user",
           "content": "quantos emails não lidos de hoje tenho?"
+        },
+        {
+          "role": "assistant",
+          "content": "Não tenho acesso direto à sua caixa de email ou ao número de mensagens não lidas.\n\nPara saber isso, precisa de:\n\n1. **Abrir o seu cliente de email** (Gmail, Outlook, etc.) e verificar o contador de não lidos\n2. **Ou me informar** quantos tem, para que eu possa ajudar a priorizá-los\n\n---\n\n**Enquanto isso:**\n\nComo é **domingo 24 de maio** e tem **7 tarefas atrasadas**, sugiro que foque no que é mais urgente **hoje**:\n\n🔴 **PRIORITÁRIO:**\n- Qual é o status da **newsletter Podcast**?\n- Os **emails pós-venda do KIT** precisam de ir hoje?\n- O **email de venda do LIVRO CÉSAR** está pronto?\n\nQuer que o ajude a organizar estas tarefas atrasadas primeiro?"
         }
       ],
       "ts": 1779646396097
