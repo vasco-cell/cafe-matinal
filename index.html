@@ -430,62 +430,23 @@ function PInbox({tasks,addTask,notes,saveNotes,mem,saveMem,toast}){
 // ── FOCO ─────────────────────────────────────────────────────────────────────
 function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
   const MODES=[{l:"Foco",s:25*60},{l:"Pausa curta",s:5*60},{l:"Pausa longa",s:15*60}];
-  const SOUNDS=[
-    {id:"silencio",l:"Silêncio",emoji:"🔇"},
-    {id:"chuva",l:"Chuva",emoji:"🌧"},
-    {id:"ondas",l:"Ondas",emoji:"🌊"},
-    {id:"floresta",l:"Floresta",emoji:"🌲"},
-    {id:"passaros",l:"Pássaros",emoji:"🐦"},
-    {id:"cafe",l:"Café",emoji:"☕"},
-    {id:"fogao",l:"Fogueiro",emoji:"🔥"},
-    {id:"lofi",l:"Lo-fi",emoji:"🎵"},
-  ];
-  const BASE="https://vasco-cell.github.io/cafe-matinal/sounds/";
-
   const[mode,setMode]=useState(0);
   const[sec,setSec]=useState(25*60);
   const[run,setRun]=useState(false);
   const[sess,setSess]=useState(0);
   const[dur,setDur]=useState(25);
   const[selTask,setSelTask]=useState("");
-  const[sound,setSound]=useState("silencio");
-  const[vol,setVol]=useState(0.5);
-  const[audioReady,setAudioReady]=useState(false);
   const iv=useRef(null);
-  const audioRef=useRef(null);
   const tot=dur*60;
   const pct=sec/tot;
   const R=88,CL=2*Math.PI*R;
   const actTasks=(tasks||[]).filter(t=>t.status!=="done");
-
-  function loadSound(id,v){
-    if(audioRef.current){audioRef.current.pause();audioRef.current.src="";}
-    if(id==="silencio"){audioRef.current=null;setAudioReady(false);return;}
-    const a=new Audio(BASE+id+".wav");
-    a.loop=true;a.volume=v||vol;
-    a.oncanplaythrough=()=>setAudioReady(true);
-    a.onerror=e=>console.warn("Audio load error:",e);
-    audioRef.current=a;
-    setAudioReady(false);
-    a.load();
-  }
-
-  useEffect(()=>{loadSound(sound,vol);},[sound]);
-
-  useEffect(()=>{
-    if(!audioRef.current)return;
-    if(run){audioRef.current.play().catch(e=>console.warn("Play error:",e));}
-    else{audioRef.current.pause();}
-  },[run]);
-
-  useEffect(()=>{if(audioRef.current)audioRef.current.volume=vol;},[vol]);
 
   useEffect(()=>{
     if(run){
       iv.current=setInterval(()=>setSec(s=>{
         if(s<=1){
           clearInterval(iv.current);setRun(false);
-          if(audioRef.current)audioRef.current.pause();
           setSess(n=>{
             if(saveFocoSessions)saveFocoSessions([...(focoSessions||[]),{id:"f"+Date.now(),dur,task:selTask||null,date:new Date().toDateString()}]);
             return n+1;
@@ -499,14 +460,11 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
     return()=>clearInterval(iv.current);
   },[run,tot]);
 
-  useEffect(()=>{return()=>{if(audioRef.current){audioRef.current.pause();audioRef.current.src="";}};},[]);
-
   function changeMode(i){setMode(i);setSec(MODES[i].s);setRun(false);setDur(Math.floor(MODES[i].s/60));}
   function changeDur(d){setDur(d);setSec(d*60);setRun(false);}
-
   const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss_=String(sec%60).padStart(2,"0");
 
-  return ce("div",{style:{height:"100%",minHeight:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"20px 24px",color:"#fff",overflowY:"auto"}},
+  return ce("div",{style:{height:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 24px 0",color:"#fff",overflowY:"auto"}},
 
     ce("div",{style:{display:"flex",background:"rgba(255,255,255,.1)",borderRadius:30,padding:3,marginBottom:24,flexShrink:0}},
       MODES.map((md,i)=>ce("button",{key:md.l,onClick:()=>changeMode(i),style:{padding:"7px 16px",borderRadius:24,border:"none",background:mode===i?"#fff":"transparent",color:mode===i?"#1A1A2E":"rgba(255,255,255,.7)",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},md.l))
@@ -515,7 +473,7 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
     ce("div",{style:{position:"relative",width:200,height:200,marginBottom:20,flexShrink:0}},
       ce("svg",{viewBox:"0 0 210 210",style:{width:"100%",height:"100%",position:"absolute",inset:0}},
         ce("circle",{cx:105,cy:105,r:R,fill:"none",stroke:"rgba(255,255,255,.1)",strokeWidth:10}),
-        ce("circle",{cx:105,cy:105,r:R,fill:"none",stroke:run?"#7C3AED":"#A78BFA",strokeWidth:10,strokeDasharray:CL,strokeDashoffset:CL*(1-pct),strokeLinecap:"round",style:{transform:"rotate(-90deg)",transformOrigin:"50% 50%",transition:"stroke-dashoffset .9s linear"}})
+        ce("circle",{cx:105,cy:105,r:R,fill:"none",stroke:run?"#1DB954":"#A78BFA",strokeWidth:10,strokeDasharray:CL,strokeDashoffset:CL*(1-pct),strokeLinecap:"round",style:{transform:"rotate(-90deg)",transformOrigin:"50% 50%",transition:"stroke-dashoffset .9s linear"}})
       ),
       ce("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
         ce("div",{style:{fontFamily:"monospace",fontSize:46,fontWeight:500,letterSpacing:3,lineHeight:1}},mm+":"+ss_),
@@ -524,45 +482,44 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
     ),
 
     ce("div",{style:{display:"flex",gap:8,marginBottom:16}},
-      [25,45,60,90].map(d=>ce("button",{key:d,onClick:()=>changeDur(d),style:{padding:"5px 14px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:dur===d?"#7C3AED":"transparent",color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},d+"min"))
+      [25,45,60,90].map(d=>ce("button",{key:d,onClick:()=>changeDur(d),style:{padding:"5px 14px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:dur===d?"rgba(255,255,255,.15)":"transparent",color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},d+"min"))
     ),
 
     ce("div",{style:{display:"flex",gap:10,marginBottom:20}},
-      ce("button",{onClick:()=>setRun(r=>!r),style:{padding:"11px 36px",borderRadius:12,border:"none",background:run?"rgba(255,255,255,.15)":"#7C3AED",color:"#fff",fontSize:15,fontWeight:500,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},run?"Pausar":"Iniciar"),
-      ce("button",{onClick:()=>{setRun(false);setSec(tot);if(audioRef.current)audioRef.current.pause();},style:{padding:"11px 18px",borderRadius:12,border:"1px solid rgba(255,255,255,.2)",background:"transparent",color:"#fff",fontSize:15,cursor:"pointer",fontFamily:"inherit"}},"↺")
+      ce("button",{onClick:()=>setRun(r=>!r),style:{padding:"11px 36px",borderRadius:12,border:"none",background:run?"rgba(255,255,255,.15)":"#1DB954",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"inherit",transition:"all .2s",letterSpacing:.5}},run?"⏸ Pausar":"▶ Iniciar"),
+      ce("button",{onClick:()=>{setRun(false);setSec(tot);},style:{padding:"11px 18px",borderRadius:12,border:"1px solid rgba(255,255,255,.2)",background:"transparent",color:"#fff",fontSize:15,cursor:"pointer",fontFamily:"inherit"}},"↺")
     ),
 
     ce("div",{style:{width:"100%",maxWidth:420,marginBottom:16}},
       ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:8,letterSpacing:".06em"}},"TAREFA DE FOCO"),
-      ce("select",{value:selTask,onChange:e=>setSelTask(e.target.value),style:{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:13,fontFamily:"inherit",cursor:"pointer",outline:"none"}},
+      ce("select",{value:selTask,onChange:e=>setSelTask(e.target.value),style:{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:13,fontFamily:"inherit",cursor:"pointer",outline:"none"}},
         ce("option",{value:"",style:{background:"#1A1A2E"}},"— Escolher tarefa —"),
         actTasks.map(t=>ce("option",{key:t.id,value:t.id,style:{background:"#1A1A2E"}},
           (t.priority==="urgent"?"🔴 ":t.priority==="high"?"🟠 ":"")+"["+t.list+"] "+t.name
         ))
+      ),
+      selTask&&ce("div",{style:{marginTop:6,fontSize:12,color:"#A78BFA",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+        "✦ "+(actTasks.find(t=>t.id===selTask)?.name||"")
       )
     ),
 
-    ce("div",{style:{width:"100%",maxWidth:420,marginBottom:12}},
-      ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}},
-        ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",letterSpacing:".06em"}},"SOM AMBIENTE"),
-        sound!=="silencio"&&ce("div",{style:{fontSize:11,color:audioReady?"#A78BFA":"rgba(255,255,255,.4)"}},audioReady?"● pronto":"⟳ a carregar...")
-      ),
-      ce("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
-        SOUNDS.map(s=>ce("button",{key:s.id,onClick:()=>setSound(s.id),
-          style:{padding:"7px 13px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:sound===s.id?"rgba(124,58,237,.7)":"rgba(255,255,255,.06)",color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5,transition:"all .15s"}},
-          s.emoji,"  ",s.l
-        ))
-      ),
-      sound!=="silencio"&&ce("div",{style:{display:"flex",alignItems:"center",gap:10,marginTop:10}},
-        ce("i",{className:"ti ti-volume",style:{fontSize:14,color:"rgba(255,255,255,.4)"}}),
-        ce("input",{type:"range",min:0.05,max:1,step:0.05,value:vol,onChange:e=>setVol(parseFloat(e.target.value)),style:{flex:1,accentColor:"#7C3AED"}}),
-        ce("i",{className:"ti ti-volume-3",style:{fontSize:14,color:"rgba(255,255,255,.4)"}}),
-        ce("span",{style:{fontSize:11,color:"rgba(255,255,255,.4)",minWidth:30,textAlign:"right"}},Math.round(vol*100)+"%")
-      )
+    ce("div",{style:{width:"100%",maxWidth:420,marginBottom:20}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
+        ce("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"#1DB954"},ce("path",{d:"M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"})),
+        ce("span",{style:{fontSize:11,color:"rgba(255,255,255,.5)",letterSpacing:".06em"}}),"SPOTIFY · PLAYLIST DE FOCO"),
+      ce("iframe",{
+        src:"https://open.spotify.com/embed/playlist/3Xea2Lx3iyn9C2lpzC0MVy?utm_source=generator&theme=0",
+        width:"100%",
+        height:152,
+        frameBorder:"0",
+        allow:"autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",
+        loading:"lazy",
+        style:{borderRadius:12,border:"none"}
+      })
     ),
 
-    focoSessions&&focoSessions.length>0&&ce("div",{style:{width:"100%",maxWidth:420,marginTop:4,textAlign:"center"}},
-      ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.35)"}},
+    focoSessions&&focoSessions.length>0&&ce("div",{style:{width:"100%",maxWidth:420,marginBottom:16,textAlign:"center"}},
+      ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.3)"}},
         "Total: "+focoSessions.length+" sessão"+(focoSessions.length!==1?"s":"")+" · "+focoSessions.reduce((s,x)=>s+(x.dur||25),0)+" min focado"
       )
     )
@@ -2015,7 +1972,7 @@ function App(){
             },
             onDragEnd:()=>setDragging(null),
             style:{opacity:isDragging?.4:1,transition:"opacity .15s",cursor:"grab"}},
-            ce("button",{className:"bn"+(pg===nav.id?" on":""),onClick:()=>setPg(nav.id),style:{width:"100%"}},
+            ce("button",{className:"bn"+(pg===nav.id?" on":""),onClick:()=>{setPg(nav.id);setNavOpen(false);},style:{width:"100%"}},
               ce("i",{className:`ti ${nav.icon}`,style:{fontSize:15,color:pg===nav.id?"#fff":nav.c}}),
               ce("span",{style:{flex:1}},nav.label),
               nav.id==="inbox"&&inbox_c>0&&ce("span",{style:{fontSize:9,background:pg==="inbox"?"rgba(255,255,255,.2)":"#EDE9FE",color:pg==="inbox"?"#fff":"#7C3AED",padding:"1px 5px",borderRadius:10}},inbox_c),
