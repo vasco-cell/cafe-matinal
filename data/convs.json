@@ -2,8 +2,17 @@
   "convs": [
     {
       "id": "c1779547310868",
-      "title": "Nova conversa",
-      "messages": [],
+      "title": "O que fazer agora?",
+      "messages": [
+        {
+          "role": "user",
+          "content": "O que fazer agora?"
+        },
+        {
+          "role": "assistant",
+          "content": "Erro: Failed to fetch"
+        }
+      ],
       "ts": 1779547310868
     }
   ]
