@@ -2204,8 +2204,11 @@ function App(){
   }
   async function genBrief(ts){
     const dk=new Date().toDateString();
+    // Check localStorage first to avoid sending email on every page refresh
+    const lsCache=localStorage.getItem("bj-brief-sent");
+    if(lsCache===dk)return; // Already sent today
     const cached=await sg('bj-brief');
-    if(cached&&cached.date===dk){setDailyBrief(cached);return;}
+    if(cached&&cached.date===dk){setDailyBrief(cached);localStorage.setItem("bj-brief-sent",dk);return;}
     const now=new Date();
     const parts=(ts||[]).slice(0,20).map(function(t){
       var late=t.due_date&&t.due_date!=='null'&&(new Date(+t.due_date))<now;
