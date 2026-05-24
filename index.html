@@ -340,6 +340,19 @@ function PAssist({tasks,calEvents,pessoal,setPage}){
 // ── TAREFAS ──────────────────────────────────────────────────────────────────
 function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
   const[status,setStatus]=useState("abertas");
+  const[newOpen,setNewOpen]=useState(false);
+  const[tName,setTName]=useState("");
+  const[tPrio,setTPrio]=useState("normal");
+  const[tList,setTList]=useState("BBTOP20");
+  const[tDate,setTDate]=useState("");
+  async function createT(){
+    if(!tName.trim())return;
+    const due=tDate?String(new Date(tDate).getTime()):"null";
+    await whF({action:"create",task_name:tName,priority:tPrio,list:tList});
+    addTask({id:"l"+Date.now(),name:tName,status:"todo",priority:tPrio,list:tList,due_date:due});
+    toast("Criada em "+tList);
+    setTName("");setTDate("");setNewOpen(false);
+  }
   const[prio,setPrio]=useState("todas");
   const[sort,setSort]=useState("data");
   const[newT,setNT]=useState("");const[nP,setNP]=useState("normal");
@@ -362,7 +375,7 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
     ce("div",{style:{flexShrink:0}},
       ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}},
         ce("div",null,ce("div",{className:"pt"},"Tarefas"),ce("div",{className:"ps"},"Captura o que importa e liberta a mente.")),
-        ce("button",{className:"bt dk",onClick:()=>setNT(" "),style:{gap:6}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Nova")
+        ce("button",{className:"bt dk",onClick:()=>setNewOpen(true),style:{gap:6}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Nova tarefa")
       ),
       late.length>0&&ce("div",{style:{padding:"8px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:10,display:"flex",alignItems:"center",gap:8}},
         ce("i",{className:"ti ti-alert-triangle",style:{fontSize:14}}),late.length+" tarefa"+(late.length!==1?"s":"")+" em atraso"
@@ -418,6 +431,26 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
           ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 6px"}},"✦")
         )
       ))
+    ),
+    newOpen&&ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},onClick:e=>{if(e.target===e.currentTarget)setNewOpen(false);}},
+      ce("div",{style:{background:"var(--bg-app)",borderRadius:12,padding:24,width:420,maxWidth:"90vw",border:"1px solid var(--border)"}},
+        ce("div",{style:{fontSize:15,fontWeight:600,marginBottom:14,display:"flex",justifyContent:"space-between"}},"Nova tarefa",ce("button",{onClick:()=>setNewOpen(false),style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},"x")),
+        ce("input",{className:"ip",value:tName,autoFocus:true,onChange:e=>setTName(e.target.value),onKeyDown:e=>{if(e.key==="Enter")createT();},placeholder:"Nome da tarefa...",style:{marginBottom:10}}),
+        ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}},
+          ce("div",null,ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:3}},"Lista"),
+            ce("select",{className:"ip",value:tList,onChange:e=>setTList(e.target.value),style:{fontSize:12}},
+              ["BBTOP20","BOS","Podcast","Marketing","Social Media","Pessoal"].map(l=>ce("option",{key:l,value:l},l)))),
+          ce("div",null,ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:3}},"Prioridade"),
+            ce("select",{className:"ip",value:tPrio,onChange:e=>setTPrio(e.target.value),style:{fontSize:12}},
+              ce("option",{value:"urgent"},"Urgente"),ce("option",{value:"high"},"Alta"),
+              ce("option",{value:"normal"},"Normal"),ce("option",{value:"low"},"Baixa")))
+        ),
+        ce("div",{style:{marginBottom:14}},ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:3}},"Data limite"),
+          ce("input",{className:"ip",type:"date",value:tDate,onChange:e=>setTDate(e.target.value),style:{fontSize:12}})),
+        ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end"}},
+          ce("button",{className:"bt",onClick:()=>setNewOpen(false)},"Cancelar"),
+          ce("button",{className:"bt dk",onClick:createT,disabled:!tName.trim()},ce("i",{className:"ti ti-plus",style:{fontSize:12}}),"  Criar"))
+      )
     )
   );
 }
