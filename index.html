@@ -804,9 +804,27 @@ function PPrios({prios,savePrios,tasks,toast}){
   );
 }
 
-function PCal({tasks,calEvents,habits,logs,setPage}){
+function PCal({tasks,calEvents,habits,logs,setPage,addTask,toast}){
   const n=new Date();
   const[yr,setYr]=useState(n.getFullYear());
+  const[newItem,setNewItem]=useState(null); // {date, type:'tarefa'|'evento'}
+  const[niName,setNiName]=useState('');
+  const[niPrio,setNiPrio]=useState('normal');
+  const[niTime,setNiTime]=useState('09:00');
+  async function createFromCal(){
+    if(!niName.trim()||!newItem)return;
+    if(newItem.type==='tarefa'){
+      const due=String(newItem.date.getTime());
+      await whF({action:'create',task_name:niName,priority:niPrio});
+      if(addTask)addTask({id:'l'+Date.now(),name:niName,status:'todo',priority:niPrio,list:'BBTOP20',due_date:due});
+      if(toast)toast('Tarefa criada para '+newItem.date.toLocaleDateString('pt-PT'));
+    } else {
+      await whF({action:'create_event',title:niName,date:newItem.date.toISOString().slice(0,10),time:niTime});
+      if(toast)toast('Evento enviado para o calendario');
+    }
+    setNiName('');setNewItem(null);
+  }
+
   const[mo,setMo]=useState(n.getMonth());
   const[selDay,setSel]=useState(n.getDate());
   const[view,setView]=useState("month"); // month | week | agenda
@@ -968,7 +986,23 @@ function PCal({tasks,calEvents,habits,logs,setPage}){
         ce("button",{className:"bt",onClick:()=>{setYr(n.getFullYear());setMo(n.getMonth());setSel(n.getDate());},style:{fontSize:11}},"Hoje")
       )
     ),
-    view==="month"?ce(MonthView):view==="week"?ce(WeekView):ce(AgendaView)
+    view==="month"?ce(MonthView):view==="week"?ce(WeekView):ce(AgendaView),
+    newItem&&ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},onClick:e=>{if(e.target===e.currentTarget)setNewItem(null);}},
+      ce("div",{style:{background:"var(--bg-app)",borderRadius:12,padding:24,width:400,maxWidth:"92vw",border:"1px solid var(--border)"}},
+        ce("div",{style:{fontSize:15,fontWeight:600,marginBottom:12,display:"flex",justifyContent:"space-between"}},
+          (newItem?.type==="tarefa"?"Nova tarefa":"Novo evento")+" · "+(newItem?.date.toLocaleDateString("pt-PT",{day:"numeric",month:"short"})||""),
+          ce("button",{onClick:()=>setNewItem(null),style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},"x")),
+        ce("input",{className:"ip",value:niName,autoFocus:true,onChange:e=>setNiName(e.target.value),onKeyDown:e=>{if(e.key==="Enter")createFromCal();},placeholder:newItem?.type==="tarefa"?"Nome da tarefa...":"Nome do evento...",style:{marginBottom:10}}),
+        newItem?.type==="tarefa"?ce("select",{className:"ip",value:niPrio,onChange:e=>setNiPrio(e.target.value),style:{marginBottom:14,fontSize:12}},
+          ce("option",{value:"urgent"},"Urgente"),ce("option",{value:"high"},"Alta"),
+          ce("option",{value:"normal"},"Normal"),ce("option",{value:"low"},"Baixa")
+        ):ce("input",{className:"ip",type:"time",value:niTime,onChange:e=>setNiTime(e.target.value),style:{marginBottom:14,fontSize:12}}),
+        ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end"}},
+          ce("button",{className:"bt",onClick:()=>setNewItem(null)},"Cancelar"),
+          ce("button",{className:"bt dk",onClick:createFromCal,disabled:!niName.trim()},
+            ce("i",{className:"ti ti-plus",style:{fontSize:12}})," Criar"))
+      )
+    )
   );
 }
 function PMemoria({mem,saveMem,toast}){
@@ -2168,7 +2202,7 @@ function App(){
     definicoes:()=>ce(PDefs,{tasks,calEvents,loading,lastSync,setPage:sp}),
     memoria:()=>ce(PMemoria,{mem,saveMem,toast}),
     prioridades:()=>ce(PPrios,{prios,savePrios,tasks,toast,setPage:sp}),
-    calendario:()=>ce(PCal,{tasks,calEvents,habits,logs,setPage:sp}),
+    calendario:()=>ce(PCal,{tasks,calEvents,habits,logs,setPage:sp,addTask,toast}),
     revisao:()=>ce(PRevisao,{tasks,toast,saveMem,mem,habits,logs}),
     previsoes:()=>ce(PPrevisoes,{tasks,habits,logs,fin,toast}),
     templates:()=>ce(PTemplates,{addTask,toast,setPage:sp}),
