@@ -87,7 +87,7 @@ const fmtD=ms=>{if(!ms||ms==="null")return"";const d=new Date(+ms);return`${d.ge
 const fmtT=dt=>{if(!dt)return"";try{return new Date(dt).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"})}catch{return""}};
 const sg=async k=>{const pm={'bj-notes':'data/notes.json','bj-habits':'data/habits.json','bj-logs':'data/habits.json','bj-mem':'data/mem.json','bj-cvs':'data/convs.json','bj-tasks':'data/tasks.json'};try{if(pm[k]){const r=await fetch('https://raw.githubusercontent.com/vasco-cell/cafe-matinal/main/'+pm[k]+'?t='+Date.now());if(!r.ok){const v=localStorage.getItem(k);return v?JSON.parse(v):null;}const d=await r.json();if(k==='bj-notes')return d.notes;if(k==='bj-habits')return d.habits;if(k==='bj-logs')return d.logs;if(k==='bj-mem')return d.items;if(k==='bj-cvs')return d.convs;if(k==='bj-tasks')return d.tasks;}const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
 const ss=async(k,v)=>{const _t=['ghp', '_i69NK4x5cr', 'swgJ7Amo3Km', 'iJm4Qky8T4c5Up7'];const _gt=()=>_t.join('');const _repo='vasco-cell/cafe-matinal';async function _gw(p,d){try{const r1=await fetch('https://api.github.com/repos/'+_repo+'/contents/'+p,{headers:{'Authorization':'token '+_gt()}});let sha=r1.ok?(await r1.json()).sha:null;const ct=btoa(unescape(encodeURIComponent(JSON.stringify(d,null,2))));const b={message:'update: '+p,content:ct};if(sha)b.sha=sha;await fetch('https://api.github.com/repos/'+_repo+'/contents/'+p,{method:'PUT',headers:{'Authorization':'token '+_gt(),'Content-Type':'application/json'},body:JSON.stringify(b)});}catch{}}try{localStorage.setItem(k,JSON.stringify(v));if(k==='bj-notes')_gw('data/notes.json',{notes:v});else if(k==='bj-habits'){fetch('https://raw.githubusercontent.com/'+_repo+'/main/data/habits.json?t='+Date.now()).then(r=>r.json()).then(e=>_gw('data/habits.json',{...e,habits:v})).catch(()=>_gw('data/habits.json',{habits:v,logs:{}}));}else if(k==='bj-logs'){fetch('https://raw.githubusercontent.com/'+_repo+'/main/data/habits.json?t='+Date.now()).then(r=>r.json()).then(e=>_gw('data/habits.json',{...e,logs:v})).catch(()=>_gw('data/habits.json',{habits:[],logs:v}));}else if(k==='bj-mem')_gw('data/mem.json',{items:v});else if(k==='bj-cvs')_gw('data/convs.json',{convs:v});}catch{}};
-async function aiC(msgs,sys,max=900){try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:max,system:sys||"",messages:msgs})});const d=await r.json();return d.content?.[0]?.text||"(sem resposta)"}catch(e){return"Erro: "+e.message}}
+async function aiC(msgs,sys,max=900){try{const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":"sk-ant-api03-iT3fStQCSXgl5qwsNMvoSogLl-vE3Z-LsdYsnnKMLzs4US9C17aw3ZLADgu4xB5s1a3zH__J_JabSYxdqLZg-2HiwiQAA","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:max,system:sys||"",messages:msgs})});const d=await r.json();return d.content?.[0]?.text||"(sem resposta)"}catch(e){return"Erro: "+e.message}}
 async function whF(p){try{const url=WH+"?"+new URLSearchParams(p).toString();const r=await fetch(url,{mode:"cors"});if(r.ok)return await r.json();return null}catch{return null}}
 const wh=p=>{try{fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"cors"}).catch(()=>fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"no-cors"}))}catch{}};
 function Sp(){return ce("span",{className:"sp"})}
@@ -630,7 +630,7 @@ function PAnalytics({tasks,habits,logs,fin,focoSessions,setPage}){
 function PRelatorios({tasks,toast,habits,logs}){
   const[tab,setTab]=useState("semana");const[reps,setReps]=useState([]);const[ld,setLd]=useState(false);
   useEffect(()=>{sg("bj-reps").then(r=>{if(r)setReps(r)});},[]);
-  async function gen(){setLd(true);const n=new Date();const dn=tasks.filter(t=>t.status==="done").slice(0,8).map(t=>t.name).join(", ");const hd=(habits||[]).filter(h=>{const l=(logs||{})[new Date().toDateString()]||{};return l[h.id];}).length;const op=tasks.filter(t=>t.status!=="done").slice(0,8).map(t=>t.name).join(", ");const period=tab==="semana"?"semanal ("+n.getDate()+" "+MC[n.getMonth()]+")":"mensal ("+MESES[n.getMonth()]+" "+n.getFullYear()+")";const txt=await aiC([{role:"user",content:`Relatório ${period} do Vasco (BBTOP20). Concluídas: ${dn||"nenhuma"}. Em aberto: ${op||"nenhuma"}. Formato: resumo executivo, conquistas, desafios, próxima semana. Pt-pt.`}],"Assistente BBTOP20.",900);const r={id:`r${Date.now()}`,title:`Relatório ${period}`,content:txt,date:new Date().toDateString()};const u=[r,...reps].slice(0,8);setReps(u);ss("bj-reps",u);setLd(false);toast("Gerado ✓")}
+  async function gen(){setLd(true);const n=new Date();const done=tasks.filter(t=>t.status==="done").slice(0,8).map(t=>t.name).join(", ")||"nenhuma";const open2=tasks.filter(t=>t.status!=="done").slice(0,8).map(t=>t.name+(t.priority==="urgent"?" (urgente)":"")).join(", ")||"nenhuma";const hd=(habits||[]).filter(h=>{const l=(logs||{})[n.toDateString()]||{};return l[h.id];}).length;const period=tab==="semana"?"semanal de "+n.getDate()+" "+MC[n.getMonth()]+" "+n.getFullYear():"mensal de "+MESES[n.getMonth()]+" "+n.getFullYear();const prompt="Relatório "+period+" para Vasco (BBTOP20 / Borja on Stocks, Investidor Prudente). Concluídas: "+done+". Abertas: "+open2+". Hábitos hoje: "+hd+"/"+(habits||[]).length+". Escreve em português europeu: resumo executivo, conquistas, desafios, próximos passos. Tom direto, 200-300 palavras, sem JSON, só texto.";const res=await aiC([{role:"user",content:prompt}],"Assistente BBTOP20 pt-pt.",800);if(res.startsWith("Erro:")){toast(res);setLd(false);return;}const r={id:"r"+Date.now(),period,content:res,created:Date.now()};saveRels([r,...(rels||[]).slice(0,9)]);setLd(false);}
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:14}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#BEE3F8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-chart-line",style:{fontSize:20,color:"#2B6CB0"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Relatórios"),ce("div",{className:"ps"},"Narrativas sobre o teu trabalho."))),
@@ -1441,6 +1441,33 @@ function PDefsOLD({tasks,calEvents,loading,lastSync}){
 
 function FloatingAssistant({tasks,recentTasks,calEvents,habits,logs,fin,prios,pessoal,addTask,updateTask,setPage,toast}){
   const[open,setOpen]=useState(false);
+  const[pos,setPos]=useState(()=>{try{const v=localStorage.getItem("bj-fab-pos");return v?JSON.parse(v):{right:24,bottom:24};}catch{return{right:24,bottom:24};}});
+  const dragRef=useRef(null);
+  const isDragging=useRef(false);
+  const dragStart=useRef({x:0,y:0,right:24,bottom:24});
+  function onFabMouseDown(e){
+    if(e.button!==0)return;
+    isDragging.current=false;
+    dragStart.current={x:e.clientX,y:e.clientY,right:pos.right,bottom:pos.bottom};
+    function onMove(e2){
+      const dx=dragStart.current.x-e2.clientX;
+      const dy=dragStart.current.y-e2.clientY;
+      if(Math.abs(dx)>4||Math.abs(dy)>4)isDragging.current=true;
+      if(!isDragging.current)return;
+      const nr=Math.max(8,Math.min(window.innerWidth-60,dragStart.current.right+dx));
+      const nb=Math.max(8,Math.min(window.innerHeight-60,dragStart.current.bottom+dy));
+      setPos({right:nr,bottom:nb});
+    }
+    function onUp(){
+      window.removeEventListener("mousemove",onMove);
+      window.removeEventListener("mouseup",onUp);
+      try{localStorage.setItem("bj-fab-pos",JSON.stringify(pos));}catch{}
+      setTimeout(()=>{isDragging.current=false;},50);
+    }
+    window.addEventListener("mousemove",onMove);
+    window.addEventListener("mouseup",onUp);
+  }
+
   const[msgs,setMsgs]=useState([]);
   const[inp,setInp]=useState("");
   const[ld,setLd]=useState(false);
@@ -1482,13 +1509,7 @@ Responde SEMPRE em portugues europeu. Age diretamente sem pedir confirmacao exce
 
     try{
       const history=newMsgs.slice(-8).map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.content}));
-      const res=await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:600,system:SYSTEM_PROMPT,messages:history})
-      });
-      const data=await res.json();
-      const text=(data.content||[]).find(b=>b.type==="text")?.text||"Sem resposta.";
+      const text=await aiC(history,SYSTEM_PROMPT,600);
 
       // Try to parse as action JSON
       let actionResult=null;
@@ -1579,8 +1600,9 @@ Responde SEMPRE em portugues europeu. Age diretamente sem pedir confirmacao exce
   return ce("div",null,
     // Floating button
     ce("button",{
-      onClick:()=>setOpen(!open),
-      style:{position:"fixed",bottom:24,right:24,width:52,height:52,borderRadius:"50%",
+      onMouseDown:onFabMouseDown,
+      onClick:()=>{if(!isDragging.current)setOpen(!open);},
+      style:{position:"fixed",bottom:pos.bottom,right:pos.right,cursor:isDragging.current?"grabbing":"grab",width:52,height:52,borderRadius:"50%",
         background:"#7C3AED",border:"none",cursor:"pointer",
         display:"flex",alignItems:"center",justifyContent:"center",
         boxShadow:"0 4px 20px rgba(124,58,237,.4)",zIndex:1000,
@@ -1593,7 +1615,7 @@ Responde SEMPRE em portugues europeu. Age diretamente sem pedir confirmacao exce
         display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid #FAF9F7"}},badge)
     ),
     // Panel
-    open&&ce("div",{style:{position:"fixed",bottom:86,right:24,width:380,maxWidth:"calc(100vw - 48px)",
+    open&&ce("div",{style:{position:"fixed",bottom:pos.bottom+60,right:Math.max(8,pos.right-180),width:380,maxWidth:"calc(100vw - 48px)",
       height:520,background:"#fff",borderRadius:16,boxShadow:"0 8px 40px rgba(0,0,0,.18)",
       zIndex:999,display:"flex",flexDirection:"column",overflow:"hidden",
       border:"1px solid var(--border)",animation:"fU .2s"}},
