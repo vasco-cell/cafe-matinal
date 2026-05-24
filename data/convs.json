@@ -7,6 +7,14 @@
         {
           "role": "user",
           "content": "O que fazer agora?"
+        },
+        {
+          "role": "assistant",
+          "content": "(sem resposta)"
+        },
+        {
+          "role": "user",
+          "content": "quantos emails tenho por ler de sexta feira dia 22/05?"
         }
       ],
       "ts": 1779646396097
