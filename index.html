@@ -1255,6 +1255,238 @@ function PDefsOLD({tasks,calEvents,loading,lastSync}){
 }
 
 
+
+function FloatingAssistant({tasks,recentTasks,calEvents,habits,logs,fin,prios,addTask,updateTask,setPage,toast}){
+  const[open,setOpen]=useState(false);
+  const[msgs,setMsgs]=useState([]);
+  const[inp,setInp]=useState("");
+  const[ld,setLd]=useState(false);
+  const[badge,setBadge]=useState(0);
+  const endRef=useRef(null);
+  const CU_KEY=localStorage.getItem("cu_key")||"";
+  const WEBHOOK="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
+
+  useEffect(()=>{if(endRef.current)endRef.current.scrollIntoView({behavior:"smooth"});},[msgs]);
+  useEffect(()=>{if(!open&&msgs.length>0)setBadge(b=>b+1);},[msgs.length]);
+  useEffect(()=>{if(open)setBadge(0);},[open]);
+
+  const SYSTEM_PROMPT=`Es o assistente pessoal de acao do Vasco (BBTOP20 - Borja on Stocks + Investidor Prudente com Cesar Borja).
+Hoje: ${new Date().toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}.
+Tarefas abertas (${tasks.filter(t=>t.status!=="done").length}): ${tasks.filter(t=>t.status!=="done").slice(0,10).map(t=>t.name+"["+t.priority+"]").join(", ")||"nenhuma"}.
+Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}.
+Financas este mes: saldo ${(fin||[]).filter(t=>{const m=new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0");return t.month===m;}).reduce((s,t)=>s+(t.type==="receita"?+t.amount:-+t.amount),0).toFixed(0)} euros.
+
+Podes executar ACOES REAIS. Quando o utilizador pede uma acao, devolves JSON estruturado para execucao.
+Formato de resposta quando ha acao a executar:
+{"action":"TIPO","params":{...},"mensagem":"descricao do que fizeste"}
+
+Tipos de acao disponiveis:
+- criar_tarefa: {"action":"criar_tarefa","params":{"name":"...","priority":"urgent|high|normal|low"},"mensagem":"..."}
+- fechar_tarefa: {"action":"fechar_tarefa","params":{"task_id":"...","task_name":"..."},"mensagem":"..."}
+- ver_emails: {"action":"ver_emails","params":{},"mensagem":"A verificar emails nao lidos..."}
+- criar_evento: {"action":"criar_evento","params":{"title":"...","date":"...","time":"..."},"mensagem":"..."}
+- resumo_dia: {"action":"resumo_dia","params":{},"mensagem":"..."}
+- navegar: {"action":"navegar","params":{"pagina":"hoje|tarefas|calendario|notas|financas|habitos|assistente"},"mensagem":"..."}
+
+Para perguntas/conversas normais sem acao, responde normalmente em texto (sem JSON).
+Responde SEMPRE em portugues europeu. Age diretamente sem pedir confirmacao excessiva.`;
+
+  async function send(){
+    if(!inp.trim()||ld)return;
+    const userMsg={role:"user",content:inp.trim(),ts:Date.now()};
+    const newMsgs=[...msgs,userMsg];
+    setMsgs(newMsgs);setInp("");setLd(true);
+
+    try{
+      const history=newMsgs.slice(-8).map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.content}));
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:600,system:SYSTEM_PROMPT,messages:history})
+      });
+      const data=await res.json();
+      const text=(data.content||[]).find(b=>b.type==="text")?.text||"Sem resposta.";
+
+      // Try to parse as action JSON
+      let actionResult=null;
+      try{
+        const clean=text.replace(/```json|```/g,"").trim();
+        if(clean.startsWith("{")){
+          const parsed=JSON.parse(clean);
+          if(parsed.action){
+            actionResult=await executeAction(parsed);
+          }
+        }
+      }catch{}
+
+      const assistantMsg={role:"assistant",content:actionResult||text,ts:Date.now(),isAction:!!actionResult};
+      setMsgs(m=>[...m,assistantMsg]);
+    }catch(e){
+      setMsgs(m=>[...m,{role:"assistant",content:"Erro: "+e.message,ts:Date.now()}]);
+    }
+    setLd(false);
+  }
+
+  async function executeAction(parsed){
+    const{action,params,mensagem}=parsed;
+    switch(action){
+      case "criar_tarefa":{
+        if(addTask&&params.name){
+          addTask({id:"l"+Date.now(),name:params.name,status:"todo",priority:params.priority||"normal",list:"BBTOP20",due_date:"null"});
+          try{await fetch(WEBHOOK+"?action=create&task_name="+encodeURIComponent(params.name),{mode:"no-cors"});}catch{}
+          toast("Tarefa criada: "+params.name);
+          return "Criei a tarefa **"+params.name+"** no ClickUp com prioridade "+( params.priority||"normal")+". Ja aparece na tua lista.";
+        }
+        return mensagem||"Tarefa criada.";
+      }
+      case "fechar_tarefa":{
+        const t=tasks.find(x=>x.id===params.task_id||x.name.toLowerCase().includes((params.task_name||"").toLowerCase()));
+        if(t&&updateTask){
+          updateTask({...t,status:"done"});
+          try{await fetch(WEBHOOK+"?action=close&task_id="+t.id,{mode:"no-cors"});}catch{}
+          toast("Tarefa fechada: "+t.name);
+          return "Fechei a tarefa **"+t.name+"** no ClickUp.";
+        }
+        return "Nao encontrei essa tarefa. Podes ser mais especifico?";
+      }
+      case "ver_emails":{
+        try{
+          const r=await fetch(WEBHOOK+"?action=get_emails",{mode:"cors"});
+          if(r.ok){const d=await r.json();return d.summary||mensagem||"Email verificado.";}
+        }catch{}
+        // Fallback — tell user to check
+        return "Enviei o pedido ao Make.com para verificar os teus emails. O resultado vai aparecer no email ou aqui em breve. (Garante que o cenario do Make esta configurado para responder a action=get_emails)";
+      }
+      case "resumo_dia":{
+        const act=tasks.filter(t=>t.status!=="done");
+        const late=act.filter(t=>t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<new Date(new Date().setHours(0,0,0,0)));
+        const urg=act.filter(t=>t.priority==="urgent");
+        const lines=[
+          "Resumo do teu dia:",
+          "- "+act.length+" tarefas abertas"+(late.length?" ("+late.length+" atrasadas)":""),
+          urg.length>0?"- Urgentes: "+urg.map(t=>t.name).join(", "):"",
+          calEvents.length>0?"- Hoje: "+calEvents.map(e=>e.summary).join(", "):"- Sem eventos no calendario",
+        ].filter(Boolean).join("\n");
+        return lines;
+      }
+      case "navegar":{
+        if(setPage&&params.pagina){setPage(params.pagina);return "Abrindo "+params.pagina+"...";}
+        return mensagem||"A navegar...";
+      }
+      case "criar_evento":{
+        try{await fetch(WEBHOOK+"?action=create_event&title="+encodeURIComponent(params.title||"")+"&date="+encodeURIComponent(params.date||"")+"&time="+encodeURIComponent(params.time||""),{mode:"no-cors"});}catch{}
+        return mensagem||"Evento enviado para o calendario.";
+      }
+      default:
+        return mensagem||text;
+    }
+  }
+
+  const SUGGESTIONS=[
+    "Quantos emails nao lidos tenho?",
+    "Resume o meu dia",
+    "Qual a minha tarefa mais urgente?",
+    "Cria tarefa: rever emails pendentes",
+    "Abre as financas",
+    "Quais as tarefas atrasadas?",
+  ];
+
+  const fmtTime=ts=>new Date(ts).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"});
+
+  return ce("div",null,
+    // Floating button
+    ce("button",{
+      onClick:()=>setOpen(!open),
+      style:{position:"fixed",bottom:24,right:24,width:52,height:52,borderRadius:"50%",
+        background:"#7C3AED",border:"none",cursor:"pointer",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        boxShadow:"0 4px 20px rgba(124,58,237,.4)",zIndex:1000,
+        transition:"transform .2s,box-shadow .2s",
+        transform:open?"scale(0.9)":"scale(1)"}
+    },
+      ce("i",{className:"ti ti-"+(open?"x":"sparkles"),style:{fontSize:22,color:"#fff"}}),
+      badge>0&&!open&&ce("div",{style:{position:"absolute",top:-4,right:-4,width:18,height:18,
+        borderRadius:"50%",background:"#E53E3E",color:"#fff",fontSize:10,fontWeight:700,
+        display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid #FAF9F7"}},badge)
+    ),
+    // Panel
+    open&&ce("div",{style:{position:"fixed",bottom:86,right:24,width:380,maxWidth:"calc(100vw - 48px)",
+      height:520,background:"#fff",borderRadius:16,boxShadow:"0 8px 40px rgba(0,0,0,.18)",
+      zIndex:999,display:"flex",flexDirection:"column",overflow:"hidden",
+      border:"1px solid #E5E3DC",animation:"fU .2s"}},
+      // Header
+      ce("div",{style:{background:"#1A1A2E",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}},
+        ce("div",{style:{width:32,height:32,borderRadius:8,background:"#7C3AED",
+          display:"flex",alignItems:"center",justifyContent:"center"}},
+          ce("i",{className:"ti ti-sparkles",style:{fontSize:16,color:"#fff"}})
+        ),
+        ce("div",{style:{flex:1}},
+          ce("div",{style:{fontSize:14,fontWeight:600,color:"#fff"}},"\u2600 Assistente"),
+          ce("div",{style:{fontSize:10,color:"#7C8DB5",fontFamily:"monospace"}},"age, cria, resume, verifica")
+        ),
+        ce("button",{onClick:()=>setOpen(false),style:{border:"none",background:"transparent",
+          cursor:"pointer",color:"#7C8DB5",fontSize:18,lineHeight:1}},"\u00d7")
+      ),
+      // Messages
+      ce("div",{style:{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10,minHeight:0}},
+        msgs.length===0&&ce("div",{style:{flex:1,display:"flex",flexDirection:"column",
+          alignItems:"center",justifyContent:"center",gap:12,padding:"8px 0"}},
+          ce("div",{style:{fontSize:13,color:"#9B9890",textAlign:"center",lineHeight:1.6,marginBottom:4}},
+            "O teu assistente de acao.\nPede-me qualquer coisa."
+          ),
+          ce("div",{style:{display:"flex",flexDirection:"column",gap:5,width:"100%"}},
+            SUGGESTIONS.map((s,i)=>ce("button",{key:i,onClick:()=>setInp(s),
+              style:{textAlign:"left",padding:"7px 11px",borderRadius:8,border:"1px solid #E5E3DC",
+                background:"#F9F7F4",fontSize:12,cursor:"pointer",color:"#1A1A2E",fontFamily:"inherit",
+                transition:"background .1s"}},s))
+          )
+        ),
+        msgs.map((m,i)=>ce("div",{key:i,style:{display:"flex",
+          justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}},
+          m.role==="assistant"&&ce("div",{style:{width:26,height:26,borderRadius:6,background:"#EDE9FE",
+            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}},
+            ce("i",{className:"ti ti-sparkles",style:{fontSize:13,color:"#7C3AED"}})
+          ),
+          ce("div",{style:{maxWidth:"82%"}},
+            ce("div",{style:{padding:"9px 12px",borderRadius:m.role==="user"?"12px 12px 4px 12px":"12px 12px 12px 4px",
+              background:m.role==="user"?"#1A1A2E":"#F5F3FF",
+              color:m.role==="user"?"#fff":"#1A1A2E",
+              fontSize:13,lineHeight:1.6,whiteSpace:"pre-wrap"}},m.content),
+            ce("div",{style:{fontSize:10,color:"#C8C4BC",marginTop:3,
+              textAlign:m.role==="user"?"right":"left"}},fmtTime(m.ts||Date.now()))
+          )
+        )),
+        ld&&ce("div",{style:{display:"flex",alignItems:"center",gap:8,color:"#9B9890",fontSize:12}},
+          ce("div",{style:{width:26,height:26,borderRadius:6,background:"#EDE9FE",
+            display:"flex",alignItems:"center",justifyContent:"center"}},
+            ce("span",{className:"sp"})
+          ),
+          "a processar..."
+        ),
+        ce("div",{ref:endRef})
+      ),
+      // Input
+      ce("div",{style:{padding:"10px 12px",borderTop:"1px solid #F0EEE8",
+        display:"flex",gap:8,alignItems:"flex-end"}},
+        ce("textarea",{
+          className:"ip",
+          value:inp,
+          onChange:e=>setInp(e.target.value),
+          onKeyDown:e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}},
+          placeholder:"Pede uma acao ou faz uma pergunta...",
+          rows:2,
+          style:{flex:1,resize:"none",lineHeight:1.5,fontSize:12,padding:"7px 10px"}
+        }),
+        ce("button",{className:"bt dk",onClick:send,disabled:ld||!inp.trim(),
+          style:{padding:"9px 11px",flexShrink:0}},
+          ce("i",{className:"ti ti-send",style:{fontSize:14}})
+        )
+      )
+    )
+  );
+}
+
+
 const NAV=[
   {id:"hoje",icon:"ti-sun",label:"Hoje",c:"#3182CE"},
   {id:"prioridades",icon:"ti-star",label:"Prioridades",c:"#D69E2E"},
@@ -1444,7 +1676,8 @@ function App(){
         ):ce(PgComp)
       )
     ),
-    toast_&&ce("div",{style:{position:"fixed",bottom:14,right:14,background:"#1A1A2E",color:"#fff",padding:"10px 16px",borderRadius:9,fontSize:13,zIndex:9999,animation:"fU .2s",maxWidth:320,lineHeight:1.4}},toast_),
+    ce(FloatingAssistant,{tasks,recentTasks,calEvents,habits,logs,fin,prios,addTask,updateTask,setPage:setPg,toast}),
+        toast_&&ce("div",{style:{position:"fixed",bottom:86,right:84,background:"#1A1A2E",color:"#fff",padding:"10px 16px",borderRadius:9,fontSize:13,zIndex:9999,animation:"fU .2s",maxWidth:320,lineHeight:1.4}},toast_),
     agentTask&&ce(AgentModal,{task:agentTask,onClose:()=>setAT(null),toast})
   )
 }
