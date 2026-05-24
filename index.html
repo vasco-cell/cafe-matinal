@@ -374,9 +374,6 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
     ))
   );
 }
-    )
-  );
-}
 function PInbox({tasks,addTask,notes,saveNotes,mem,saveMem,toast}){
   const[tab,setTb]=useState("tarefa");const[inp,setInp]=useState("");
   function cap(){if(!inp.trim())return;if(tab==="tarefa"){addTask({id:`l${Date.now()}`,name:inp,status:"todo",priority:"normal",list:"BBTOP20",due_date:"null"});wh({action:"create",task_name:inp})}else if(tab==="nota"){saveNotes([{id:`n${Date.now()}`,content:inp,created:Date.now()},...notes])}else{saveMem([{id:`m${Date.now()}`,content:inp,tag:"Lembrete",source:"inbox",created:Date.now()},...(mem||[])])}setInp("");toast({tarefa:"Tarefa criada ✓",nota:"Nota guardada ✓",memoria:"Memória guardada ✓"}[tab])}
