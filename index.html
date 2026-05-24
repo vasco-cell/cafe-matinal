@@ -243,7 +243,7 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
       !aRep&&ce("div",{style:{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}},["✨ Sim, ver o meu dia","Tarefas atrasadas?","O que fazer agora?"].map(s=>ce("button",{key:s,className:"bt",onClick:()=>setAM(s),style:{fontSize:11}},s))),
       ce("div",{style:{display:"flex",gap:6}},ce("input",{className:"ip",value:aMsg,onChange:e=>setAM(e.target.value),onKeyDown:e=>e.key==="Enter"&&sendA(),placeholder:"Escreve uma mensagem...",style:{flex:1}}),ce("button",{className:"bt dk",onClick:sendA,disabled:aLd||!aMsg.trim()},aLd?ce(Sp):ce("i",{className:"ti ti-send",style:{fontSize:13}})))
     ),
-    ce(()=>{
+    (()=>{
       const recNames={};
       (tasks||[]).forEach(function(t){const k=t.name.replace(/\s+\d+$/,"").toLowerCase().trim();recNames[k]=(recNames[k]||[]).concat(t);});
       const recTasks=Object.values(recNames).filter(function(g){return g.length>=2;}).map(function(g){return g[0];});
@@ -258,7 +258,7 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
           );
         }))
       );
-    }),
+    })(),
     urg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#E53E3E",letterSpacing:".06em",marginBottom:8}},"🔴 URGENTE"),urg.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:false,aguarda,setAguardaItem}))),
     tod.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#DD6B20",letterSpacing:".06em",marginBottom:8}},"🟠 PARA HOJE"),tod.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:false,aguarda,setAguardaItem}))),
     prg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),ce("div",{style:{fontSize:11,fontWeight:600,color:"#38A169",letterSpacing:".06em",marginBottom:8}},"🟢 EM PROGRESSO — concluídas?"),prg.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:true,aguarda,setAguardaItem}))),
