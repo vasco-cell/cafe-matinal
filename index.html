@@ -98,7 +98,7 @@ function TC({t,onUpdate,onAgent,showQ}){
   return ce("div",{style:{background:"#fff",border:"1px solid #E5E3DC",borderLeft:`4px solid ${PA(t.priority)}`,borderRadius:10,marginBottom:7,opacity:cl?.4:1,overflow:"hidden"}},
     ce("div",{style:{padding:"11px 13px",display:"flex",alignItems:"center",gap:10}},
       ce("div",{style:{flex:1,minWidth:0}},
-        ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:cl?"#9B9890":"#1A1A2E",textDecoration:cl?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
+        ce("a",{href:"https://app.clickup.com/t/"+t.id,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:cl?"#9B9890":"#1A1A2E",textDecoration:cl?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
         ce("div",{style:{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}},
           isLate(t.due_date)&&!cl&&ce("span",{style:{fontSize:10,color:"#E53E3E"}},"Em atraso · "+fmtD(t.due_date)),
           !isLate(t.due_date)&&t.due_date&&t.due_date!=="null"&&ce("span",{style:{fontSize:10,color:"#9B9890"}},"prazo "+fmtD(t.due_date)),
@@ -108,7 +108,7 @@ function TC({t,onUpdate,onAgent,showQ}){
       !cl&&ce("div",{style:{display:"flex",gap:5,flexShrink:0}},
         ce("button",{className:"bt gn",onClick:doClose,disabled:cl_,style:{fontSize:11,padding:"4px 9px"}},cl_?ce(Sp):"✓ Fechar"),
         ce("button",{className:"bt",onClick:doDelay,disabled:dl,style:{fontSize:11,padding:"4px 9px"}},dl?ce(Sp):"+1 dia"),
-        ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",className:"bt",style:{fontSize:11,padding:"4px 9px",color:"#1A4A7A"}},"↗ ClickUp"),
+        ce("a",{href:"https://app.clickup.com/t/"+t.id,target:"_blank",rel:"noreferrer",className:"bt",style:{fontSize:11,padding:"4px 9px",color:"#1A4A7A"}},"↗ ClickUp"),
         ce("button",{className:"bt pu2",onClick:()=>onAgent&&onAgent(t),style:{fontSize:11,padding:"4px 9px"}},"✦")
       )
     ),
@@ -227,11 +227,11 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
     oth.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),ce("div",{style:{fontSize:11,fontWeight:600,color:"#3182CE",letterSpacing:".06em",marginBottom:8}},"🔵 ESTA SEMANA · RADAR"),
       ce("div",{className:"cd"},oth.slice(0,10).map((t,i)=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",borderBottom:i<oth.length-1?"1px solid #F0EEE8":"none",fontSize:12}},
         ce("div",{style:{width:6,height:6,borderRadius:"50%",background:PA(t.priority),flexShrink:0}}),
-        ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",style:{flex:1,color:"#5A5750",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
+        ce("a",{href:"https://app.clickup.com/t/"+t.id,target:"_blank",rel:"noreferrer",style:{flex:1,color:"#5A5750",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
         t.list&&ce("span",{style:{fontSize:10,color:"#9B9890",background:"#F5F2EC",padding:"1px 6px",borderRadius:8}},t.list),
         ce("span",{style:{fontSize:10,color:"#9B9890",fontFamily:"monospace",flexShrink:0}},fmtD(t.due_date)||"sem prazo"),
         ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 7px"}},"✦"),
-        ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",className:"bt",style:{fontSize:10,padding:"3px 7px",color:"#1A4A7A"}},"↗")
+        ce("a",{href:"https://app.clickup.com/t/"+t.id,target:"_blank",rel:"noreferrer",className:"bt",style:{fontSize:10,padding:"3px 7px",color:"#1A4A7A"}},"↗")
       )))
     ),
     ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginTop:10,padding:"7px 10px",borderRadius:8,border:"1px dashed #E5E3DC",background:"#FAF9F7"}},
@@ -307,7 +307,7 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
   });
   if(sort==="data")list=[...list].sort((a,b)=>{const da=a.due_date&&a.due_date!=="null"?+a.due_date:99999999999999;const db=b.due_date&&b.due_date!=="null"?+b.due_date:99999999999999;return da-db;});
   else if(sort==="prio")list=[...list].sort((a,b)=>({urgent:0,high:1,normal:2,low:3}[a.priority||"normal"]||2)-({urgent:0,high:1,normal:2,low:3}[b.priority||"normal"]||2));
-  async function doAdd(){if(!newT.trim())return;await whF({action:"create",task_name:newT,priority:nP});addTask({id:`l${Date.now()}`,name:newT,status:"todo",priority:nP,list:"BBTOP20",due_date:"null"});setNT("");toast("Criada no ClickUp ✓");}
+  async function doAdd(){if(!newT.trim())return;await whF({action:"create",task_name:newT,priority:nP});addTask({id:"l"+Date.now(),name:newT,status:"todo",priority:nP,list:"BBTOP20",due_date:"null"});setNT("");toast("Criada no ClickUp ✓");}
   const PRIOS=[{v:"todas",l:"Todas as importâncias"},{v:"urgent",l:"Alta importância"},{v:"high",l:"Média importância"},{v:"normal",l:"Baixa importância"},{v:"low",l:"Pouca importância"}];
   const STATUS=[{v:"abertas",l:"Abertas"},{v:"atraso",l:"Em atraso"},{v:"concluidas",l:"Concluídas"},{v:"todas",l:"Todas"}];
   return ce("div",{style:{display:"flex",flexDirection:"column",height:"100%",animation:"fU .2s"}},
@@ -317,7 +317,7 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
         ce("button",{className:"bt dk",onClick:()=>setNT(" "),style:{gap:6}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Nova")
       ),
       late.length>0&&ce("div",{style:{padding:"8px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:10,display:"flex",alignItems:"center",gap:8}},
-        ce("i",{className:"ti ti-alert-triangle",style:{fontSize:14}}),`${late.length} tarefa${late.length!==1?"s":""} em atraso`
+        ce("i",{className:"ti ti-alert-triangle",style:{fontSize:14}}),late.length+" tarefa"+(late.length!==1?"s":"")+" em atraso"
       ),
       ce("div",{style:{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center",justifyContent:"space-between"}},
         ce("div",{style:{display:"flex",border:"1px solid #E5E3DC",borderRadius:8,overflow:"hidden"}},
@@ -357,14 +357,14 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
           t.status==="done"&&ce("i",{className:"ti ti-check",style:{fontSize:10,color:"#fff"}})
         ),
         ce("div",{style:{flex:1,minWidth:0}},
-          ce("a",{href:`https://app.clickup.com/t/${t.id}`,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:t.status==="done"?"#9B9890":"#1A1A2E",textDecoration:t.status==="done"?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
+          ce("a",{href:"https://app.clickup.com/t/"+t.id,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:t.status==="done"?"#9B9890":"#1A1A2E",textDecoration:t.status==="done"?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
           ce("div",{style:{display:"flex",gap:8,marginTop:2,flexWrap:"wrap"}},
             isLate(t.due_date)&&t.status!=="done"&&ce("span",{style:{fontSize:10,color:"#E53E3E",fontWeight:600}},"⚠ "+fmtD(t.due_date)),
             !isLate(t.due_date)&&t.due_date&&t.due_date!=="null"&&ce("span",{style:{fontSize:10,color:"#9B9890"}},"prazo "+fmtD(t.due_date)),
             t.list&&ce("span",{style:{fontSize:10,color:"#9B9890",background:"#F5F2EC",padding:"1px 5px",borderRadius:6}},t.list)
           )
         ),
-        ce("span",{style:{fontSize:10,padding:"2px 7px",borderRadius:10,background:PBG(t.priority||"normal"),color:PA2(t.priority||"normal"),border:`1px solid ${PA2(t.priority||"normal")}30`,flexShrink:0}},PL2(t.priority||"normal")),
+        ce("span",{style:{fontSize:10,padding:"2px 7px",borderRadius:10,background:PBG(t.priority||"normal"),color:PA2(t.priority||"normal"),border:"1px solid "+PA2(t.priority||"normal")+"30",flexShrink:0}},PL2(t.priority||"normal")),
         t.status!=="done"&&ce("div",{style:{display:"flex",gap:4,flexShrink:0}},
           ce("button",{className:"bt",onClick:async()=>{await whF({action:"delay",task_id:t.id});toast("+1 dia ✓");},style:{fontSize:10,padding:"3px 6px"}},"+1d"),
           ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 6px"}},"✦")
