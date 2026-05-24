@@ -291,7 +291,7 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
 
 // ── ASSISTENTE ───────────────────────────────────────────────────────────────
 
-function PAssist({tasks,calEvents,pessoal,setPage,toast}){
+function PAssist({tasks,calEvents,pessoal,setPage,toast,fin}){
   const[convs,setCvs]=useState(function(){try{return JSON.parse(localStorage.getItem("bj-convs")||"[]");}catch{return[];}});
   const[cur,setCur]=useState(null);
   const[inp,setInp]=useState("");
@@ -766,55 +766,43 @@ function PRelatorios({tasks,toast,habits,logs,fin}){
 
   function saveReps(v){setReps(v);try{localStorage.setItem("bj-reps",JSON.stringify(v.slice(0,20)));}catch{}}
 
-  function gen(){
+  async function gen(){
     setLd(true);
-    const n=new Date();
-    const done=tasks.filter(t=>t.status==="done");
-    const open2=tasks.filter(t=>t.status!=="done");
-    const late=open2.filter(t=>t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n);
-    const urg=open2.filter(t=>t.priority==="urgent");
-    const high=open2.filter(t=>t.priority==="high");
-    const hd=(habits||[]).filter(h=>{const l=(logs||{})[n.toDateString()]||{};return l[h.id];}).length;
-    const moKey=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
-    const saldo=(fin||[]).filter(t=>t.month===moKey).reduce((s,t)=>s+(t.type==="receita"?+t.amount:-+t.amount),0);
-    const receitas=(fin||[]).filter(t=>t.month===moKey&&t.type==="receita").reduce((s,t)=>s+(+t.amount),0);
-    const despesas=(fin||[]).filter(t=>t.month===moKey&&t.type==="despesa").reduce((s,t)=>s+(+t.amount),0);
-    const period=tab==="semana"
-      ?"Semanal — "+n.getDate()+" "+MC[n.getMonth()]+" "+n.getFullYear()
-      :"Mensal — "+MESES[n.getMonth()]+" "+n.getFullYear();
-
-    const content=`# Relatório ${period}
-
-## Resumo Executivo
-${open2.length} tarefas abertas${late.length>0?` (${late.length} atrasadas)`:""}${urg.length>0?` e ${urg.length} urgentes`:""}. Hábitos hoje: ${hd}/${(habits||[]).length}. Saldo mensal: ${saldo>=0?"+":""}${saldo.toFixed(2)} €.
-
-## Conquistas
-${done.length===0?"Sem tarefas concluídas registadas neste período.":done.slice(0,10).map(t=>`✓ ${t.name}`).join("\n")}
-
-## Tarefas Urgentes e Prioritárias
-${urg.length===0&&high.length===0?"Nenhuma tarefa urgente ou de alta prioridade.":
-[...urg.map(t=>`🔴 [URGENTE] ${t.name}`),
- ...high.map(t=>`🟠 [ALTA] ${t.name}`)].slice(0,8).join("\n")}
-
-## Atrasadas
-${late.length===0?"Sem tarefas atrasadas.":late.slice(0,6).map(t=>`⚠ ${t.name} (${new Date(+t.due_date).toLocaleDateString("pt-PT")})`).join("\n")}
-
-## Finanças do Mês
-Receitas: +${receitas.toFixed(2)} €
-Despesas: -${despesas.toFixed(2)} €
-Saldo: ${saldo>=0?"+":""}${saldo.toFixed(2)} €${saldo<0?" ⚠ Saldo negativo":""}
-
-## Hábitos
-${(habits||[]).length===0?"Sem hábitos configurados.":
-(habits||[]).map(h=>{const l=(logs||{})[n.toDateString()]||{};return `${l[h.id]?"✅":"⬜"} ${h.name}`;}).join("\n")}
-
-## Próximos Passos
-${open2.filter(t=>t.due_date&&t.due_date!=="null").sort((a,b)=>+a.due_date-+b.due_date).slice(0,5).map((t,i)=>`${i+1}. ${t.name} — ${new Date(+t.due_date).toLocaleDateString("pt-PT")}`).join("\n")||
-open2.slice(0,5).map((t,i)=>`${i+1}. ${t.name}`).join("\n")||"Nenhuma tarefa com prazo próximo."}`;
-
-    const r={id:"r"+Date.now(),period,content,created:Date.now()};
-    saveReps([r,...reps.slice(0,19)]);
-    toast&&toast("Relatório gerado ✓");
+    var n=new Date();
+    var done=tasks.filter(function(t){return t.status==="done";});
+    var open2=tasks.filter(function(t){return t.status!=="done";});
+    var late=open2.filter(function(t){return t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n;});
+    var urg=open2.filter(function(t){return t.priority==="urgent";});
+    var hi=open2.filter(function(t){return t.priority==="high";});
+    var hd=(habits||[]).filter(function(h){var l=(logs||{})[n.toDateString()]||{};return l[h.id];}).length;
+    var moKey=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
+    var finMo=(fin||[]).filter(function(t){return t.month===moKey;});
+    var saldo=finMo.reduce(function(s,t){return s+(t.type==="receita"?+t.amount:-+t.amount);},0);
+    var rec=finMo.filter(function(t){return t.type==="receita";}).reduce(function(s,t){return s+(+t.amount);},0);
+    var desp=finMo.filter(function(t){return t.type==="despesa";}).reduce(function(s,t){return s+(+t.amount);},0);
+    var period=tab==="semana"
+      ?"Semanal - "+n.getDate()+" "+MC[n.getMonth()]+" "+n.getFullYear()
+      :"Mensal - "+MESES[n.getMonth()]+" "+n.getFullYear();
+    var hab_lines=(habits||[]).length===0?"Sem habitos.":(habits||[]).map(function(h){var l=(logs||{})[n.toDateString()]||{};return (l[h.id]?"[X]":"[ ]")+" "+h.name;}).join("\n");
+    var done_lines=done.length===0?"Sem tarefas concluidas.":done.slice(0,10).map(function(t){return "OK "+t.name;}).join("\n");
+    var urg_lines=urg.length===0&&hi.length===0?"Nenhuma urgente.":[].concat(urg.map(function(t){return "[URGENTE] "+t.name;}),hi.map(function(t){return "[ALTA] "+t.name;})).slice(0,8).join("\n");
+    var late_lines=late.length===0?"Sem atrasadas.":late.slice(0,6).map(function(t){return "ATRASADA: "+t.name+" ("+new Date(+t.due_date).toLocaleDateString("pt-PT")+")";}).join("\n");
+    var next_lines=open2.filter(function(t){return t.due_date&&t.due_date!=="null";}).sort(function(a,b){return +a.due_date-+b.due_date;}).slice(0,5).map(function(t,i){return (i+1)+". "+t.name+" - "+new Date(+t.due_date).toLocaleDateString("pt-PT");}).join("\n")||"Sem prazos proximos.";
+    var content=[
+      "# Relatorio "+period,"",
+      "## Resumo Executivo",
+      open2.length+" tarefas abertas"+(late.length>0?" ("+late.length+" atrasadas)":"")+(urg.length>0?" e "+urg.length+" urgentes":"")+". Habitos: "+hd+"/"+(habits||[]).length+". Saldo: "+(saldo>=0?"+":"")+saldo.toFixed(2)+" EUR.","",
+      "## Conquistas",done_lines,"",
+      "## Urgentes",urg_lines,"",
+      "## Atrasadas",late_lines,"",
+      "## Financas",
+      "Receitas: +"+rec.toFixed(2)+" EUR | Despesas: -"+desp.toFixed(2)+" EUR | Saldo: "+(saldo>=0?"+":"")+saldo.toFixed(2)+" EUR","",
+      "## Habitos",hab_lines,"",
+      "## Proximas Entregas",next_lines
+    ].join("\n");
+    var r={id:"r"+Date.now(),period:period,content:content,created:Date.now()};
+    saveReps([r].concat(reps.slice(0,19)));
+    toast&&toast("Relatorio gerado!");
     setLd(false);
   }
 
@@ -2217,7 +2205,7 @@ function App(){
   const sp=setPg;
   const PageMap={
     hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage:()=>setTriageOpen(true),aguarda,setAguardaItem,darkMode,setDarkMode}),
-    assistente:()=>ce(PAssist,{tasks,calEvents,pessoal,setPage:sp}),
+    assistente:()=>ce(PAssist,{tasks,calEvents,pessoal,setPage:sp,toast,fin}),
     tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios,aguarda,setAguardaItem,taskNewOpen,setTaskNewOpen}),
     inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast,setPage:sp}),
     foco:()=>ce(PFoco,{tasks,focoSessions,saveFocoSessions,setPage:sp,toast}),
