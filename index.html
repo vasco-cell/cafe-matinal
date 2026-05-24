@@ -1575,25 +1575,53 @@ Responde SEMPRE em portugues europeu. Age diretamente sem pedir confirmacao exce
     const userMsg={role:"user",content:inp.trim(),ts:Date.now()};
     const newMsgs=[...msgs,userMsg];
     setMsgs(newMsgs);setInp("");setLd(true);
-
     try{
       const history=newMsgs.slice(-8).map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.content}));
-      const text=await aiC(history,SYSTEM_PROMPT,600);
-
+      const ak=localStorage.getItem("bj-ak")||"";
+      if(!ak){setMsgs(m=>[...m,{role:"assistant",content:"Configura a chave API nas Definicoes.",ts:Date.now()}]);setLd(false);return;}
+      
+      // Detect if the request is about email — use MCP tools
+      const emailKeywords=["email","mail","emails","caixa","entrada","mensagem","mensagens","lidos","nao lidos","unread","inbox","remetente","assunto"];
+      const needsEmail=emailKeywords.some(k=>inp.toLowerCase().includes(k));
+      
+      let text;
+      if(needsEmail){
+        // Call API with Microsoft 365 MCP server for real email access
+        const body={
+          model:"claude-haiku-4-5-20251001",
+          max_tokens:1000,
+          system:SYSTEM_PROMPT,
+          messages:history,
+          mcp_servers:[{type:"url",url:"https://microsoft365.mcp.claude.com/mcp",name:"microsoft365"}]
+        };
+        const r=await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"content-type":"application/json","x-api-key":ak,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+          body:JSON.stringify(body)
+        });
+        const data=await r.json();
+        if(data.error)throw new Error(data.error.message);
+        // Extract all text blocks (MCP may return tool_use blocks too)
+        text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n")||"(sem resposta)";
+        // If only tool_use, it means Claude used the tool but needs another round
+        if(!text&&(data.content||[]).some(b=>b.type==="tool_use")){
+          text="A verificar o teu email... (resultado em processamento)";
+        }
+      } else {
+        // Normal request — use regular aiC
+        text=await aiC(history,SYSTEM_PROMPT,600);
+      }
+      
       // Try to parse as action JSON
       let actionResult=null;
       try{
         const clean=text.replace(/```json|```/g,"").trim();
         if(clean.startsWith("{")){
           const parsed=JSON.parse(clean);
-          if(parsed.action){
-            actionResult=await executeAction(parsed);
-          }
+          if(parsed.action){actionResult=await executeAction(parsed);}
         }
       }catch{}
-
-      const assistantMsg={role:"assistant",content:actionResult||text,ts:Date.now(),isAction:!!actionResult};
-      setMsgs(m=>[...m,assistantMsg]);
+      setMsgs(m=>[...m,{role:"assistant",content:actionResult||text,ts:Date.now(),isAction:!!actionResult}]);
     }catch(e){
       setMsgs(m=>[...m,{role:"assistant",content:"Erro: "+e.message,ts:Date.now()}]);
     }
