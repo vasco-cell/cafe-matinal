@@ -105,7 +105,7 @@ function AgentModal({task,onClose,toast}){
 }
 
 // ── TASK CARD ────────────────────────────────────────────────────────────────
-function TC({t,onUpdate,onAgent,showQ}){
+function TC({t,onUpdate,onAgent,showQ,aguarda,setAguardaItem}){
   const[cl,setCl]=useState(t.status==="done");const[cl_,setCl_]=useState(false);const[dl,setDl]=useState(false);const[qa,setQa]=useState(null);
   async function doClose(){setCl_(true);await whF({action:"close",task_id:t.id});setCl(true);setCl_(false);if(onUpdate)onUpdate(t.id,"done")}
   async function doDelay(){setDl(true);await whF({action:"delay",task_id:t.id});setDl(false);if(onUpdate)onUpdate(t.id,"delay")}
@@ -113,10 +113,13 @@ function TC({t,onUpdate,onAgent,showQ}){
     ce("div",{style:{padding:"11px 13px",display:"flex",alignItems:"center",gap:10}},
       ce("div",{style:{flex:1,minWidth:0}},
         ce("a",{href:"https://app.clickup.com/t/"+t.id,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:cl?"#9B9890":"#1A1A2E",textDecoration:cl?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
-        ce("div",{style:{display:"flex",gap:8,marginTop:3,flexWrap:"wrap"}},
+        ce("div",{style:{display:"flex",gap:8,marginTop:3,flexWrap:"wrap",alignItems:"center"}},
           isLate(t.due_date)&&!cl&&ce("span",{style:{fontSize:10,color:"#E53E3E"}},"Em atraso · "+fmtD(t.due_date)),
           !isLate(t.due_date)&&t.due_date&&t.due_date!=="null"&&ce("span",{style:{fontSize:10,color:"var(--text-3)"}},"prazo "+fmtD(t.due_date)),
-          t.list&&ce("span",{style:{fontSize:10,color:"var(--text-3)",background:"#F5F2EC",padding:"1px 6px",borderRadius:8,border:"1px solid var(--border)"}},t.list)
+          t.list&&ce("span",{style:{fontSize:10,color:"var(--text-3)",background:"var(--bg-surface)",padding:"1px 6px",borderRadius:8,border:"0.5px solid var(--border)"}},t.list),
+          (onUpdate&&aguarda&&aguarda[t.id])&&ce("span",{style:{fontSize:10,padding:"1px 7px",borderRadius:8,background:"#FEF9E7",border:"0.5px solid #F6AD55",color:"#C05621",display:"flex",alignItems:"center",gap:3}},
+            ce("i",{className:"ti ti-clock",style:{fontSize:10}}),"aguarda "+aguarda[t.id]
+          )
         )
       ),
       !cl&&ce("div",{style:{display:"flex",gap:5,flexShrink:0}},
@@ -135,7 +138,7 @@ function TC({t,onUpdate,onAgent,showQ}){
 }
 
 // ── HOJE ─────────────────────────────────────────────────────────────────────
-function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin}){
+function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage}){
   const n=new Date();const h=n.getHours();
   const gr=h<12?"Bom dia.":h<17?"Boa tarde.":"Boa noite.";
   const act=tasks.filter(t=>t.status!=="done");
@@ -228,7 +231,11 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
         ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:22,color:moSaldo>=0?"#38A169":"#E53E3E"}},(moSaldo>=0?"+":"")+moSaldo.toFixed(0)+" €")
       )
     ),
-        late.length>0&&ce("div",{style:{padding:"9px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:8}},ce("i",{className:"ti ti-alert-circle",style:{fontSize:16}}),`Tens ${late.length} tarefa${late.length!==1?"s":""} em atraso`),
+        late.length>0&&ce("div",{style:{padding:"10px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",color:"#C53030",fontSize:13,marginBottom:12,display:"flex",alignItems:"center",gap:10,cursor:"pointer"},onClick:openTriage},
+      ce("i",{className:"ti ti-alert-triangle",style:{fontSize:15}}),
+      ce("span",{style:{flex:1}},late.length+" tarefa"+(late.length!==1?"s":"")+" em atraso — clica para fazer triagem"),
+      ce("span",{style:{fontSize:11,background:"#C53030",color:"#fff",padding:"2px 8px",borderRadius:20}},"Triar agora")
+    ),
     ce("button",{onClick:gen3,disabled:t3l,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"9px",borderRadius:8,border:"1px solid #DDD6FE",background:"#F5F3FF",color:"#6D28D9",fontSize:13,cursor:"pointer",marginBottom:14,fontFamily:"inherit"}},t3l?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:14}}),t3l?"A gerar...":"Sugerir 3 tarefas prioritárias para hoje (IA)"),
     ce("div",{className:"cd",style:{padding:14,marginBottom:14}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},ce("i",{className:"ti ti-sparkles",style:{fontSize:16,color:"#7C3AED"}}),ce("span",{style:{fontSize:13,fontWeight:500}},"Assistente"),ce("button",{onClick:()=>setPage("assistente"),style:{marginLeft:"auto",fontSize:11,color:"#7C3AED",background:"none",border:"none",cursor:"pointer"}},"Abrir →")),
@@ -236,9 +243,25 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
       !aRep&&ce("div",{style:{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}},["✨ Sim, ver o meu dia","Tarefas atrasadas?","O que fazer agora?"].map(s=>ce("button",{key:s,className:"bt",onClick:()=>setAM(s),style:{fontSize:11}},s))),
       ce("div",{style:{display:"flex",gap:6}},ce("input",{className:"ip",value:aMsg,onChange:e=>setAM(e.target.value),onKeyDown:e=>e.key==="Enter"&&sendA(),placeholder:"Escreve uma mensagem...",style:{flex:1}}),ce("button",{className:"bt dk",onClick:sendA,disabled:aLd||!aMsg.trim()},aLd?ce(Sp):ce("i",{className:"ti ti-send",style:{fontSize:13}})))
     ),
-    urg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#E53E3E",letterSpacing:".06em",marginBottom:8}},"🔴 URGENTE"),urg.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:false}))),
-    tod.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#DD6B20",letterSpacing:".06em",marginBottom:8}},"🟠 PARA HOJE"),tod.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:false}))),
-    prg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),ce("div",{style:{fontSize:11,fontWeight:600,color:"#38A169",letterSpacing:".06em",marginBottom:8}},"🟢 EM PROGRESSO — concluídas?"),prg.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:true}))),
+    ce(()=>{
+      const recNames={};
+      (tasks||[]).forEach(function(t){const k=t.name.replace(/\s+\d+$/,"").toLowerCase().trim();recNames[k]=(recNames[k]||[]).concat(t);});
+      const recTasks=Object.values(recNames).filter(function(g){return g.length>=2;}).map(function(g){return g[0];});
+      if(!recTasks.length)return null;
+      return ce("div",{style:{marginBottom:14}},
+        ce("div",{style:{fontSize:11,fontWeight:600,letterSpacing:".06em",color:"#38A169",marginBottom:8}},"↻ RECORRENTES"),
+        ce("div",{className:"cd"},recTasks.slice(0,5).map(function(t,i){
+          return ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"7px 12px",borderBottom:i<recTasks.length-1?"1px solid var(--border-light)":"none"}},
+            ce("div",{style:{width:6,height:6,borderRadius:"50%",background:"#38A169",flexShrink:0}}),
+            ce("a",{href:t.url,target:"_blank",rel:"noreferrer",style:{flex:1,fontSize:12,color:"var(--text-1)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
+            ce("span",{style:{fontSize:10,color:"var(--text-3)",background:"var(--bg-surface)",padding:"1px 6px",borderRadius:8,border:"0.5px solid var(--border)"}},t.list)
+          );
+        }))
+      );
+    }),
+    urg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#E53E3E",letterSpacing:".06em",marginBottom:8}},"🔴 URGENTE"),urg.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:false,aguarda,setAguardaItem}))),
+    tod.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{fontSize:11,fontWeight:600,color:"#DD6B20",letterSpacing:".06em",marginBottom:8}},"🟠 PARA HOJE"),tod.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:false,aguarda,setAguardaItem}))),
+    prg.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),ce("div",{style:{fontSize:11,fontWeight:600,color:"#38A169",letterSpacing:".06em",marginBottom:8}},"🟢 EM PROGRESSO — concluídas?"),prg.map(t=>ce(TC,{key:t.id,t,onUpdate:(id,s)=>{},onAgent:setAT,showQ:true,aguarda,setAguardaItem}))),
     oth.length>0&&ce("div",{style:{marginBottom:12}},ce("div",{style:{height:1,background:"#E5E3DC",margin:"4px 0 14px"}}),ce("div",{style:{fontSize:11,fontWeight:600,color:"#3182CE",letterSpacing:".06em",marginBottom:8}},"🔵 ESTA SEMANA · RADAR"),
       ce("div",{className:"cd"},oth.slice(0,10).map((t,i)=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",borderBottom:i<oth.length-1?"1px solid #F0EEE8":"none",fontSize:12}},
         ce("div",{style:{width:6,height:6,borderRadius:"50%",background:PA(t.priority),flexShrink:0}}),
@@ -261,7 +284,8 @@ function PAssist({tasks,calEvents}){
   const[convs,setCvs]=useState([]);const[cur,setCur]=useState(null);const[inp,setInp]=useState("");const[ld,setLd]=useState(false);const end=useRef(null);const n=new Date();
   useEffect(()=>{sg("bj-cvs").then(c=>{if(c?.length){setCvs(c);setCur(c[0])}else nC()});},[]);
   useEffect(()=>{end.current?.scrollIntoView({behavior:"smooth"});},[cur?.messages]);
-  const SYS=`Assistente pessoal do Vasco (BBTOP20 — Borja on Stocks + Investidor Prudente com César Borja). BOS: dinâmico/assertivo, 197 €/497 €/ano. IP: sereno/ponderado, 149 €/397 €/ano. Tarefas activas: ${tasks.filter(t=>t.status!=="done").slice(0,12).map(t=>t.name).join(", ")||"nenhuma"}. Eventos hoje: ${calEvents.map(e=>e.summary).join(", ")||"nenhum"}. Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MESES[n.getMonth()]} ${n.getFullYear()}. Pt-pt. Age directamente sem pedir confirmação excessiva.`;
+  const lateAct=tasks.filter(t=>t.status!=="done"&&t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n);
+  const SYS=`Assistente pessoal do Vasco (BBTOP20 — Borja on Stocks + Investidor Prudente com César Borja). BOS: dinâmico/assertivo, 197 €/497 €/ano. IP: sereno/ponderado, 149 €/397 €/ano. Tarefas activas: ${tasks.filter(t=>t.status!=="done").slice(0,12).map(t=>t.name).join(", ")||"nenhuma"}. Tarefas ATRASADAS (${lateAct.length}): ${lateAct.slice(0,5).map(t=>t.name).join(", ")||"nenhuma"}. Eventos hoje: ${calEvents.map(e=>e.summary).join(", ")||"nenhum"}. Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MESES[n.getMonth()]} ${n.getFullYear()}. Pt-pt. Age directamente. Nas primeiras mensagens do dia, sugere proactivamente o que requer atenção imediata.`;
   function nC(){const c={id:`c${Date.now()}`,title:"Nova conversa",messages:[],ts:Date.now()};const u=[c,...convs];setCvs(u);setCur(c);ss("bj-cvs",u)}
   function dC(id){const u=convs.filter(c=>c.id!==id);setCvs(u);ss("bj-cvs",u);if(cur?.id===id){if(u.length)setCur(u[0]);else nC()}}
   async function send(){if(!inp.trim()||ld||!cur)return;const um={role:"user",content:inp.trim()};const upd={...cur,messages:[...cur.messages,um],title:cur.messages.length===0?inp.trim().slice(0,36):cur.title};setCur(upd);setInp("");setLd(true);const all=convs.map(c=>c.id===upd.id?upd:c);setCvs(all);ss("bj-cvs",all);const r=await aiC(upd.messages,SYS);const fin={...upd,messages:[...upd.messages,{role:"assistant",content:r}]};setCur(fin);const all2=all.map(c=>c.id===fin.id?fin:c);setCvs(all2);ss("bj-cvs",all2);setLd(false)}
@@ -287,7 +311,7 @@ function PAssist({tasks,calEvents}){
           ce("h3",{style:{fontFamily:"DM Serif Display,serif",fontSize:20,marginBottom:6,color:"var(--text-1)"}},"Olá! Estou aqui sempre que precisares."),
           ce("p",{style:{fontSize:13,color:"var(--text-2)",marginBottom:14}},"Queres que faça um check-in do teu dia, ou preferes seguir o teu caminho?"),
           ce("div",{style:{display:"flex",flexDirection:"column",gap:7,maxWidth:320,margin:"0 auto"}},
-            ["✨ Sim, fazer check-in do dia","Tenho tarefas atrasadas?","Ajuda-me a organizar hoje","Quais são as minhas tarefas?"].map(q=>ce("button",{key:q,className:"bt",onClick:()=>{setInp(q);setTimeout(send,80)},style:{justifyContent:"center",padding:"9px",fontSize:12,borderRadius:10}},q))
+            ["✨ Check-in do dia","Quais as tarefas atrasadas?","O que fazer agora?","Dá-me um resumo da semana","Cria tarefa urgente","Analisa o meu backlog"].map(q=>ce("button",{key:q,className:"bt",onClick:()=>{setInp(q);setTimeout(send,80)},style:{justifyContent:"center",padding:"9px",fontSize:12,borderRadius:10}},q))
           )
         ),
         cur?.messages?.map((m,i)=>ce("div",{key:i,style:{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}},
@@ -1622,6 +1646,59 @@ function GlobalSearch({tasks,notes,mem,prios,fin,searchQ,setSearchQ,searchOpen,s
   );
 }
 
+
+function TriagemModal({tasks,updateTask,toast,onClose}){
+  const late=tasks.filter(t=>t.status!=="done"&&isLate(t.due_date));
+  const[decisions,setDec]=useState({});
+  const[idx,setIdx]=useState(0);
+  const cur=late[idx];
+  if(!cur)return ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"}},
+    ce("div",{style:{background:"var(--bg-app)",borderRadius:14,padding:28,maxWidth:440,width:"90vw",textAlign:"center"}},
+      ce("i",{className:"ti ti-circle-check",style:{fontSize:48,color:"#38A169",display:"block",marginBottom:12}}),
+      ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:22,marginBottom:8}},"Triagem concluída!"),
+      ce("p",{style:{fontSize:13,color:"var(--text-3)",marginBottom:20}},"Processaste "+late.length+" tarefas atrasadas."),
+      ce("button",{className:"bt dk",onClick:onClose,style:{margin:"0 auto",display:"flex"}},"Fechar")
+    )
+  );
+  function decide(action){
+    setDec(d=>({...d,[cur.id]:action}));
+    if(action==="fechar"){updateTask({...cur,status:"done"});toast("Fechada: "+cur.name);}
+    if(action==="ignorar"){updateTask({...cur,due_date:String(Date.now()+7*86400000)});toast("+7 dias: "+cur.name);}
+    setIdx(i=>i+1);
+  }
+  const pct=Math.round(idx/late.length*100);
+  return ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"}},
+    ce("div",{style:{background:"var(--bg-app)",borderRadius:14,padding:"24px 28px",maxWidth:480,width:"90vw",border:"1px solid var(--border)"}},
+      ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}},
+        ce("div",null,
+          ce("div",{style:{fontSize:12,color:"var(--text-3)",fontFamily:"monospace",marginBottom:2}},"TRIAGEM · "+idx+" de "+late.length),
+          ce("div",{style:{height:4,borderRadius:2,background:"var(--border)",overflow:"hidden",width:200}},
+            ce("div",{style:{height:"100%",width:pct+"%",background:"#7C3AED",borderRadius:2,transition:"width .3s"}})
+          )
+        ),
+        ce("button",{onClick:onClose,style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",fontSize:18}},"×")
+      ),
+      ce("div",{style:{background:"var(--bg-surface)",borderRadius:10,padding:"16px",marginBottom:20,borderLeft:"4px solid #E53E3E"}},
+        ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:6,fontFamily:"monospace"}},"ATRASADA · "+fmtD(cur.due_date)),
+        ce("div",{style:{fontSize:16,fontWeight:500,color:"var(--text-1)",lineHeight:1.4}},cur.name),
+        cur.list&&ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:4}},cur.list)
+      ),
+      ce("div",{style:{fontSize:13,color:"var(--text-2)",marginBottom:14,textAlign:"center"}},"O que fazes com esta tarefa?"),
+      ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}},
+        ce("button",{onClick:()=>decide("fechar"),className:"bt gn",style:{flexDirection:"column",gap:4,padding:"12px 8px",justifyContent:"center",textAlign:"center",height:"auto"}},
+          ce("i",{className:"ti ti-check",style:{fontSize:18,display:"block",marginBottom:2}}),ce("span",{style:{fontSize:11}},"Fechar")
+        ),
+        ce("button",{onClick:()=>decide("ignorar"),className:"bt",style:{flexDirection:"column",gap:4,padding:"12px 8px",justifyContent:"center",textAlign:"center",height:"auto"}},
+          ce("i",{className:"ti ti-calendar-plus",style:{fontSize:18,display:"block",marginBottom:2}}),ce("span",{style:{fontSize:11}},"Adiar 7 dias")
+        ),
+        ce("button",{onClick:()=>decide("manter"),className:"bt",style:{flexDirection:"column",gap:4,padding:"12px 8px",justifyContent:"center",textAlign:"center",height:"auto",borderColor:"#E53E3E",color:"#C53030"}},
+          ce("i",{className:"ti ti-arrow-right",style:{fontSize:18,display:"block",marginBottom:2}}),ce("span",{style:{fontSize:11}},"Manter assim")
+        )
+      )
+    )
+  );
+}
+
 const NAV=[
   {id:"hoje",icon:"ti-sun",label:"Hoje",c:"#3182CE"},
   {id:"prioridades",icon:"ti-star",label:"Prioridades",c:"#D69E2E"},
@@ -1667,10 +1744,14 @@ function App(){
   const[lastSync,setSync]=useState("");
   const[toast_,setToast]=useState(null);
   const[agentTask,setAT]=useState(null);
+  const[aguarda,setAguarda]=useState(()=>{try{return JSON.parse(localStorage.getItem('bj-aguarda')||'{}');}catch{return {};}});
+  function setAguardaItem(id,val){const n={...aguarda,[id]:val};setAguarda(n);localStorage.setItem('bj-aguarda',JSON.stringify(n));}
   const[ready,setReady]=useState(false);
   const[searchQ,setSearchQ]=useState('');
   const[searchOpen,setSearchOpen]=useState(false);
   const[darkMode,setDarkMode]=useState(()=>localStorage.getItem('bj-dark')==='1');
+  const[navOpen,setNavOpen]=useState(false);
+  const[triageOpen,setTriageOpen]=useState(false);
   useEffect(()=>{document.documentElement.classList.toggle('dark',darkMode);localStorage.setItem('bj-dark',darkMode?'1':'0');},[darkMode]);
   const[navOrder,setNavOrder]=useState(null);
   const[dragging,setDragging]=useState(null);
@@ -1767,9 +1848,9 @@ function App(){
 
   const sp=setPg;
   const PageMap={
-    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin}),
+    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage:()=>setTriageOpen(true),aguarda,setAguardaItem}),
     assistente:()=>ce(PAssist,{tasks,calEvents,setPage:sp}),
-    tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios}),
+    tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios,aguarda,setAguardaItem}),
     inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast,setPage:sp}),
     foco:()=>ce(PFoco,{tasks,focoSessions,saveFocoSessions,setPage:sp,toast}),
     notas:()=>ce(PNotas,{notes,saveNotes,toast,addTask,setPage:sp}),
@@ -1791,7 +1872,8 @@ function App(){
   const PgComp=PageMap[pg]||PageMap.hoje;
 
   return ce("div",{style:{display:"flex",width:"100%",height:"100%"}},
-    ce("nav",{style:{width:200,borderRight:"1px solid var(--border)",background:"var(--bg-nav)",display:"flex",flexDirection:"column",flexShrink:0,height:"100%",overflowY:"hidden"}},
+    ce("div",{className:"mob-overlay"+(navOpen?" open":""),onClick:()=>setNavOpen(false)}),
+    ce("nav",{className:"nav-mob"+(navOpen?" open":""),style:{width:200,borderRight:"1px solid var(--border)",background:"var(--bg-nav)",display:"flex",flexDirection:"column",flexShrink:0,height:"100%",overflowY:"hidden"}},
       ce("div",{style:{padding:"13px 13px 11px",borderBottom:"1px solid var(--border)"}},
         ce("div",{style:{display:"flex",alignItems:"center",gap:9}},
           ce("div",{style:{width:28,height:28,borderRadius:8,background:"#1A1A2E",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14}},
@@ -1839,6 +1921,7 @@ function App(){
     ),
     ce("div",{style:{flex:1,display:"flex",flexDirection:"column",minHeight:0,minWidth:0}},
       ce("div",{style:{borderBottom:"1px solid var(--border)",padding:"9px 22px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--bg-app)",flexShrink:0,zIndex:10}},
+        ce("button",{className:"mob-ham",onClick:()=>setNavOpen(o=>!o),style:{"aria-label":"Menu"}},ce("i",{className:"ti ti-menu-2",style:{fontSize:20}})),
         ce("div",null,ce("div",{style:{fontSize:10,color:"var(--text-3)"}},h_<12?"Olá":h_<17?"Boa tarde":"Boa noite"),ce("div",{style:{fontSize:15,fontWeight:600,color:"var(--text-1)",lineHeight:1.1}},"vasco")),
         ce("div",{style:{display:"flex",alignItems:"center",gap:10}},
           ce("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:20,border:"1px solid var(--border)",background:"var(--bg-page)",color:"var(--text-3)",fontSize:11}},ce("i",{className:"ti ti-search",style:{fontSize:13}}),"Pesquisar..."),
@@ -1854,6 +1937,7 @@ function App(){
         ):ce(PgComp)
       )
     ),
+    triageOpen&&ce(TriagemModal,{tasks,updateTask,toast,onClose:()=>setTriageOpen(false)}),
     ce(GlobalSearch,{tasks,notes,mem,prios,fin,searchQ,setSearchQ,searchOpen,setSearchOpen,setPage:setPg,toast}),
     ce(FloatingAssistant,{tasks,recentTasks,calEvents,habits,logs,fin,prios,addTask,updateTask,setPage:setPg,toast}),
         toast_&&ce("div",{style:{position:"fixed",bottom:86,right:84,background:"#1A1A2E",color:"#fff",padding:"10px 16px",borderRadius:9,fontSize:13,zIndex:9999,animation:"fU .2s",maxWidth:320,lineHeight:1.4}},toast_),
