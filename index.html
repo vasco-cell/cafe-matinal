@@ -88,12 +88,17 @@ const fmtT=dt=>{if(!dt)return"";try{return new Date(dt).toLocaleTimeString("pt-P
 const sg=async k=>{const pm={'bj-notes':'data/notes.json','bj-habits':'data/habits.json','bj-logs':'data/habits.json','bj-mem':'data/mem.json','bj-cvs':'data/convs.json','bj-tasks':'data/tasks.json'};try{if(pm[k]){const r=await fetch('https://raw.githubusercontent.com/vasco-cell/cafe-matinal/main/'+pm[k]+'?t='+Date.now());if(!r.ok){const v=localStorage.getItem(k);return v?JSON.parse(v):null;}const d=await r.json();if(k==='bj-notes')return d.notes;if(k==='bj-habits')return d.habits;if(k==='bj-logs')return d.logs;if(k==='bj-mem')return d.items;if(k==='bj-cvs')return d.convs;if(k==='bj-tasks')return d.tasks;}const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
 const ss=async(k,v)=>{const _t=['ghp', '_i69NK4x5cr', 'swgJ7Amo3Km', 'iJm4Qky8T4c5Up7'];const _gt=()=>_t.join('');const _repo='vasco-cell/cafe-matinal';async function _gw(p,d){try{const r1=await fetch('https://api.github.com/repos/'+_repo+'/contents/'+p,{headers:{'Authorization':'token '+_gt()}});let sha=r1.ok?(await r1.json()).sha:null;const ct=btoa(unescape(encodeURIComponent(JSON.stringify(d,null,2))));const b={message:'update: '+p,content:ct};if(sha)b.sha=sha;await fetch('https://api.github.com/repos/'+_repo+'/contents/'+p,{method:'PUT',headers:{'Authorization':'token '+_gt(),'Content-Type':'application/json'},body:JSON.stringify(b)});}catch{}}try{localStorage.setItem(k,JSON.stringify(v));if(k==='bj-notes')_gw('data/notes.json',{notes:v});else if(k==='bj-habits'){fetch('https://raw.githubusercontent.com/'+_repo+'/main/data/habits.json?t='+Date.now()).then(r=>r.json()).then(e=>_gw('data/habits.json',{...e,habits:v})).catch(()=>_gw('data/habits.json',{habits:v,logs:{}}));}else if(k==='bj-logs'){fetch('https://raw.githubusercontent.com/'+_repo+'/main/data/habits.json?t='+Date.now()).then(r=>r.json()).then(e=>_gw('data/habits.json',{...e,logs:v})).catch(()=>_gw('data/habits.json',{habits:[],logs:v}));}else if(k==='bj-mem')_gw('data/mem.json',{items:v});else if(k==='bj-cvs')_gw('data/convs.json',{convs:v});}catch{}};
 async function aiC(msgs,sys,max){
+  var ak=localStorage.getItem("bj-ak")||"";
+  if(!ak)return "Adiciona a tua chave API Claude nas Definicoes para usar a IA.";
   try{
-    var prompt=msgs.map(function(m){return m.content;}).join("\n");
-    var r=await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({action:"ai",prompt:prompt,system:sys||"Assistente BBTOP20 pt-pt.",max_tokens:max||900})});
+    var r=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"content-type":"application/json","x-api-key":ak,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:max||900,system:sys||"",messages:msgs})
+    });
     var d=await r.json();
-    return d.text||d.response||d.content||"(sem resposta da IA)";
+    if(d.error)return "Erro API: "+d.error.message;
+    return (d.content&&d.content[0]&&d.content[0].text)||"(sem resposta)";
   }catch(e){
     return "Erro: "+e.message;
   }
