@@ -435,20 +435,11 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
     {id:"chuva",l:"Chuva",emoji:"🌧"},
     {id:"floresta",l:"Floresta",emoji:"🌲"},
     {id:"passaros",l:"Pássaros",emoji:"🐦"},
-    {id:"cafe",l:"Café",emoji:"☕"},
-    {id:"lofi",l:"Lo-fi",emoji:"🎵"},
     {id:"ondas",l:"Ondas",emoji:"🌊"},
+    {id:"cafe",l:"Café",emoji:"☕"},
     {id:"fogao",l:"Fogueiro",emoji:"🔥"},
+    {id:"lofi",l:"Lo-fi",emoji:"🎵"},
   ];
-  const SOUND_URLS={
-    chuva:"https://cdn.pixabay.com/audio/2022/03/10/audio_2b16e2fe20.mp3",
-    floresta:"https://cdn.pixabay.com/audio/2021/09/06/audio_e8f89abb76.mp3",
-    passaros:"https://cdn.pixabay.com/audio/2021/10/19/audio_23016a8e81.mp3",
-    cafe:"https://cdn.pixabay.com/audio/2022/01/18/audio_d0ef66c5b8.mp3",
-    lofi:"https://cdn.pixabay.com/audio/2022/11/22/audio_febc508520.mp3",
-    ondas:"https://cdn.pixabay.com/audio/2022/10/30/audio_3f1fba5b95.mp3",
-    fogao:"https://cdn.pixabay.com/audio/2022/03/14/audio_e34f490fc5.mp3",
-  };
 
   const[mode,setMode]=useState(0);
   const[sec,setSec]=useState(25*60);
@@ -457,47 +448,137 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
   const[dur,setDur]=useState(25);
   const[selTask,setSelTask]=useState("");
   const[sound,setSound]=useState("silencio");
-  const[vol,setVol]=useState(0.4);
+  const[vol,setVol]=useState(0.5);
   const iv=useRef(null);
-  const audioRef=useRef(null);
+  const actxRef=useRef(null);
+  const nodesRef=useRef([]);
   const tot=dur*60;
   const pct=sec/tot;
   const R=88,CL=2*Math.PI*R;
   const actTasks=(tasks||[]).filter(t=>t.status!=="done");
 
-  // Sound management
-  useEffect(()=>{
-    if(audioRef.current){audioRef.current.pause();audioRef.current=null;}
-    if(sound!=="silencio"&&SOUND_URLS[sound]){
-      const a=new Audio(SOUND_URLS[sound]);
-      a.loop=true;a.volume=vol;
-      audioRef.current=a;
-      if(run)a.play().catch(()=>{});
-    }
-    return()=>{if(audioRef.current){audioRef.current.pause();audioRef.current=null;}};
-  },[sound]);
+  function stopSound(){
+    nodesRef.current.forEach(n=>{try{n.stop();}catch(e){}});
+    nodesRef.current=[];
+  }
 
-  useEffect(()=>{
-    if(audioRef.current){
-      if(run)audioRef.current.play().catch(()=>{});
-      else audioRef.current.pause();
-    }
-  },[run]);
+  function startSound(id,v){
+    stopSound();
+    if(id==="silencio")return;
+    try{
+      if(!actxRef.current||actxRef.current.state==="closed"){
+        actxRef.current=new(window.AudioContext||window.webkitAudioContext)();
+      }
+      const ctx=actxRef.current;
+      if(ctx.state==="suspended")ctx.resume();
+      const gain=ctx.createGain();
+      gain.gain.setValueAtTime(v,ctx.currentTime);
+      gain.connect(ctx.destination);
 
+      if(id==="chuva"||id==="cafe"){
+        // White noise (rain / cafe)
+        const bufSize=ctx.sampleRate*2;
+        const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
+        const data=buf.getChannelData(0);
+        for(let i=0;i<bufSize;i++)data[i]=(Math.random()*2-1);
+        const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+        const filter=ctx.createBiquadFilter();
+        if(id==="chuva"){filter.type="bandpass";filter.frequency.value=1200;filter.Q.value=0.8;}
+        else{filter.type="lowpass";filter.frequency.value=800;}
+        src.connect(filter);filter.connect(gain);src.start();
+        nodesRef.current=[src];
+      }
+      else if(id==="ondas"){
+        // Low frequency oscillation for waves
+        const bufSize=ctx.sampleRate*4;
+        const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
+        const data=buf.getChannelData(0);
+        for(let i=0;i<bufSize;i++){
+          const t=i/ctx.sampleRate;
+          data[i]=(Math.random()*2-1)*0.5*(0.5+0.5*Math.sin(2*Math.PI*0.15*t));
+        }
+        const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+        const filter=ctx.createBiquadFilter();filter.type="lowpass";filter.frequency.value=600;
+        src.connect(filter);filter.connect(gain);src.start();
+        nodesRef.current=[src];
+      }
+      else if(id==="floresta"||id==="passaros"){
+        // Pink-ish noise with occasional chirps
+        const bufSize=ctx.sampleRate*2;
+        const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
+        const data=buf.getChannelData(0);
+        let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0;
+        for(let i=0;i<bufSize;i++){
+          const w=Math.random()*2-1;
+          b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;
+          b2=0.96900*b2+w*0.1538520;b3=0.86650*b3+w*0.3104856;
+          b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;
+          data[i]=(b0+b1+b2+b3+b4+b5+w*0.5362)*0.11;
+        }
+        const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+        const filter=ctx.createBiquadFilter();
+        if(id==="passaros"){filter.type="highpass";filter.frequency.value=800;}
+        else{filter.type="bandpass";filter.frequency.value=500;filter.Q.value=0.5;}
+        src.connect(filter);filter.connect(gain);src.start();
+        nodesRef.current=[src];
+      }
+      else if(id==="fogao"){
+        // Low crackle
+        const bufSize=ctx.sampleRate*2;
+        const buf=ctx.createBuffer(1,bufSize,ctx.sampleRate);
+        const data=buf.getChannelData(0);
+        for(let i=0;i<bufSize;i++){
+          data[i]=Math.random()<0.003?(Math.random()*2-1)*0.8:(Math.random()*2-1)*0.04;
+        }
+        const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+        const filter=ctx.createBiquadFilter();filter.type="lowpass";filter.frequency.value=400;
+        src.connect(filter);filter.connect(gain);src.start();
+        nodesRef.current=[src];
+      }
+      else if(id==="lofi"){
+        // Simple lo-fi pad: layered sine waves at harmonic intervals
+        const freqs=[110,165,220,277,330];
+        const srcs=freqs.map(f=>{
+          const o=ctx.createOscillator();
+          const g2=ctx.createGain();
+          o.frequency.value=f;
+          o.type="sine";
+          g2.gain.setValueAtTime(0.04+(Math.random()*0.02),ctx.currentTime);
+          const lfo=ctx.createOscillator();
+          const lfoG=ctx.createGain();
+          lfo.frequency.value=0.3+Math.random()*0.2;
+          lfoG.gain.value=0.015;
+          lfo.connect(lfoG);lfoG.connect(g2.gain);
+          lfo.start();o.connect(g2);g2.connect(gain);o.start();
+          return o;
+        });
+        nodesRef.current=srcs;
+      }
+    }catch(e){console.warn("Audio error:",e);}
+  }
+
+  // Start/stop sound with timer
   useEffect(()=>{
-    if(audioRef.current)audioRef.current.volume=vol;
+    if(run&&sound!=="silencio"){startSound(sound,vol);}
+    else{stopSound();}
+    return stopSound;
+  },[run,sound]);
+
+  // Update volume live
+  useEffect(()=>{
+    if(actxRef.current&&nodesRef.current.length>0){
+      try{actxRef.current.destination.channelInterpretation="discrete";}catch{}
+    }
   },[vol]);
 
+  // Timer
   useEffect(()=>{
     if(run){
       iv.current=setInterval(()=>setSec(s=>{
         if(s<=1){
-          clearInterval(iv.current);setRun(false);
-          if(audioRef.current)audioRef.current.pause();
+          clearInterval(iv.current);setRun(false);stopSound();
           setSess(n=>{
-            if(saveFocoSessions){
-              saveFocoSessions([...(focoSessions||[]),{id:"f"+Date.now(),dur,task:selTask||null,date:new Date().toDateString()}]);
-            }
+            if(saveFocoSessions)saveFocoSessions([...(focoSessions||[]),{id:"f"+Date.now(),dur,task:selTask||null,date:new Date().toDateString()}]);
             return n+1;
           });
           if(toast)toast("Sessão de foco concluída! 🎉");
@@ -509,8 +590,21 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
     return()=>clearInterval(iv.current);
   },[run,tot]);
 
+  useEffect(()=>{return()=>{stopSound();if(actxRef.current)actxRef.current.close();};},[]);
+
   function changeMode(i){setMode(i);setSec(MODES[i].s);setRun(false);setDur(Math.floor(MODES[i].s/60));}
   function changeDur(d){setDur(d);setSec(d*60);setRun(false);}
+  function toggleRun(){
+    if(!run&&sound!=="silencio"){
+      if(!actxRef.current||actxRef.current.state==="closed"){
+        actxRef.current=new(window.AudioContext||window.webkitAudioContext)();
+      }
+      if(actxRef.current.state==="suspended")actxRef.current.resume().then(()=>startSound(sound,vol));
+      else startSound(sound,vol);
+    }else if(run){stopSound();}
+    setRun(r=>!r);
+  }
+
   const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss_=String(sec%60).padStart(2,"0");
 
   return ce("div",{style:{height:"100%",minHeight:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"20px 24px",color:"#fff",overflowY:"auto"}},
@@ -535,39 +629,51 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
     ),
 
     ce("div",{style:{display:"flex",gap:10,marginBottom:20}},
-      ce("button",{onClick:()=>setRun(!run),style:{padding:"11px 36px",borderRadius:12,border:"none",background:run?"rgba(255,255,255,.15)":"#7C3AED",color:"#fff",fontSize:15,fontWeight:500,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},run?"Pausar":"Iniciar"),
-      ce("button",{onClick:()=>{setRun(false);setSec(tot);if(audioRef.current)audioRef.current.pause();},style:{padding:"11px 18px",borderRadius:12,border:"1px solid rgba(255,255,255,.2)",background:"transparent",color:"#fff",fontSize:15,cursor:"pointer",fontFamily:"inherit"}},"↺")
+      ce("button",{onClick:toggleRun,style:{padding:"11px 36px",borderRadius:12,border:"none",background:run?"rgba(255,255,255,.15)":"#7C3AED",color:"#fff",fontSize:15,fontWeight:500,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},run?"Pausar":"Iniciar"),
+      ce("button",{onClick:()=>{setRun(false);setSec(tot);stopSound();},style:{padding:"11px 18px",borderRadius:12,border:"1px solid rgba(255,255,255,.2)",background:"transparent",color:"#fff",fontSize:15,cursor:"pointer",fontFamily:"inherit"}},"↺")
     ),
 
-    ce("div",{style:{width:"100%",maxWidth:400,marginBottom:16}},
+    ce("div",{style:{width:"100%",maxWidth:420,marginBottom:16}},
       ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:8,letterSpacing:".06em"}},"TAREFA DE FOCO"),
       ce("select",{value:selTask,onChange:e=>setSelTask(e.target.value),style:{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid rgba(255,255,255,.2)",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:13,fontFamily:"inherit",cursor:"pointer",outline:"none"}},
         ce("option",{value:"",style:{background:"#1A1A2E"}},"— Escolher tarefa —"),
         actTasks.map(t=>ce("option",{key:t.id,value:t.id,style:{background:"#1A1A2E"}},
           (t.priority==="urgent"?"🔴 ":t.priority==="high"?"🟠 ":"")+"["+t.list+"] "+t.name
         ))
-      ),
-      selTask&&ce("div",{style:{marginTop:6,fontSize:12,color:"#A78BFA",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
-        "✦ "+(actTasks.find(t=>t.id===selTask)?.name||"")
       )
     ),
 
-    ce("div",{style:{width:"100%",maxWidth:400,marginBottom:12}},
-      ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:8,letterSpacing:".06em"}},"SOM AMBIENTE"),
+    ce("div",{style:{width:"100%",maxWidth:420,marginBottom:12}},
+      ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:8,letterSpacing:".06em"}},"SOM AMBIENTE"+(sound!=="silencio"?" · activo 🎵":"")),
       ce("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
-        SOUNDS.map(s=>ce("button",{key:s.id,onClick:()=>setSound(s.id),style:{padding:"6px 12px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:sound===s.id?"rgba(124,58,237,.6)":"rgba(255,255,255,.06)",color:"#fff",fontSize:11,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5,transition:"all .15s"}},
-          s.emoji," ",s.l
+        SOUNDS.map(s=>ce("button",{key:s.id,
+          onClick:()=>{
+            const newS=s.id;
+            setSound(newS);
+            if(run){
+              stopSound();
+              if(newS!=="silencio")setTimeout(()=>startSound(newS,vol),50);
+            }
+          },
+          style:{padding:"7px 13px",borderRadius:20,border:"1px solid rgba(255,255,255,.2)",background:sound===s.id?"rgba(124,58,237,.7)":"rgba(255,255,255,.06)",color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5,transition:"all .15s"}},
+          s.emoji,"  ",s.l
         ))
       ),
       sound!=="silencio"&&ce("div",{style:{display:"flex",alignItems:"center",gap:10,marginTop:10}},
-        ce("i",{className:"ti ti-volume",style:{fontSize:14,color:"rgba(255,255,255,.5)"}}),
-        ce("input",{type:"range",min:0,max:1,step:0.05,value:vol,onChange:e=>setVol(parseFloat(e.target.value)),style:{flex:1,accentColor:"#7C3AED"}}),
-        ce("i",{className:"ti ti-volume-3",style:{fontSize:14,color:"rgba(255,255,255,.5)"}})
+        ce("i",{className:"ti ti-volume",style:{fontSize:14,color:"rgba(255,255,255,.4)"}}),
+        ce("input",{type:"range",min:0.05,max:1,step:0.05,value:vol,
+          onChange:e=>{
+            const v=parseFloat(e.target.value);setVol(v);
+            if(actxRef.current&&run){stopSound();setTimeout(()=>startSound(sound,v),50);}
+          },
+          style:{flex:1,accentColor:"#7C3AED"}}),
+        ce("i",{className:"ti ti-volume-3",style:{fontSize:14,color:"rgba(255,255,255,.4)"}}),
+        ce("span",{style:{fontSize:11,color:"rgba(255,255,255,.4)",minWidth:30,textAlign:"right"}},Math.round(vol*100)+"%")
       )
     ),
 
-    focoSessions&&focoSessions.length>0&&ce("div",{style:{width:"100%",maxWidth:400,marginTop:4}},
-      ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.4)",textAlign:"center"}},
+    focoSessions&&focoSessions.length>0&&ce("div",{style:{width:"100%",maxWidth:420,marginTop:4,textAlign:"center"}},
+      ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.35)"}},
         "Total: "+focoSessions.length+" sessão"+(focoSessions.length!==1?"s":"")+" · "+focoSessions.reduce((s,x)=>s+(x.dur||25),0)+" min focado"
       )
     )
