@@ -18,11 +18,7 @@
         },
         {
           "role": "user",
-          "content": "quantos esmaisl tenho de dia 22/05"
-        },
-        {
-          "role": "assistant",
-          "content": "Não tenho acesso a dados em tempo real sobre os seus emails específicos ou a caixa de correio.\n\nPara responder com precisão, precisaria que você me confirmasse:\n\n1. **Quantos emails não lidos tem de sexta-feira (22/05)** — verifique na sua caixa de correio\n2. **De qual conta** — Gmail, Outlook, ou outra?\n\n**O que recomendo agora (domingo 24/05):**\n\nDado que tem **7 tarefas ATRASADAS**, a prioridade deveria ser:\n\n1. ✅ **EMAILS PÓS-VENDA KIT** — clientes à espera de confirmação\n2. ✅ **EMAIL VENDA DO LIVRO** — a subs e inscrições\n3. ✅ **Newsletter Podcast** — precisa sair\n4. ✅ **CTAs/links redes** — completar\n\nQuer que o ajude a **organizar estas tarefas por urgência** e estimar o tempo para cada uma?"
+          "content": "quantos emails tenho de dia 22/05?"
         }
       ],
       "ts": 1779646396097
