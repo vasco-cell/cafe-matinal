@@ -555,7 +555,7 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
   );
 }
 function PNotas({notes,saveNotes,toast,addTask,setPage}){
-  const[inp,setInp]=useState("");const[title,setTitle]=useState("");const[show,setShow]=useState(false);const[ais,setAis]=useState({});
+  const[inp,setInp]=useState("");const[title,setTitle]=useState("");const[show,setShow]=useState(false);const[ais,setAis]=useState({});const[editNote,setEditNote]=useState(null);
   function add(){if(!inp.trim())return;saveNotes([{id:`n${Date.now()}`,title:title||inp.slice(0,30),content:inp,created:Date.now()},...notes]);setInp("");setTitle("");setShow(false);toast("Nota guardada ✓")}
   async function doAI(id,a,c){
     setAis(function(s){var x=Object.assign({},s);x[id+a]="ld";return x;});
@@ -594,10 +594,11 @@ function PNotas({notes,saveNotes,toast,addTask,setPage}){
         Object.keys(ais).filter(k=>k.startsWith(n.id)&&ais[k]!=="ld").map(k=>ce("div",{key:k,style:{marginTop:8,padding:8,background:"#F5F3FF",borderRadius:6,fontSize:11,color:"#4C1D95",lineHeight:1.6,whiteSpace:"pre-wrap"}},ais[k])),
         ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:8}},
           ce("span",{style:{fontSize:10,color:"var(--text-3)"}},fmt(n.created)),
-          ce("button",{onClick:()=>saveNotes(notes.filter(x=>x.id!==n.id)),style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)"}},ce("i",{className:"ti ti-trash",style:{fontSize:12}}))
+          ce("button",{onClick:function(){setEditNote(n);},style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",marginRight:4}},ce("i",{className:"ti ti-pencil",style:{fontSize:11}})),ce("button",{onClick:()=>saveNotes(notes.filter(x=>x.id!==n.id)),style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)"}},ce("i",{className:"ti ti-trash",style:{fontSize:12}}))
         )
       ))
-    )
+    ),
+    editNote&&ce(EditModal,{item:editNote,label:"Editar nota",onSave:function(u){saveNotes(notes.map(function(x){return x.id===u.id?u:x;}));toast("Guardada");},onDelete:function(){saveNotes(notes.filter(function(x){return x.id!==editNote.id;}));toast("Eliminada");},onClose:function(){setEditNote(null);}})
   )
 }
 
@@ -1006,7 +1007,7 @@ function PCal({tasks,calEvents,habits,logs,setPage,addTask,toast}){
   );
 }
 function PMemoria({mem,saveMem,toast}){
-  var[tab,setTab]=React.useState("nota");
+  var[tab,setTab]=React.useState("nota");var[editMem,setEditMem]=useState(null);
   var[inp,setInp]=React.useState("");
   var[tag,setTag]=React.useState("Lembrete");
   var TAGS=["Lembrete","Facto","Citacao","Ideia"];
@@ -1049,12 +1050,13 @@ function PMemoria({mem,saveMem,toast}){
         return ce("div",{key:m.id,style:{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 14px",borderRadius:8,background:"var(--bg-app)",border:"1px solid var(--border)"}},
           ce("span",{style:{fontSize:11,padding:"2px 8px",borderRadius:20,background:TAG_COLORS[m.tag]||"#F2F3F4",color:TAG_TEXT[m.tag]||"#555",flexShrink:0,marginTop:1}},m.tag||"Nota"),
           ce("span",{style:{fontSize:13,color:"var(--text-1)",flex:1,lineHeight:1.5}},m.content),
-          ce("button",{onClick:function(){saveMem((mem||[]).filter(function(x){return x.id!==m.id;}));},style:{border:"none",background:"transparent",cursor:"pointer",color:"#CBD5E0",flexShrink:0}},
+          ce("button",{onClick:function(){setEditMem(m);},style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",marginRight:4}},ce("i",{className:"ti ti-pencil",style:{fontSize:11}})),ce("button",{onClick:function(){saveMem((mem||[]).filter(function(x){return x.id!==m.id;}));},style:{border:"none",background:"transparent",cursor:"pointer",color:"#CBD5E0",flexShrink:0}},
             ce("i",{className:"ti ti-trash",style:{fontSize:12}})
           )
         );
       })
-    )
+    ),
+    editMem&&ce(EditModal,{item:editMem,noTitle:true,label:"Editar memoria",onSave:function(u){saveMem((mem||[]).map(function(x){return x.id===u.id?u:x;}));toast("Guardada");},onDelete:function(){saveMem((mem||[]).filter(function(x){return x.id!==editMem.id;}));toast("Eliminada");},onClose:function(){setEditMem(null);}})
   );
 }
 
@@ -2038,6 +2040,27 @@ function NotificationsPanel({tasks,calEvents,habits,logs,open,onClose,setPage}){
       )
     )
   );
+}
+
+
+function EditModal(props){
+  var item=props.item,onSave=props.onSave,onDelete=props.onDelete,onClose=props.onClose;
+  var noTitle=props.noTitle,label=props.label;
+  var ts=useState((item&&item.title)||""),t=ts[0],setT=ts[1];
+  var cs=useState((item&&item.content)||""),c=cs[0],setC=cs[1];
+  function save(){var upd={};Object.keys(item).forEach(function(k){upd[k]=item[k];});upd.content=c;upd.title=t;upd.updated=Date.now();onSave(upd);onClose();}
+  return ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:2500,display:"flex",alignItems:"center",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)onClose();}},
+    ce("div",{style:{background:"var(--bg-app)",borderRadius:12,padding:24,width:540,maxWidth:"92vw",border:"1px solid var(--border)"}},
+      ce("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:14}},
+        ce("span",{style:{fontSize:15,fontWeight:600}},label||"Editar"),
+        ce("div",{style:{display:"flex",gap:8}},
+          onDelete&&ce("button",{onClick:function(){onDelete();onClose();},style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E",fontFamily:"inherit",fontSize:12}},ce("i",{className:"ti ti-trash",style:{fontSize:13}})," Eliminar"),
+          ce("button",{onClick:onClose,style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},"x"))),
+      !noTitle&&ce("input",{className:"ip",value:t,onChange:function(e){setT(e.target.value);},placeholder:"Titulo",style:{marginBottom:8}}),
+      ce("textarea",{className:"ip",value:c,onChange:function(e){setC(e.target.value);},rows:8,style:{resize:"vertical",lineHeight:1.6,marginBottom:14}}),
+      ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end"}},
+        ce("button",{className:"bt",onClick:onClose},"Cancelar"),
+        ce("button",{className:"bt dk",onClick:save},"Guardar"))));
 }
 
 const NAV=[
