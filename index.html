@@ -35,7 +35,10 @@ a{text-decoration:none}
 .pt{font-family:'DM Serif Display',Georgia,serif;font-size:34px;font-weight:400;color:#1A1A2E;letter-spacing:-.5px}
 .ps{font-size:13px;color:#6B6860;margin-top:3px}
 .po{transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1s linear}
-
+.page-scroll{height:100%;overflow-y:auto;overflow-x:hidden}
+.drag-handle{cursor:grab;opacity:.4;font-size:11px;padding:0 2px}
+.drag-handle:hover{opacity:1}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
 </style>
 </head>
 <body>
@@ -1487,6 +1490,115 @@ Responde SEMPRE em portugues europeu. Age diretamente sem pedir confirmacao exce
 }
 
 
+
+function PPrevisoes({tasks,habits,logs,fin,toast}){
+  const[prevs,setPrevs]=useState(function(){try{var v=localStorage.getItem("bj-prevs");return v?JSON.parse(v):[]}catch{return[];}});
+  const[ld,setLd]=useState(false);
+  const n=new Date();
+  const MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  function savePrevs(v){setPrevs(v);try{localStorage.setItem("bj-prevs",JSON.stringify(v));}catch{}}
+  async function gerarPrevisao(){
+    setLd(true);
+    const act=tasks.filter(function(t){return t.status!=="done";});
+    const late=act.filter(function(t){return t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n;});
+    const moKey=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
+    const saldo=(fin||[]).filter(function(t){return t.month===moKey;}).reduce(function(s,t){return s+(t.type==="receita"?+t.amount:-+t.amount);},0);
+    const habDone=(habits||[]).filter(function(h){var dl=(logs||{})[n.toDateString()]||{};return dl[h.id];}).length;
+    const ctx="Data: "+n.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})
+      +". Tarefas abertas: "+act.length+" ("+late.length+" atrasadas)"
+      +". Tarefas urgentes: "+act.filter(function(t){return t.priority==="urgent";}).map(function(t){return t.name;}).join(", ")
+      +". Habitos hoje: "+habDone+"/"+(habits||[]).length
+      +". Saldo este mes: "+saldo.toFixed(0)+" euros"
+      +". Proximas tarefas com prazo: "+act.filter(function(t){return t.due_date&&t.due_date!=="null";}).sort(function(a,b){return +a.due_date-+b.due_date;}).slice(0,5).map(function(t){return t.name+" ("+new Date(+t.due_date).toLocaleDateString("pt-PT")+")";}).join(", ");
+    const prompt="Com base neste contexto: "+ctx+". Faz uma previsao para os proximos 7 dias. Responde APENAS em JSON sem markdown: {"dias":[{"data":"SEG 26 mai","foco":"titulo curto","tarefas":["tarefa1","tarefa2"],"risco":"baixo|medio|alto","nota":"observacao"}],"resumo":"2-3 frases sobre a semana","alertas":["alerta1"]}";
+    const res=await aiC([{role:"user",content:prompt}],"Assistente BBTOP20 pt-pt. Responde so JSON.",800);
+    try{
+      const clean=res.replace(/```json|```/g,"").trim();
+      const parsed=JSON.parse(clean);
+      const weekStart=new Date(n);weekStart.setDate(n.getDate()-n.getDay()+(n.getDay()===0?-6:1));
+      const weekEnd=new Date(weekStart);weekEnd.setDate(weekStart.getDate()+6);
+      const prev={id:"p"+Date.now(),
+        title:"Previsao "+weekStart.getDate()+" "+MC[weekStart.getMonth()]+" - "+weekEnd.getDate()+" "+MC[weekEnd.getMonth()]+" "+weekEnd.getFullYear(),
+        created:Date.now(),data:parsed};
+      savePrevs([prev,...prevs.slice(0,4)]);
+      toast("Previsao gerada para 7 dias");
+    }catch(e){toast("Erro ao gerar previsao: "+e.message);}
+    setLd(false);
+  }
+  const RISCO_COLOR={baixo:"#38A169",medio:"#DD6B20",alto:"#E53E3E"};
+  const RISCO_BG={baixo:"#F0FFF4",medio:"#FFFAF0",alto:"#FFF5F5"};
+  return ce("div",{style:{display:"flex",flexDirection:"column",height:"100%",animation:"fU .2s"}},
+    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexShrink:0}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:14}},
+        ce("div",{style:{width:40,height:40,borderRadius:10,background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center"}},
+          ce("i",{className:"ti ti-telescope",style:{fontSize:20,color:"#7C3AED"}})
+        ),
+        ce("div",null,
+          ce("div",{className:"pt",style:{fontSize:28}},"Previsoes"),
+          ce("div",{className:"ps"},"Um olhar sobre os proximos dias.")
+        )
+      ),
+      ce("button",{className:"bt dk",onClick:gerarPrevisao,disabled:ld,style:{gap:6}},
+        ld?ce("span",{className:"sp"}):ce("i",{className:"ti ti-sparkles",style:{fontSize:13}}),
+        ld?"A gerar...":" Prever 7 dias"
+      )
+    ),
+    ce("div",{style:{flex:1,overflowY:"auto",minHeight:0}},
+      prevs.length===0?ce("div",{style:{textAlign:"center",padding:"60px 20px",color:"#9B9890"}},
+        ce("i",{className:"ti ti-telescope",style:{fontSize:48,display:"block",marginBottom:16,opacity:.3}}),
+        ce("p",{style:{fontSize:15,marginBottom:8}},"Sem previsoes ainda."),
+        ce("p",{style:{fontSize:13,color:"#C8C4BC",marginBottom:20}},"Clica em Prever 7 dias para a IA analisar as tuas tarefas, habitos e financas e gerar uma previsao personalizada."),
+        ce("button",{className:"bt dk",onClick:gerarPrevisao,disabled:ld,style:{gap:6,margin:"0 auto",display:"flex"}},
+          ld?ce("span",{className:"sp"}):ce("i",{className:"ti ti-sparkles",style:{fontSize:13}}),
+          " Gerar primeira previsao"
+        )
+      ):
+      ce("div",null,
+        prevs.map(function(prev,pi){
+          var isLast=pi>0;
+          return ce("div",{key:prev.id,style:{marginBottom:20}},
+            ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}},
+              ce("div",{style:{fontWeight:600,fontSize:14}},prev.title),
+              ce("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+                ce("span",{style:{fontSize:10,color:"#9B9890",fontFamily:"monospace"}},new Date(prev.created).toLocaleString("pt-PT",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})),
+                ce("button",{onClick:function(){savePrevs(prevs.filter(function(p){return p.id!==prev.id;}));},style:{border:"none",background:"transparent",cursor:"pointer",color:"#CBD5E0"}},
+                  ce("i",{className:"ti ti-trash",style:{fontSize:13}}))
+              )
+            ),
+            prev.data.alertas&&prev.data.alertas.length>0&&ce("div",{style:{padding:"10px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",marginBottom:12,display:"flex",flexDirection:"column",gap:4}},
+              prev.data.alertas.map(function(a,i){return ce("div",{key:i,style:{display:"flex",alignItems:"flex-start",gap:8,fontSize:13,color:"#C53030"}},
+                ce("i",{className:"ti ti-alert-triangle",style:{fontSize:14,flexShrink:0,marginTop:1}}),a
+              );})
+            ),
+            prev.data.resumo&&ce("div",{className:"cd",style:{padding:"12px 16px",marginBottom:12,background:"#F5F3FF",border:"1px solid #DDD6FE"}},
+              ce("p",{style:{fontSize:13,color:"#1A1A2E",lineHeight:1.6,fontStyle:"italic"}},prev.data.resumo)
+            ),
+            ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+              (prev.data.dias||[]).map(function(dia,di){
+                return ce("div",{key:di,className:"cd",style:{overflow:"visible"}},
+                  ce("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderLeft:"4px solid "+(RISCO_COLOR[dia.risco]||"#CBD5E0"),background:RISCO_BG[dia.risco]||"#fff"}},
+                    ce("div",{style:{minWidth:70,flexShrink:0}},
+                      ce("div",{style:{fontSize:12,fontWeight:600,color:"#1A1A2E"}},dia.data||"Dia "+(di+1)),
+                      dia.risco&&ce("div",{style:{fontSize:10,color:RISCO_COLOR[dia.risco]||"#CBD5E0",marginTop:1}},dia.risco)
+                    ),
+                    ce("div",{style:{flex:1}},
+                      ce("div",{style:{fontSize:13,fontWeight:500,color:"#1A1A2E",marginBottom:3}},dia.foco||""),
+                      (dia.tarefas||[]).length>0&&ce("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
+                        (dia.tarefas||[]).map(function(t,ti){return ce("span",{key:ti,style:{fontSize:10,padding:"2px 7px",borderRadius:10,background:"#F5F2EC",color:"#5A5750",border:"1px solid #E5E3DC"}},t);})),
+                      dia.nota&&ce("div",{style:{fontSize:11,color:"#9B9890",marginTop:4,fontStyle:"italic"}},dia.nota)
+                    )
+                  )
+                );
+              })
+            )
+          );
+        })
+      )
+    )
+  );
+}
+
+
 const NAV=[
   {id:"hoje",icon:"ti-sun",label:"Hoje",c:"#3182CE"},
   {id:"prioridades",icon:"ti-star",label:"Prioridades",c:"#D69E2E"},
@@ -1533,6 +1645,9 @@ function App(){
   const[toast_,setToast]=useState(null);
   const[agentTask,setAT]=useState(null);
   const[ready,setReady]=useState(false);
+  const[navOrder,setNavOrder]=useState(function(){try{var v=localStorage.getItem('bj-nav-order');return v?JSON.parse(v):null}catch{return null;}});
+  const[dragging,setDragging]=useState(null);
+  function saveNavOrder(v){setNavOrder(v);try{localStorage.setItem('bj-nav-order',JSON.stringify(v));}catch{}}
   const[focoSessions,setFocoSessions]=useState(function(){try{var v=localStorage.getItem('bj-foco-sess');return v?JSON.parse(v):[]}catch{return[];}});
   function saveFocoSessions(v){setFocoSessions(v);try{localStorage.setItem('bj-foco-sess',JSON.stringify(v));}catch{}}
   const n=new Date();
@@ -1626,7 +1741,7 @@ function App(){
     prioridades:()=>ce(PPrios,{prios,savePrios,tasks,toast,setPage:sp}),
     calendario:()=>ce(PCal,{tasks,calEvents,habits,logs,setPage:sp}),
     revisao:()=>ce(PRevisao,{tasks,toast,saveMem,mem,habits,logs}),
-    previsoes:()=>stub("Previsoes","ti-telescope","#7C3AED","Em breve: previsao AI para os proximos 7 dias."),
+    previsoes:()=>ce(PPrevisoes,{tasks,habits,logs,fin,toast}),
     templates:()=>ce(PTemplates,{addTask,toast,setPage:sp}),
     rotinas:()=>ce(PRotinas,{toast,setPage:sp}),
     pessoal:()=>ce(PPessoal,{pessoal,savePessoal,toast,prios,savePrios}),
@@ -1646,13 +1761,28 @@ function App(){
         )
       ),
       ce("div",{style:{flex:1,overflowY:"auto",overflowX:"hidden",padding:"6px 8px",minHeight:0}},
-        NAV.map(nav=>ce("button",{key:nav.id,className:"bn"+(pg===nav.id?" on":""),onClick:()=>setPg(nav.id)},
+        (navOrder?NAV.slice().sort(function(a,b){var oa=navOrder.indexOf(a.id);var ob=navOrder.indexOf(b.id);return(oa<0?99:oa)-(ob<0?99:ob);}):NAV).map(function(nav,idx,arr){
+  return ce("div",{key:nav.id,
+    draggable:true,
+    onDragStart:function(e){setDragging(nav.id);e.dataTransfer.effectAllowed="move";},
+    onDragOver:function(e){e.preventDefault();e.dataTransfer.dropEffect="move";},
+    onDrop:function(e){e.preventDefault();if(!dragging||dragging===nav.id)return;
+      var ord=(navOrder||(navOrder?NAV.slice().sort(function(a,b){var oa=navOrder.indexOf(a.id);var ob=navOrder.indexOf(b.id);return(oa<0?99:oa)-(ob<0?99:ob);}):NAV)).map(function(n){return n.id;});
+      var from=ord.indexOf(dragging);var to=ord.indexOf(nav.id);
+      if(from<0||to<0){ord=(navOrder?NAV.slice().sort(function(a,b){var oa=navOrder.indexOf(a.id);var ob=navOrder.indexOf(b.id);return(oa<0?99:oa)-(ob<0?99:ob);}):NAV).map(function(n){return n.id;});from=ord.indexOf(dragging);to=ord.indexOf(nav.id);}
+      var newOrd=[...ord];newOrd.splice(from,1);newOrd.splice(to,0,dragging);
+      saveNavOrder(newOrd);setDragging(null);},
+    onDragEnd:function(){setDragging(null);},
+    style:{opacity:dragging===nav.id?.4:1,cursor:"grab"}},
+    ce("button",{className:"bn"+(pg===nav.id?" on":""),onClick:function(){setPg(nav.id);},style:{width:"100%"}},
           ce("i",{className:`ti ${nav.icon}`,style:{fontSize:15,color:pg===nav.id?"#fff":nav.c}}),
           ce("span",{style:{flex:1}},nav.label),
           nav.id==="inbox"&&inbox_c>0&&ce("span",{style:{fontSize:9,background:pg==="inbox"?"rgba(255,255,255,.2)":"#EDE9FE",color:pg==="inbox"?"#fff":"#7C3AED",padding:"1px 5px",borderRadius:10}},inbox_c),
-          nav.id==="hoje"&&act>0&&ce("span",{style:{fontSize:9,background:pg==="hoje"?"rgba(255,255,255,.2)":"#FEE2E2",color:pg==="hoje"?"#fff":"#E53E3E",padding:"1px 5px",borderRadius:10}},act)
-        ))
-      ),
+              nav.id==="hoje"&&act>0&&ce("span",{style:{fontSize:9,background:pg==="hoje"?"rgba(255,255,255,.2)":"#FEE2E2",color:pg==="hoje"?"#fff":"#E53E3E",padding:"1px 5px",borderRadius:10}},act)
+            )
+          )
+        );
+      }),
       ce("div",{style:{padding:"8px 13px",borderTop:"1px solid #E5E3DC",flexShrink:0}},
         ce("div",{style:{fontSize:10,color:tasks.length>0?"#38A169":"#9B9890",display:"flex",alignItems:"center",gap:5,marginBottom:2}},ce("i",{className:"ti ti-brand-clickup",style:{fontSize:11}}),tasks.length>0?tasks.length+" tarefas":"ClickUp offline"),
         ce("div",{style:{fontSize:10,color:calEvents.length>0?"#3182CE":"#9B9890",display:"flex",alignItems:"center",gap:5}},ce("i",{className:"ti ti-calendar",style:{fontSize:11}}),calEvents.length>0?calEvents.length+" eventos hoje":"Calendar offline"),
