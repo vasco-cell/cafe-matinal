@@ -1510,7 +1510,7 @@ function PPrevisoes({tasks,habits,logs,fin,toast}){
       +". Habitos hoje: "+habDone+"/"+(habits||[]).length
       +". Saldo este mes: "+saldo.toFixed(0)+" euros"
       +". Proximas tarefas com prazo: "+act.filter(function(t){return t.due_date&&t.due_date!=="null";}).sort(function(a,b){return +a.due_date-+b.due_date;}).slice(0,5).map(function(t){return t.name+" ("+new Date(+t.due_date).toLocaleDateString("pt-PT")+")";}).join(", ");
-    const prompt="Com base neste contexto: "+ctx+". Faz uma previsao para os proximos 7 dias. Responde APENAS em JSON sem markdown: {"dias":[{"data":"SEG 26 mai","foco":"titulo curto","tarefas":["tarefa1","tarefa2"],"risco":"baixo|medio|alto","nota":"observacao"}],"resumo":"2-3 frases sobre a semana","alertas":["alerta1"]}";
+    const prompt='Com base neste contexto: '+ctx+'. Faz uma previsao para os proximos 7 dias. Responde APENAS em JSON sem markdown: {dias:[{data:SEG 26 mai,foco:titulo curto,tarefas:[tarefa1],risco:baixo|medio|alto,nota:observacao}],resumo:2-3 frases,alertas:[alerta1]}. Usa aspas duplas no JSON. Exemplo: {"dias":[{"data":"...","foco":"...","tarefas":["..."],"risco":"baixo","nota":"..."}],"resumo":"...","alertas":["..."]}'
     const res=await aiC([{role:"user",content:prompt}],"Assistente BBTOP20 pt-pt. Responde so JSON.",800);
     try{
       const clean=res.replace(/```json|```/g,"").trim();
