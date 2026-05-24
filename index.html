@@ -1761,29 +1761,29 @@ function App(){
         )
       ),
       ce("div",{style:{flex:1,overflowY:"auto",overflowX:"hidden",padding:"6px 8px",minHeight:0}},
-        (navOrder?NAV.slice().sort(function(a,b){var oa=navOrder.indexOf(a.id);var ob=navOrder.indexOf(b.id);return(oa<0?99:oa)-(ob<0?99:ob);}):NAV).map(function(nav,idx,arr){
-  return ce("div",{key:nav.id,
-    draggable:true,
-    onDragStart:function(e){setDragging(nav.id);e.dataTransfer.effectAllowed="move";},
-    onDragOver:function(e){e.preventDefault();e.dataTransfer.dropEffect="move";},
-    onDrop:function(e){e.preventDefault();if(!dragging||dragging===nav.id)return;
-      var ord=(navOrder||(navOrder?NAV.slice().sort(function(a,b){var oa=navOrder.indexOf(a.id);var ob=navOrder.indexOf(b.id);return(oa<0?99:oa)-(ob<0?99:ob);}):NAV)).map(function(n){return n.id;});
-      var from=ord.indexOf(dragging);var to=ord.indexOf(nav.id);
-      if(from<0||to<0){ord=(navOrder?NAV.slice().sort(function(a,b){var oa=navOrder.indexOf(a.id);var ob=navOrder.indexOf(b.id);return(oa<0?99:oa)-(ob<0?99:ob);}):NAV).map(function(n){return n.id;});from=ord.indexOf(dragging);to=ord.indexOf(nav.id);}
-      var newOrd=[...ord];newOrd.splice(from,1);newOrd.splice(to,0,dragging);
-      saveNavOrder(newOrd);setDragging(null);},
-    onDragEnd:function(){setDragging(null);},
-    style:{opacity:dragging===nav.id?.4:1,cursor:"grab"}},
-    ce("button",{className:"bn"+(pg===nav.id?" on":""),onClick:function(){setPg(nav.id);},style:{width:"100%"}},
-          ce("i",{className:`ti ${nav.icon}`,style:{fontSize:15,color:pg===nav.id?"#fff":nav.c}}),
-          ce("span",{style:{flex:1}},nav.label),
-          nav.id==="inbox"&&inbox_c>0&&ce("span",{style:{fontSize:9,background:pg==="inbox"?"rgba(255,255,255,.2)":"#EDE9FE",color:pg==="inbox"?"#fff":"#7C3AED",padding:"1px 5px",borderRadius:10}},inbox_c),
-              nav.id==="hoje"&&act>0&&ce("span",{style:{fontSize:9,background:pg==="hoje"?"rgba(255,255,255,.2)":"#FEE2E2",color:pg==="hoje"?"#fff":"#E53E3E",padding:"1px 5px",borderRadius:10}},act)
-            )
+        (navOrder?[...NAV].sort(function(a,b){var oa=navOrder.indexOf(a.id),ob=navOrder.indexOf(b.id);return(oa<0?99:oa)-(ob<0?99:ob);}):NAV).map(function(nav){
+        var isDrag=dragging===nav.id;
+        return ce("div",{key:nav.id,draggable:true,
+          onDragStart:function(e){setDragging(nav.id);e.dataTransfer.effectAllowed="move";},
+          onDragOver:function(e){e.preventDefault();},
+          onDrop:function(e){
+            e.preventDefault();if(!dragging||dragging===nav.id)return;
+            var base=(navOrder?[...NAV].sort(function(a,b){var oa=navOrder.indexOf(a.id),ob=navOrder.indexOf(b.id);return(oa<0?99:oa)-(ob<0?99:ob);}):NAV).map(function(n){return n.id;});
+            var fi=base.indexOf(dragging),ti=base.indexOf(nav.id);
+            if(fi<0||ti<0)return;
+            base.splice(fi,1);base.splice(ti,0,dragging);
+            saveNavOrder(base);setDragging(null);
+          },
+          onDragEnd:function(){setDragging(null);},
+          style:{opacity:isDrag?.4:1}},
+          ce("button",{className:"bn"+(pg===nav.id?" on":""),onClick:function(){setPg(nav.id);},style:{width:"100%",cursor:"pointer"}},
+            ce("i",{className:"ti "+nav.icon,style:{fontSize:15,color:pg===nav.id?"#fff":nav.c}}),
+            ce("span",{style:{flex:1}},nav.label),
+            nav.id==="hoje"&&act>0&&ce("span",{style:{fontSize:9,background:pg==="hoje"?"rgba(255,255,255,.2)":"#FEE2E2",color:pg==="hoje"?"#fff":"#E53E3E",padding:"1px 5px",borderRadius:10}},act)
           )
         );
       }),
-      ce("div",{style:{padding:"8px 13px",borderTop:"1px solid #E5E3DC",flexShrink:0}},
+            ce("div",{style:{padding:"8px 13px",borderTop:"1px solid #E5E3DC",flexShrink:0}},
         ce("div",{style:{fontSize:10,color:tasks.length>0?"#38A169":"#9B9890",display:"flex",alignItems:"center",gap:5,marginBottom:2}},ce("i",{className:"ti ti-brand-clickup",style:{fontSize:11}}),tasks.length>0?tasks.length+" tarefas":"ClickUp offline"),
         ce("div",{style:{fontSize:10,color:calEvents.length>0?"#3182CE":"#9B9890",display:"flex",alignItems:"center",gap:5}},ce("i",{className:"ti ti-calendar",style:{fontSize:11}}),calEvents.length>0?calEvents.length+" eventos hoje":"Calendar offline"),
         ce("div",{style:{fontSize:9,color:"#9B9890",marginTop:4}},"v2.1 · feito com calma")
