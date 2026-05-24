@@ -2,8 +2,13 @@
   "convs": [
     {
       "id": "c1779648858029",
-      "title": "Nova conversa",
-      "messages": [],
+      "title": "Quais as tarefas atrasadas?",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Quais as tarefas atrasadas?"
+        }
+      ],
       "ts": 1779648858029
     },
     {
