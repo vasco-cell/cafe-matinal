@@ -2046,6 +2046,124 @@ function EditModal(props){
         ce("button",{className:"bt dk",onClick:save},"Guardar"))));
 }
 
+
+function PPrevisoes({tasks,habits,logs,fin,toast}){
+  var[prevs,savePrevs]=React.useState(function(){try{return JSON.parse(localStorage.getItem("bj-prevs")||"[]");}catch{return[];}});
+  var[ld,setLd]=React.useState(false);
+  var n=new Date();
+  var MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  var DIAS=["Dom","Seg","Ter","Qua","Qui","Sex","Sab"];
+
+  function savePrevsFn(v){savePrevs(v);try{localStorage.setItem("bj-prevs",JSON.stringify(v.slice(0,10)));}catch{}}
+
+  function gerar(){
+    setLd(true);
+    var act=tasks.filter(function(t){return t.status!=="done";});
+    var late=act.filter(function(t){return t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n;});
+    var urg=act.filter(function(t){return t.priority==="urgent";});
+    var byDue=act.filter(function(t){return t.due_date&&t.due_date!=="null";}).sort(function(a,b){return +a.due_date-+b.due_date;});
+    var moKey=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
+    var saldo=(fin||[]).filter(function(t){return t.month===moKey;}).reduce(function(s,t){return s+(t.type==="receita"?+t.amount:-+t.amount);},0);
+    var habDone=(habits||[]).filter(function(h){var dl=(logs||{})[n.toDateString()]||{};return dl[h.id];}).length;
+
+    var dias=Array.from({length:7},function(_,i){
+      var d=new Date(n);d.setDate(n.getDate()+1+i);
+      var tasksDia=byDue.filter(function(t){return new Date(+t.due_date).toDateString()===d.toDateString();});
+      var isWeekend=d.getDay()===0||d.getDay()===6;
+      var hasUrg=tasksDia.filter(function(t){return t.priority==="urgent";}).length>0;
+      var risco=hasUrg?"alto":tasksDia.length>3?"medio":isWeekend?"baixo":"baixo";
+      return{
+        data:DIAS[d.getDay()]+" "+d.getDate()+" "+MC[d.getMonth()],
+        foco:isWeekend?"Recuperacao e planeamento":hasUrg?"Resolver urgencias":"Avanco em abertas",
+        tarefas:tasksDia.slice(0,3).map(function(t){return t.name;}).concat(isWeekend?["Descanso e revisao"]:[]),
+        risco:risco,
+        nota:tasksDia.length===0?"Dia livre para foco profundo":tasksDia.length>2?"Dia carregado — prioriza":"Continue o ritmo"
+      };
+    });
+
+    var alertas=[];
+    if(late.length>0)alertas.push(late.length+" tarefa"+(late.length!==1?"s":"")+" em atraso");
+    if(urg.length>0)alertas.push("Urgentes: "+urg.slice(0,2).map(function(t){return t.name;}).join(", "));
+    if(saldo<0)alertas.push("Saldo mensal negativo: "+saldo.toFixed(0)+" EUR");
+
+    var ws=new Date(n);ws.setDate(n.getDate()-n.getDay()+(n.getDay()===0?-6:1));
+    var we=new Date(ws);we.setDate(ws.getDate()+6);
+    var title="Previsao "+ws.getDate()+" "+MC[ws.getMonth()]+" - "+we.getDate()+" "+MC[we.getMonth()]+" "+we.getFullYear();
+
+    var prev={id:"p"+Date.now(),title:title,created:Date.now(),resumo:"Semana com "+act.length+" tarefas abertas"+(late.length>0?", "+late.length+" atrasadas":"")+(urg.length>0?" e "+urg.length+" urgentes":"")+". Habitos: "+habDone+"/"+(habits||[]).length+".",alertas:alertas,dias:dias};
+    savePrevsFn([prev].concat(prevs.slice(0,9)));
+    toast&&toast("Previsao gerada!");
+    setLd(false);
+  }
+
+  var[viewId,setViewId]=React.useState(null);
+  var viewing=prevs.find(function(p){return p.id===viewId;});
+  var RISCO_COLOR={alto:"#E53E3E",medio:"#D69E2E",baixo:"#38A169"};
+  var fmtD=function(ts){return new Date(ts).toLocaleDateString("pt-PT",{day:"2-digit",month:"short"});};
+
+  return ce("div",{style:{display:"flex",flexDirection:"column",height:"100%",animation:"fU .2s"}},
+    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexShrink:0}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:14}},
+        ce("div",{style:{width:40,height:40,borderRadius:10,background:"var(--bg-surface)",display:"flex",alignItems:"center",justifyContent:"center"}},
+          ce("i",{className:"ti ti-telescope",style:{fontSize:20,color:"var(--purple)"}})),
+        ce("div",null,ce("div",{className:"pt",style:{fontSize:24}},"Previsoes"),ce("div",{className:"ps"},"Um olhar sobre os proximos dias."))
+      ),
+      ce("button",{className:"bt dk",onClick:gerar,disabled:ld,style:{gap:5}},
+        ld?ce("span",{className:"sp"}):ce("i",{className:"ti ti-sparkles",style:{fontSize:13}})," Prever 7 dias")
+    ),
+    viewing?ce("div",{style:{flex:1,overflowY:"auto"}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        ce("button",{className:"bt",onClick:function(){setViewId(null);},style:{gap:4}},ce("i",{className:"ti ti-arrow-left",style:{fontSize:13}}),"Voltar"),
+        ce("span",{style:{fontSize:13,fontWeight:500,flex:1}},viewing.title),
+        ce("button",{onClick:function(){savePrevsFn(prevs.filter(function(x){return x.id!==viewId;}));setViewId(null);},
+          style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E"}},ce("i",{className:"ti ti-trash",style:{fontSize:16}}))
+      ),
+      ce("div",{className:"cd",style:{padding:16,marginBottom:12}},
+        ce("p",{style:{fontSize:13,color:"var(--text-1)",lineHeight:1.7,marginBottom:10}},viewing.resumo),
+        viewing.alertas&&viewing.alertas.length>0&&ce("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          viewing.alertas.map(function(a,i){return ce("div",{key:i,style:{display:"flex",gap:8,alignItems:"center",padding:"6px 10px",borderRadius:7,background:"#FFF5F5",border:"1px solid #FEB2B2",fontSize:12,color:"#C53030"}},ce("i",{className:"ti ti-alert-triangle",style:{fontSize:13}}),a);})
+        )
+      ),
+      ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:10}},
+        (viewing.dias||[]).map(function(dia,i){
+          return ce("div",{key:i,className:"cd",style:{padding:14}},
+            ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+              ce("div",{style:{fontSize:13,fontWeight:600,color:"var(--text-1)"}},dia.data),
+              ce("div",{style:{fontSize:10,padding:"2px 7px",borderRadius:10,background:RISCO_COLOR[dia.risco]+"22",color:RISCO_COLOR[dia.risco],fontWeight:600}},dia.risco)
+            ),
+            ce("div",{style:{fontSize:12,color:"var(--purple)",marginBottom:6,fontWeight:500}},dia.foco),
+            dia.tarefas&&dia.tarefas.length>0&&ce("div",{style:{display:"flex",flexDirection:"column",gap:3}},
+              dia.tarefas.map(function(t,j){return ce("div",{key:j,style:{fontSize:11,color:"var(--text-2)",padding:"2px 0",borderTop:j>0?"1px solid var(--border-light)":"none"}},t);})
+            ),
+            dia.nota&&ce("div",{style:{marginTop:6,fontSize:11,color:"var(--text-3)",fontStyle:"italic"}},dia.nota)
+          );
+        })
+      )
+    ):ce("div",{style:{flex:1,overflowY:"auto"}},
+      prevs.length===0?ce("div",{style:{textAlign:"center",padding:"60px 20px",color:"var(--text-3)"}},
+        ce("i",{className:"ti ti-telescope",style:{fontSize:40,display:"block",marginBottom:12,opacity:.3}}),
+        ce("p",{style:{fontSize:14,marginBottom:4}},"Sem previsoes ainda."),
+        ce("p",{style:{fontSize:12}},"A IA analisa as tuas tarefas, habitos e financas para gerar uma previsao personalizada."),
+        ce("button",{className:"bt dk",onClick:gerar,style:{marginTop:16,gap:5}},ce("i",{className:"ti ti-sparkles",style:{fontSize:13}})," Gerar primeira previsao")
+      ):
+      ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        prevs.map(function(prev){return ce("div",{key:prev.id,className:"cd",style:{padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12},
+          onClick:function(){setViewId(prev.id);}},
+          ce("div",{style:{flex:1}},
+            ce("div",{style:{fontSize:14,fontWeight:500,color:"var(--text-1)",marginBottom:3}},prev.title),
+            ce("div",{style:{fontSize:11,color:"var(--text-3)"}},fmtD(prev.created))
+          ),
+          ce("i",{className:"ti ti-chevron-right",style:{fontSize:14,color:"var(--text-3)"}}),
+          ce("button",{onClick:function(e){e.stopPropagation();savePrevsFn(prevs.filter(function(x){return x.id!==prev.id;}));},
+            style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E",padding:"4px"}},
+            ce("i",{className:"ti ti-trash",style:{fontSize:14}})
+          )
+        );})
+      )
+    )
+  );
+}
+
 const NAV=[
   {id:"hoje",icon:"ti-sun",label:"Hoje",c:"#3182CE"},
   {id:"prioridades",icon:"ti-star",label:"Prioridades",c:"#D69E2E"},
