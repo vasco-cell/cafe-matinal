@@ -23,6 +23,10 @@
         {
           "role": "assistant",
           "content": "Não tenho acesso a informações sobre os seus emails específicos ou ao histórico da sua caixa de correio do dia 22 de maio.\n\nPara obter essa informação, preciso que:\n\n1. **Verifique diretamente** no seu cliente de email (Gmail, Outlook, etc.)\n2. **Use filtros por data** para encontrar emails de 22/05/2026\n3. **Me partilhe** essa informação se quiser que eu a ajude a organizar ou priorizar\n\n---\n\n**O que podemos fazer agora:**\n\nDado que **estamos numa domingo 24 de maio**, sugiro que comece por:\n\n✅ **Tarefas ATRASADAS que reclamam atenção:**\n- Enviar newsletter Podcast (qual é o status?)\n- CTAs / links redes (precisa de revisão?)\n- EMAILS PÓS-VENDA KIT (quantos pendentes?)\n- Email venda do LIVRO CÉSAR (já foi enviado?)\n\nQual destas áreas gostaria de atacar primeiro para recuperar o atraso?"
+        },
+        {
+          "role": "user",
+          "content": "quantos emails não lidos de hoje tenho?"
         }
       ],
       "ts": 1779646396097
