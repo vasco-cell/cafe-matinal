@@ -1782,8 +1782,9 @@ function App(){
             nav.id==="hoje"&&act>0&&ce("span",{style:{fontSize:9,background:pg==="hoje"?"rgba(255,255,255,.2)":"#FEE2E2",color:pg==="hoje"?"#fff":"#E53E3E",padding:"1px 5px",borderRadius:10}},act)
           )
         );
-      }),
-            ce("div",{style:{padding:"8px 13px",borderTop:"1px solid #E5E3DC",flexShrink:0}},
+      )
+      ),
+      ce("div",{style:{padding:"8px 13px",borderTop:"1px solid #E5E3DC",flexShrink:0}},
         ce("div",{style:{fontSize:10,color:tasks.length>0?"#38A169":"#9B9890",display:"flex",alignItems:"center",gap:5,marginBottom:2}},ce("i",{className:"ti ti-brand-clickup",style:{fontSize:11}}),tasks.length>0?tasks.length+" tarefas":"ClickUp offline"),
         ce("div",{style:{fontSize:10,color:calEvents.length>0?"#3182CE":"#9B9890",display:"flex",alignItems:"center",gap:5}},ce("i",{className:"ti ti-calendar",style:{fontSize:11}}),calEvents.length>0?calEvents.length+" eventos hoje":"Calendar offline"),
         ce("div",{style:{fontSize:9,color:"#9B9890",marginTop:4}},"v2.1 · feito com calma")
