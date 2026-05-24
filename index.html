@@ -431,11 +431,7 @@ Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}.
 
 function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
   const[status,setStatus]=useState("abertas");
-  const _newOpen=taskNewOpen!==undefined?taskNewOpen:false;
-  const _setNewOpen=setTaskNewOpen||function(){};
-  const[_localOpen,_setLocalOpen]=useState(false);
-  const newOpen=taskNewOpen!==undefined?_newOpen:_localOpen;
-  const setNewOpen=setTaskNewOpen!==undefined?_setNewOpen:_setLocalOpen;
+  const[newOpen,setNewOpen]=useState(false);
   const[tName,setTName]=useState("");
   const[tPrio,setTPrio]=useState("normal");
   const[tList,setTList]=useState("BBTOP20");
@@ -2103,7 +2099,6 @@ function App(){
   const[darkMode,setDarkMode]=useState(()=>localStorage.getItem('bj-dark')==='1');
   const[navOpen,setNavOpen]=useState(false);
   const[triageOpen,setTriageOpen]=useState(false);
-  const[taskNewOpen,setTaskNewOpen]=useState(false);
   const[notifOpen,setNotifOpen]=useState(false);
   useEffect(()=>{document.documentElement.classList.toggle('dark',darkMode);localStorage.setItem('bj-dark',darkMode?'1':'0');},[darkMode]);
   const[navOrder,setNavOrder]=useState(null);
@@ -2206,7 +2201,7 @@ function App(){
   const PageMap={
     hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage:()=>setTriageOpen(true),aguarda,setAguardaItem,darkMode,setDarkMode}),
     assistente:()=>ce(PAssist,{tasks,calEvents,pessoal,setPage:sp,toast,fin}),
-    tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios,aguarda,setAguardaItem,taskNewOpen,setTaskNewOpen}),
+    tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios,aguarda,setAguardaItem}),
     inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast,setPage:sp}),
     foco:()=>ce(PFoco,{tasks,focoSessions,saveFocoSessions,setPage:sp,toast}),
     notas:()=>ce(PNotas,{notes,saveNotes,toast,addTask,setPage:sp}),
