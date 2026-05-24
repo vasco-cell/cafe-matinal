@@ -1,3 +1,27 @@
 {
-  "convs": []
+  "convs": [
+    {
+      "id": "c1779646396097",
+      "title": "O que fazer agora?",
+      "messages": [
+        {
+          "role": "user",
+          "content": "O que fazer agora?"
+        },
+        {
+          "role": "assistant",
+          "content": "(sem resposta)"
+        },
+        {
+          "role": "user",
+          "content": "quantos emails tenho por ler de sexta feira dia 22/05?"
+        },
+        {
+          "role": "user",
+          "content": "quantos esmaisl tenho de dia 22/05"
+        }
+      ],
+      "ts": 1779646396097
+    }
+  ]
 }
