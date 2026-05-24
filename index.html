@@ -290,55 +290,145 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
 }
 
 // ── ASSISTENTE ───────────────────────────────────────────────────────────────
-function PAssist({tasks,calEvents,pessoal,setPage}){
-  const[convs,setCvs]=useState([]);const[cur,setCur]=useState(null);const[inp,setInp]=useState("");const[ld,setLd]=useState(false);const end=useRef(null);const n=new Date();
-  useEffect(()=>{sg("bj-cvs").then(c=>{if(c?.length){setCvs(c);setCur(c[0])}else nC()});},[]);
-  useEffect(()=>{end.current?.scrollIntoView({behavior:"smooth"});},[cur?.messages]);
-  const lateAct=tasks.filter(t=>t.status!=="done"&&t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n);
-  const SYS=`Assistente pessoal do Vasco (BBTOP20 — Borja on Stocks + Investidor Prudente com César Borja). BOS: dinâmico/assertivo, 197 €/497 €/ano. IP: sereno/ponderado, 149 €/397 €/ano. Tarefas activas: ${tasks.filter(t=>t.status!=="done").slice(0,12).map(t=>t.name).join(", ")||"nenhuma"}. Tarefas ATRASADAS (${lateAct.length}): ${lateAct.slice(0,5).map(t=>t.name).join(", ")||"nenhuma"}. Eventos hoje: ${calEvents.map(e=>e.summary).join(", ")||"nenhum"}. Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MESES[n.getMonth()]} ${n.getFullYear()}. Pt-pt. Age directamente. Nas primeiras mensagens do dia, sugere proactivamente o que requer atenção imediata.`;
-  function nC(){const c={id:`c${Date.now()}`,title:"Nova conversa",messages:[],ts:Date.now()};const u=[c,...convs];setCvs(u);setCur(c);ss("bj-cvs",u)}
-  function dC(id){const u=convs.filter(c=>c.id!==id);setCvs(u);ss("bj-cvs",u);if(cur?.id===id){if(u.length)setCur(u[0]);else nC()}}
-  async function send(){if(!inp.trim()||ld||!cur)return;const um={role:"user",content:inp.trim()};const upd={...cur,messages:[...cur.messages,um],title:cur.messages.length===0?inp.trim().slice(0,36):cur.title};setCur(upd);setInp("");setLd(true);const all=convs.map(c=>c.id===upd.id?upd:c);setCvs(all);ss("bj-cvs",all);const r=await aiC(upd.messages,SYS);const fin={...upd,messages:[...upd.messages,{role:"assistant",content:r}]};setCur(fin);const all2=all.map(c=>c.id===fin.id?fin:c);setCvs(all2);ss("bj-cvs",all2);setLd(false)}
-  return ce("div",{style:{display:"flex",height:"100%",animation:"fU .2s"}},
-    ce("div",{style:{width:185,flexShrink:0,borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",paddingTop:6}},
-      ce("button",{className:"bt dk",onClick:nC,style:{margin:"0 10px 10px",justifyContent:"center"}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Nova conversa"),
-      ce("div",{style:{flex:1,overflowY:"auto",padding:"0 6px"}},
-        convs.length===0&&ce("p",{style:{fontSize:12,color:"var(--text-3)",textAlign:"center",padding:"20px 8px"}},"Sem conversas ativas."),
-        convs.map(c=>ce("div",{key:c.id,style:{display:"flex",alignItems:"center",gap:4,marginBottom:3}},
-          ce("button",{onClick:()=>setCur(c),style:{flex:1,textAlign:"left",padding:"7px 10px",borderRadius:8,border:"none",background:cur?.id===c.id?"#1A1A2E":"transparent",color:cur?.id===c.id?"#fff":"#6B6860",fontSize:12,cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontFamily:"inherit"}},c.title),
-          ce("button",{onClick:()=>dC(c.id),style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",padding:"3px"}},ce("i",{className:"ti ti-x",style:{fontSize:11}}))
-        ))
+
+function PAssist({tasks,calEvents,pessoal,setPage,toast}){
+  const[convs,setCvs]=useState(function(){try{return JSON.parse(localStorage.getItem("bj-convs")||"[]");}catch{return[];}});
+  const[cur,setCur]=useState(null);
+  const[inp,setInp]=useState("");
+  const[ld,setLd]=useState(false);
+  const n=new Date();
+  const DIAS=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  const MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+
+  function saveCvs(v){setCvs(v);try{localStorage.setItem("bj-convs",JSON.stringify(v.slice(0,50)));}catch{}}
+  function newConv(){const c={id:"c"+Date.now(),title:"Nova conversa",messages:[],created:Date.now(),archived:false};const updated=[c,...convs];saveCvs(updated);setCur(c);}
+  function delConv(id){saveCvs(convs.filter(c=>c.id!==id));if(cur&&cur.id===id)setCur(null);}
+  function archConv(id){saveCvs(convs.map(c=>c.id===id?{...c,archived:!c.archived}:c));}
+
+  const SYS=`Chamas-te Beirafonte, assistente pessoal do Vasco (BBTOP20 — Borja on Stocks + Investidor Prudente).
+Data: ${DIAS[n.getDay()]} ${n.getDate()} ${MC[n.getMonth()]} ${n.getFullYear()}.
+Tarefas abertas: ${tasks.filter(t=>t.status!=="done").slice(0,10).map(t=>t.name+"["+t.priority+"]").join(", ")||"nenhuma"}.
+Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}.
+És um assistente inteligente, perspicaz e directo. Respondes em português europeu. Podes analisar tarefas, dar conselhos, resumir informação e ajudar com qualquer questão.`;
+
+  async function send(){
+    if(!inp.trim()||ld||!cur)return;
+    const ak=localStorage.getItem("bj-ak")||"";
+    if(!ak){toast&&toast("Adiciona a chave API nas Definições");return;}
+    const um={role:"user",content:inp.trim(),ts:Date.now()};
+    const upd={...cur,messages:[...cur.messages,um],title:cur.messages.length===0?inp.trim().slice(0,40):cur.title};
+    setCur(upd);setInp("");setLd(true);
+    const all=convs.map(c=>c.id===upd.id?upd:c);saveCvs(all);
+    try{
+      const history=upd.messages.slice(-16).map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.content}));
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"content-type":"application/json","x-api-key":ak,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:1200,system:SYS,messages:history})
+      });
+      const data=await res.json();
+      if(data.error)throw new Error(data.error.message);
+      const text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n")||"(sem resposta)";
+      const am={role:"assistant",content:text,ts:Date.now()};
+      const final={...upd,messages:[...upd.messages,am]};
+      setCur(final);
+      saveCvs(convs.map(c=>c.id===final.id?final:c));
+    }catch(e){
+      const em={role:"assistant",content:"Erro: "+e.message,ts:Date.now()};
+      const final={...upd,messages:[...upd.messages,em]};
+      setCur(final);saveCvs(convs.map(c=>c.id===final.id?final:c));
+    }
+    setLd(false);
+  }
+
+  const active=convs.filter(c=>!c.archived);
+  const archived=convs.filter(c=>c.archived);
+  const fmtT=ts=>new Date(ts).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"});
+  const fmtD=ts=>new Date(ts).toLocaleDateString("pt-PT",{day:"2-digit",month:"short"});
+
+  return ce("div",{style:{display:"flex",height:"100%",animation:"fU .2s",gap:0}},
+    ce("div",{style:{width:220,borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",flexShrink:0}},
+      ce("div",{style:{padding:"12px 10px",borderBottom:"1px solid var(--border)",flexShrink:0}},
+        ce("button",{className:"bt dk",onClick:newConv,style:{width:"100%",justifyContent:"center",gap:6}},
+          ce("i",{className:"ti ti-plus",style:{fontSize:13}}),"Nova conversa")
+      ),
+      ce("div",{style:{flex:1,overflowY:"auto",padding:"6px 8px",minHeight:0}},
+        active.length===0&&ce("p",{style:{fontSize:12,color:"var(--text-3)",textAlign:"center",padding:"20px 8px"}},"Sem conversas.\nClica em Nova conversa."),
+        active.map(c=>ce("div",{key:c.id,
+          onClick:()=>setCur(c),
+          style:{padding:"8px 10px",borderRadius:8,marginBottom:4,cursor:"pointer",
+            background:cur&&cur.id===c.id?"var(--purple-bg)":"transparent",
+            border:"1px solid "+(cur&&cur.id===c.id?"var(--purple)":"transparent")}},
+          ce("div",{style:{fontSize:12,fontWeight:500,color:"var(--text-1)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:2}},c.title),
+          ce("div",{style:{fontSize:10,color:"var(--text-3)",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            fmtD(c.created),
+            ce("div",{style:{display:"flex",gap:4}},
+              ce("button",{onClick:e=>{e.stopPropagation();archConv(c.id);},title:"Arquivar",style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",padding:"1px 3px",fontSize:11}},ce("i",{className:"ti ti-archive",style:{fontSize:11}})),
+              ce("button",{onClick:e=>{e.stopPropagation();delConv(c.id);},title:"Apagar",style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E",padding:"1px 3px",fontSize:11}},ce("i",{className:"ti ti-trash",style:{fontSize:11}}))
+            )
+          )
+        )),
+        archived.length>0&&ce("div",{style:{marginTop:8}},
+          ce("div",{style:{fontSize:10,color:"var(--text-3)",letterSpacing:".06em",padding:"4px 6px",fontWeight:600}},"ARQUIVO"),
+          archived.map(c=>ce("div",{key:c.id,onClick:()=>setCur(c),
+            style:{padding:"6px 10px",borderRadius:8,marginBottom:2,cursor:"pointer",opacity:.6,
+              background:cur&&cur.id===c.id?"var(--purple-bg)":"transparent"}},
+            ce("div",{style:{fontSize:11,color:"var(--text-2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.title),
+            ce("div",{style:{display:"flex",justifyContent:"flex-end",gap:4}},
+              ce("button",{onClick:e=>{e.stopPropagation();archConv(c.id);},style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",fontSize:11}},ce("i",{className:"ti ti-inbox",style:{fontSize:11}})),
+              ce("button",{onClick:e=>{e.stopPropagation();delConv(c.id);},style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E",fontSize:11}},ce("i",{className:"ti ti-trash",style:{fontSize:11}}))
+            )
+          ))
+        )
       )
     ),
-    ce("div",{style:{flex:1,display:"flex",flexDirection:"column",minHeight:0,minWidth:0}},
-      ce("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",display:"flex",alignItems:"center",gap:10}},
-        ce("div",{style:{width:32,height:32,borderRadius:"50%",background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:16,color:"#7C3AED"}})),
-        ce("div",null,ce("div",{style:{fontWeight:500,fontSize:13}},"Assistente BBTOP20"),ce("div",{style:{fontSize:11,color:"var(--text-3)"}},"Claude · contexto real das tuas tarefas"))
+    cur?ce("div",{style:{flex:1,display:"flex",flexDirection:"column",minWidth:0}},
+      ce("div",{style:{padding:"10px 16px",borderBottom:"1px solid var(--border)",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between"}},
+        ce("div",{style:{fontSize:14,fontWeight:500,color:"var(--text-1)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},cur.title),
+        ce("div",{style:{display:"flex",gap:6}},
+          ce("button",{className:"bt",onClick:()=>archConv(cur.id),style:{fontSize:11,gap:4}},ce("i",{className:"ti ti-archive",style:{fontSize:12}}),cur.archived?"Restaurar":"Arquivar"),
+          ce("button",{className:"bt",onClick:()=>delConv(cur.id),style:{fontSize:11,gap:4,color:"#E53E3E",borderColor:"#E53E3E"}},ce("i",{className:"ti ti-trash",style:{fontSize:12}}),"Apagar")
+        )
       ),
-      ce("div",{style:{flex:1,overflowY:"auto",padding:16,display:"flex",flexDirection:"column",gap:12}},
-        !cur?.messages?.length&&ce("div",{style:{textAlign:"center",padding:"28px 20px"}},
-          ce("div",{style:{width:52,height:52,borderRadius:12,background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}},ce("i",{className:"ti ti-sparkles",style:{fontSize:24,color:"#7C3AED"}})),
-          ce("h3",{style:{fontFamily:"DM Serif Display,serif",fontSize:20,marginBottom:6,color:"var(--text-1)"}},"Olá! Estou aqui sempre que precisares."),
-          ce("p",{style:{fontSize:13,color:"var(--text-2)",marginBottom:14}},"Queres que faça um check-in do teu dia, ou preferes seguir o teu caminho?"),
-          ce("div",{style:{display:"flex",flexDirection:"column",gap:7,maxWidth:320,margin:"0 auto"}},
-            ["✨ Check-in do dia","Quais as tarefas atrasadas?","O que fazer agora?","Dá-me um resumo da semana","Cria tarefa urgente","Analisa o meu backlog"].map(q=>ce("button",{key:q,className:"bt",onClick:()=>{setInp(q);setTimeout(send,80)},style:{justifyContent:"center",padding:"9px",fontSize:12,borderRadius:10}},q))
-          )
+      ce("div",{style:{flex:1,overflowY:"auto",padding:"16px",display:"flex",flexDirection:"column",gap:12,minHeight:0}},
+        cur.messages.length===0&&ce("div",{style:{textAlign:"center",padding:"40px 20px",color:"var(--text-3)"}},
+          ce("i",{className:"ti ti-sparkles",style:{fontSize:32,display:"block",marginBottom:10,opacity:.4}}),
+          ce("p",{style:{fontSize:14}},"Beirafonte está pronto."),
+          ce("p",{style:{fontSize:12,marginTop:4,color:"var(--text-3)"}},"Pergunta qualquer coisa sobre as tuas tarefas, finanças, ou qualquer outro tema.")
         ),
-        cur?.messages?.map((m,i)=>ce("div",{key:i,style:{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}},
-          ce("div",{style:{maxWidth:"80%",padding:"10px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"#1A1A2E":"#F0EEE8",color:m.role==="user"?"#fff":"#1A1A2E",fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap"}},m.content)
+        cur.messages.map((m,i)=>ce("div",{key:i,style:{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:10}},
+          m.role==="assistant"&&ce("div",{style:{width:30,height:30,borderRadius:8,background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}},
+            ce("i",{className:"ti ti-sparkles",style:{fontSize:15,color:"var(--purple)"}})
+          ),
+          ce("div",{style:{maxWidth:"75%"}},
+            ce("div",{style:{padding:"10px 14px",borderRadius:m.role==="user"?"14px 14px 4px 14px":"14px 14px 14px 4px",
+              background:m.role==="user"?"#1A1A2E":"var(--bg-surface)",
+              color:m.role==="user"?"#fff":"var(--text-1)",fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap"}},m.content),
+            ce("div",{style:{fontSize:10,color:"var(--text-3)",marginTop:3,textAlign:m.role==="user"?"right":"left"}},fmtT(m.ts||Date.now()))
+          )
         )),
-        ld&&ce("div",{style:{display:"flex",alignItems:"center",gap:8,color:"var(--text-3)",fontSize:12}},ce(Sp),"a responder..."),
-        ce("div",{ref:end})
+        ld&&ce("div",{style:{display:"flex",alignItems:"center",gap:10,color:"var(--text-3)",fontSize:13}},
+          ce("div",{style:{width:30,height:30,borderRadius:8,background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center"}},ce("span",{className:"sp"})),
+          "Beirafonte está a pensar..."
+        )
       ),
-      ce("div",{style:{padding:"10px 14px",borderTop:"1px solid var(--border)",display:"flex",gap:8,alignItems:"flex-end"}},
-        ce("textarea",{className:"ip",value:inp,onChange:e=>setInp(e.target.value),onKeyDown:e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}},placeholder:"Escreve... (Enter para enviar, Shift+Enter nova linha)",rows:2,style:{flex:1,resize:"none",lineHeight:1.5}}),
-        ce("button",{className:"bt dk",onClick:send,disabled:ld||!inp.trim(),style:{padding:"9px 12px"}},ce("i",{className:"ti ti-send",style:{fontSize:14}}))
+      ce("div",{style:{padding:"12px 16px",borderTop:"1px solid var(--border)",display:"flex",gap:8,flexShrink:0}},
+        ce("textarea",{className:"ip",value:inp,onChange:e=>setInp(e.target.value),
+          onKeyDown:e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}},
+          placeholder:"Pergunta ou conversa livremente... (Enter para enviar)",rows:3,
+          style:{flex:1,resize:"none",lineHeight:1.6,fontSize:13}}),
+        ce("button",{className:"bt dk",onClick:send,disabled:ld||!inp.trim(),style:{padding:"10px 14px",flexShrink:0,alignSelf:"flex-end"}},
+          ce("i",{className:"ti ti-send",style:{fontSize:16}})
+        )
       )
+    ):ce("div",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,color:"var(--text-3)"}},
+      ce("i",{className:"ti ti-sparkles",style:{fontSize:40,opacity:.3}}),
+      ce("p",{style:{fontSize:14}},"Selecciona ou cria uma conversa"),
+      ce("button",{className:"bt dk",onClick:newConv,style:{gap:6,marginTop:4}},ce("i",{className:"ti ti-plus",style:{fontSize:13}}),"Nova conversa")
     )
-  )
+  );
 }
 
-// ── TAREFAS ──────────────────────────────────────────────────────────────────
 function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
   const[status,setStatus]=useState("abertas");
   const _newOpen=taskNewOpen!==undefined?taskNewOpen:false;
@@ -666,59 +756,122 @@ function PAnalytics({tasks,habits,logs,fin,focoSessions,setPage}){
 }
 
 // ── RELATÓRIOS ────────────────────────────────────────────────────────────────
+
 function PRelatorios({tasks,toast,habits,logs,fin}){
-  const[tab,setTab]=useState("semana");const[reps,setReps]=useState([]);const[ld,setLd]=useState(false);
-  useEffect(()=>{sg("bj-reps").then(r=>{if(r)setReps(r)});},[]);
+  const[tab,setTab]=useState("semana");
+  const[reps,setReps]=useState(function(){try{return JSON.parse(localStorage.getItem("bj-reps")||"[]");}catch{return[];}});
+  const[ld,setLd]=useState(false);
+  const MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+  function saveReps(v){setReps(v);try{localStorage.setItem("bj-reps",JSON.stringify(v.slice(0,20)));}catch{}}
+
   function gen(){
     setLd(true);
-    var n=new Date();
-    var done=tasks.filter(function(t){return t.status==="done";});
-    var open2=tasks.filter(function(t){return t.status!=="done";});
-    var late=open2.filter(function(t){return t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n;});
-    var urg=open2.filter(function(t){return t.priority==="urgent";});
-    var hd=(habits||[]).filter(function(h){var l=(logs||{})[n.toDateString()]||{};return l[h.id];}).length;
-    var moKey=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
-    var saldo=(fin||[]).filter(function(t){return t.month===moKey;}).reduce(function(s,t){return s+(t.type==="receita"?+t.amount:-+t.amount);},0);
-    var period=tab==="semana"?"semanal (semana de "+n.getDate()+" "+MC[n.getMonth()]+")":"mensal ("+MESES[n.getMonth()]+" "+n.getFullYear()+")";
-    var linhas=[
-      "# Relatorio "+period,
-      "",
-      "## Resumo executivo",
-      "Periodo: "+period+". "+open2.length+" tarefas abertas, "+done.length+" concluidas"+(late.length>0?", "+late.length+" em atraso":"")+". Habitos: "+hd+"/"+(habits||[]).length+" hoje.",
-      "",
-      "## Conquistas",
-      done.slice(0,8).map(function(t){return "- "+t.name;}).join("\n")||"- Sem tarefas concluidas registadas",
-      "",
-      "## Em progresso",
-      open2.filter(function(t){return t.priority==="urgent"||t.priority==="high";}).slice(0,5).map(function(t){return "- ["+t.priority+"] "+t.name;}).join("\n")||"- Sem tarefas urgentes",
-      "",
-      late.length>0?"## Atrasadas\n"+late.slice(0,5).map(function(t){return "- "+t.name+" (desde "+new Date(+t.due_date).toLocaleDateString("pt-PT")+")";}).join("\n"):"",
-      "",
-      "## Financas do mes",
-      saldo>=0?"Saldo positivo: +"+saldo.toFixed(2)+" euros":"Saldo negativo: "+saldo.toFixed(2)+" euros",
-      "",
-      "## Habitos",
-      (habits||[]).map(function(h){var l=(logs||{})[n.toDateString()]||{};return "- "+h.name+": "+(l[h.id]?"concluido":"pendente");}).join("\n")||"- Sem habitos configurados",
-      "",
-      "## Proximos passos",
-      urg.slice(0,3).map(function(t){return "1. "+t.name;}).join("\n")||(open2.slice(0,3).map(function(t){return "1. "+t.name;}).join("\n"))||"1. Rever lista de tarefas"
-    ].filter(function(l){return l!=="";}).join("\n");
-    var r={id:"r"+Date.now(),period:period,content:linhas,created:Date.now()};
-    setReps(function(prev){return [r,...prev.slice(0,9)];});
-    toast("Relatorio gerado");
+    const n=new Date();
+    const done=tasks.filter(t=>t.status==="done");
+    const open2=tasks.filter(t=>t.status!=="done");
+    const late=open2.filter(t=>t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n);
+    const urg=open2.filter(t=>t.priority==="urgent");
+    const high=open2.filter(t=>t.priority==="high");
+    const hd=(habits||[]).filter(h=>{const l=(logs||{})[n.toDateString()]||{};return l[h.id];}).length;
+    const moKey=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
+    const saldo=(fin||[]).filter(t=>t.month===moKey).reduce((s,t)=>s+(t.type==="receita"?+t.amount:-+t.amount),0);
+    const receitas=(fin||[]).filter(t=>t.month===moKey&&t.type==="receita").reduce((s,t)=>s+(+t.amount),0);
+    const despesas=(fin||[]).filter(t=>t.month===moKey&&t.type==="despesa").reduce((s,t)=>s+(+t.amount),0);
+    const period=tab==="semana"
+      ?"Semanal — "+n.getDate()+" "+MC[n.getMonth()]+" "+n.getFullYear()
+      :"Mensal — "+MESES[n.getMonth()]+" "+n.getFullYear();
+
+    const content=`# Relatório ${period}
+
+## Resumo Executivo
+${open2.length} tarefas abertas${late.length>0?` (${late.length} atrasadas)`:""}${urg.length>0?` e ${urg.length} urgentes`:""}. Hábitos hoje: ${hd}/${(habits||[]).length}. Saldo mensal: ${saldo>=0?"+":""}${saldo.toFixed(2)} €.
+
+## Conquistas
+${done.length===0?"Sem tarefas concluídas registadas neste período.":done.slice(0,10).map(t=>`✓ ${t.name}`).join("\n")}
+
+## Tarefas Urgentes e Prioritárias
+${urg.length===0&&high.length===0?"Nenhuma tarefa urgente ou de alta prioridade.":
+[...urg.map(t=>`🔴 [URGENTE] ${t.name}`),
+ ...high.map(t=>`🟠 [ALTA] ${t.name}`)].slice(0,8).join("\n")}
+
+## Atrasadas
+${late.length===0?"Sem tarefas atrasadas.":late.slice(0,6).map(t=>`⚠ ${t.name} (${new Date(+t.due_date).toLocaleDateString("pt-PT")})`).join("\n")}
+
+## Finanças do Mês
+Receitas: +${receitas.toFixed(2)} €
+Despesas: -${despesas.toFixed(2)} €
+Saldo: ${saldo>=0?"+":""}${saldo.toFixed(2)} €${saldo<0?" ⚠ Saldo negativo":""}
+
+## Hábitos
+${(habits||[]).length===0?"Sem hábitos configurados.":
+(habits||[]).map(h=>{const l=(logs||{})[n.toDateString()]||{};return `${l[h.id]?"✅":"⬜"} ${h.name}`;}).join("\n")}
+
+## Próximos Passos
+${open2.filter(t=>t.due_date&&t.due_date!=="null").sort((a,b)=>+a.due_date-+b.due_date).slice(0,5).map((t,i)=>`${i+1}. ${t.name} — ${new Date(+t.due_date).toLocaleDateString("pt-PT")}`).join("\n")||
+open2.slice(0,5).map((t,i)=>`${i+1}. ${t.name}`).join("\n")||"Nenhuma tarefa com prazo próximo."}`;
+
+    const r={id:"r"+Date.now(),period,content,created:Date.now()};
+    saveReps([r,...reps.slice(0,19)]);
+    toast&&toast("Relatório gerado ✓");
     setLd(false);
   }
-  return ce("div",{style:{animation:"fU .2s"}},
-    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}},
-      ce("div",{style:{display:"flex",alignItems:"center",gap:14}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#BEE3F8",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-chart-line",style:{fontSize:20,color:"#2B6CB0"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Relatórios"),ce("div",{className:"ps"},"Narrativas sobre o teu trabalho."))),
-      ce("div",{style:{display:"flex",gap:6}},["semana","mes"].map(t=>ce("button",{key:t,className:"bt",onClick:()=>setTab(t),style:{background:tab===t?"#1A1A2E":"transparent",color:tab===t?"#fff":"#6B6860"}},{semana:"Semana",mes:"Mês"}[t])),ce("button",{className:"bt dk",onClick:gen,disabled:ld,style:{gap:5}},ld?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:13}})," Gerar"))
+
+  const[viewId,setViewId]=useState(null);
+  const viewing=reps.find(r=>r.id===viewId);
+  const fmtD=ts=>new Date(ts).toLocaleDateString("pt-PT",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+
+  return ce("div",{style:{display:"flex",flexDirection:"column",height:"100%",animation:"fU .2s"}},
+    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexShrink:0}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:14}},
+        ce("div",{style:{width:40,height:40,borderRadius:10,background:"var(--bg-surface)",display:"flex",alignItems:"center",justifyContent:"center"}},
+          ce("i",{className:"ti ti-chart-line",style:{fontSize:20,color:"var(--purple)"}})),
+        ce("div",null,ce("div",{className:"pt",style:{fontSize:24}},"Relatórios"),ce("div",{className:"ps"},"Narrativas sobre o teu trabalho."))
+      ),
+      ce("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+        ce("div",{style:{display:"flex",border:"1px solid var(--border)",borderRadius:8,overflow:"hidden"}},
+          [["semana","Semana"],["mes","Mês"]].map(([v,l])=>ce("button",{key:v,onClick:()=>setTab(v),
+            style:{padding:"5px 12px",border:"none",borderRight:v==="semana"?"1px solid var(--border)":"none",
+              background:tab===v?"#1A1A2E":"transparent",color:tab===v?"#fff":"var(--text-2)",fontSize:11,cursor:"pointer",fontFamily:"inherit"}},l))
+        ),
+        ce("button",{className:"bt dk",onClick:gen,disabled:ld,style:{gap:5}},ld?ce("span",{className:"sp"}):ce("i",{className:"ti ti-sparkles",style:{fontSize:13}})," Gerar")
+      )
     ),
-    reps.length===0?ce("p",{style:{textAlign:"center",color:"var(--text-3)",fontSize:13,padding:40}},"Clica em Gerar para criar o primeiro relatório."):
-    reps.map(r=>ce("div",{key:r.id,className:"cd",style:{padding:14,marginBottom:10}},ce("div",{style:{fontSize:13,fontWeight:500,marginBottom:4}},r.title),ce("p",{style:{fontSize:12,color:"var(--text-2)",whiteSpace:"pre-wrap",lineHeight:1.6}},r.content)))
-  )
+    viewing?ce("div",{style:{flex:1,overflowY:"auto",minHeight:0}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14,flexShrink:0}},
+        ce("button",{className:"bt",onClick:()=>setViewId(null),style:{gap:4}},ce("i",{className:"ti ti-arrow-left",style:{fontSize:13}}),"Voltar"),
+        ce("span",{style:{fontSize:13,fontWeight:500,flex:1}},viewing.period),
+        ce("button",{onClick:()=>{saveReps(reps.filter(r=>r.id!==viewId));setViewId(null);},
+          style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E"}},ce("i",{className:"ti ti-trash",style:{fontSize:16}}))
+      ),
+      ce("div",{className:"cd",style:{padding:20}},
+        ce("pre",{style:{fontSize:13,lineHeight:1.7,whiteSpace:"pre-wrap",color:"var(--text-1)",fontFamily:"inherit",margin:0}},viewing.content)
+      )
+    ):ce("div",{style:{flex:1,overflowY:"auto",minHeight:0}},
+      reps.length===0?ce("div",{style:{textAlign:"center",padding:"48px 20px",color:"var(--text-3)"}},
+        ce("i",{className:"ti ti-chart-line",style:{fontSize:36,display:"block",marginBottom:10,opacity:.3}}),
+        ce("p",{style:{fontSize:14,marginBottom:4}},"Sem relatórios ainda."),
+        ce("p",{style:{fontSize:12}},"Clica em Gerar para criar o primeiro relatório.")
+      ):
+      ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        reps.map(r=>ce("div",{key:r.id,className:"cd",style:{padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:12},
+          onClick:()=>setViewId(r.id)},
+          ce("div",{style:{flex:1}},
+            ce("div",{style:{fontSize:14,fontWeight:500,color:"var(--text-1)",marginBottom:3}},r.period),
+            ce("div",{style:{fontSize:11,color:"var(--text-3)"}},fmtD(r.created))
+          ),
+          ce("i",{className:"ti ti-chevron-right",style:{fontSize:14,color:"var(--text-3)"}}),
+          ce("button",{onClick:e=>{e.stopPropagation();saveReps(reps.filter(x=>x.id!==r.id));},
+            style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E",padding:"4px"}},
+            ce("i",{className:"ti ti-trash",style:{fontSize:14}})
+          )
+        ))
+      )
+    )
+  );
 }
 
-// ── DEFINIÇÕES ────────────────────────────────────────────────────────────────
 function PDefs({tasks,calEvents,loading,lastSync,setPage,toast}){var aks=useState(function(){return localStorage.getItem("bj-ak")||"";});var ak=aks[0],setAkRaw=aks[1];var akis=useState(ak);var akInput=akis[0],setAkInput=akis[1];var shs=useState(false);var showAk=shs[0],setShowAk=shs[1];function saveKey(){var v=akInput.trim();setAkRaw(v);localStorage.setItem("bj-ak",v);toast(v?"IA activa!":"Chave removida.");}return ce("div",{style:{animation:"fU .2s",maxWidth:640}},ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"var(--border)",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-settings",style:{fontSize:20,color:"var(--text-2)"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Definicoes"),ce("div",{className:"ps"},"A tua conta e preferencias."))),ce("div",{className:"cd",style:{padding:20,marginBottom:14}},ce("div",{style:{display:"flex",alignItems:"center",gap:12}},ce("div",{style:{width:40,height:40,borderRadius:"50%",background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,color:"var(--purple)"}},"VN"),ce("div",null,ce("div",{style:{fontSize:14,fontWeight:600}},"Vasco Neves"),ce("div",{style:{fontSize:12,color:"var(--text-3)"}},"vasco@borjaonstocks.com")))),ce("div",{className:"cd",style:{padding:20,marginBottom:14}},ce("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},ce("div",{style:{width:32,height:32,borderRadius:8,background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-key",style:{fontSize:15,color:"var(--purple)"}})),ce("div",null,ce("div",{style:{fontSize:14,fontWeight:600}},"Chave API Claude"),ce("div",{style:{fontSize:12,color:"var(--text-3)"}},"Para IA · console.anthropic.com"))),ak&&ce("div",{style:{padding:"7px 12px",borderRadius:8,background:"#F0FFF4",border:"1px solid #9AE6B4",marginBottom:10,fontSize:12,color:"#276749",display:"flex",gap:6,alignItems:"center"}},ce("i",{className:"ti ti-circle-check",style:{fontSize:13}}),"Activa: sk-..."+ak.slice(-6)),ce("div",{style:{display:"flex",gap:8,marginBottom:6}},ce("input",{className:"ip",type:showAk?"text":"password",value:akInput,onChange:function(e){setAkInput(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")saveKey();},placeholder:"sk-ant-api03-...",style:{flex:1,fontSize:12,fontFamily:"monospace"}}),ce("button",{className:"bt",onClick:function(){setShowAk(!showAk);},style:{padding:"6px 10px"}},ce("i",{className:"ti ti-"+(showAk?"eye-off":"eye"),style:{fontSize:14}})),ce("button",{className:"bt dk",onClick:saveKey,style:{gap:5}},ce("i",{className:"ti ti-check",style:{fontSize:12}})," Guardar")),ak&&ce("button",{onClick:function(){setAkInput("");setAkRaw("");localStorage.removeItem("bj-ak");toast("Chave removida.");},style:{border:"none",background:"transparent",cursor:"pointer",fontSize:11,color:"#E53E3E",fontFamily:"inherit"}},"Remover chave")),ce("div",{className:"cd",style:{padding:20,marginBottom:14}},ce("div",{style:{fontSize:14,fontWeight:600,marginBottom:10}},"Integracoes"),ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:tasks.length>0?"#F0FFF4":"#FFF5F5",border:"1px solid "+(tasks.length>0?"#9AE6B4":"#FEB2B2")}},ce("i",{className:"ti ti-brand-clickup",style:{fontSize:17,color:"#7B68EE"}}),ce("span",{style:{flex:1,fontSize:13}},"ClickUp - "+tasks.length+" tarefas"),ce("span",{style:{fontSize:11,fontWeight:600,color:tasks.length>0?"#38A169":"#E53E3E"}},tasks.length>0?"Ligado":"Offline")),ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:"var(--purple-bg)",border:"1px solid var(--border)"}},ce("i",{className:"ti ti-mail",style:{fontSize:17,color:"var(--purple)"}}),ce("span",{style:{flex:1,fontSize:13}},"vasco@borjaonstocks.com"),ce("span",{style:{fontSize:11,fontWeight:600,color:"var(--purple)"}},"Activo")))),ce("div",{className:"cd",style:{padding:20}},ce("p",{style:{fontSize:13,color:"var(--text-2)",lineHeight:1.6}},"Cafe Matinal v2.5 - sync "+(lastSync||"no"))));}
 function PPrios({prios,savePrios,tasks,toast}){
   var[showNew,setShowNew]=React.useState(false);
@@ -1514,17 +1667,27 @@ function PDefsOLD({tasks,calEvents,loading,lastSync}){
 
 function FloatingAssistant({tasks,recentTasks,calEvents,habits,logs,fin,prios,pessoal,addTask,updateTask,setPage,toast}){
   const[open,setOpen]=useState(false);
-  const[pos,setPos]=useState(()=>{try{const v=localStorage.getItem("bj-fab-pos");return v?JSON.parse(v):{right:24,bottom:24};}catch{return{right:24,bottom:24};}});
+  const[msgs,setMsgs]=useState([]);
+  const[inp,setInp]=useState("");
+  const[ld,setLd]=useState(false);
+  const[badge,setBadge]=useState(0);
+  const[pos,setPos]=useState(()=>{try{var v=localStorage.getItem("bj-fab-pos");return v?JSON.parse(v):{right:24,bottom:24};}catch{return{right:24,bottom:24};}});
   const dragRef=useRef(null);
   const isDragging=useRef(false);
   const dragStart=useRef({x:0,y:0,right:24,bottom:24});
+  const endRef=useRef(null);
+  const WEBHOOK="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
+
+  useEffect(()=>{if(endRef.current)endRef.current.scrollIntoView({behavior:"smooth"});},[msgs]);
+  useEffect(()=>{if(!open&&msgs.length>0)setBadge(b=>b+1);},[msgs.length]);
+  useEffect(()=>{if(open)setBadge(0);},[open]);
+
   function onFabMouseDown(e){
     if(e.button!==0)return;
     isDragging.current=false;
     dragStart.current={x:e.clientX,y:e.clientY,right:pos.right,bottom:pos.bottom};
     function onMove(e2){
-      const dx=dragStart.current.x-e2.clientX;
-      const dy=dragStart.current.y-e2.clientY;
+      const dx=dragStart.current.x-e2.clientX,dy=dragStart.current.y-e2.clientY;
       if(Math.abs(dx)>4||Math.abs(dy)>4)isDragging.current=true;
       if(!isDragging.current)return;
       const nr=Math.max(8,Math.min(window.innerWidth-60,dragStart.current.right+dx));
@@ -1541,354 +1704,140 @@ function FloatingAssistant({tasks,recentTasks,calEvents,habits,logs,fin,prios,pe
     window.addEventListener("mouseup",onUp);
   }
 
-  const[msgs,setMsgs]=useState([]);
-  const[inp,setInp]=useState("");
-  const[ld,setLd]=useState(false);
-  const[badge,setBadge]=useState(0);
-  const endRef=useRef(null);
-  const CU_KEY=localStorage.getItem("cu_key")||"";
-  const WEBHOOK="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
+  const n=new Date();
+  const act=tasks.filter(t=>t.status!=="done");
+  const late=act.filter(t=>t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n);
+  const urg=act.filter(t=>t.priority==="urgent");
+  const moKey=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
+  const saldo=(fin||[]).filter(t=>t.month===moKey).reduce((s,t)=>s+(t.type==="receita"?+t.amount:-+t.amount),0);
+  const habDone=(habits||[]).filter(h=>(logs||{})[n.toDateString()]?.[h.id]).length;
 
-  useEffect(()=>{if(endRef.current)endRef.current.scrollIntoView({behavior:"smooth"});},[msgs]);
-  useEffect(()=>{if(!open&&msgs.length>0)setBadge(b=>b+1);},[msgs.length]);
-  useEffect(()=>{if(open)setBadge(0);},[open]);
-
-  const SYSTEM_PROMPT=`Es o assistente pessoal de acao do Vasco (BBTOP20 - Borja on Stocks + Investidor Prudente com Cesar Borja).
-Hoje: ${new Date().toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}.
-Tarefas abertas (${tasks.filter(t=>t.status!=="done").length}): ${tasks.filter(t=>t.status!=="done").slice(0,10).map(t=>t.name+"["+t.priority+"]").join(", ")||"nenhuma"}.
-Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}.
-Financas este mes: saldo ${(fin||[]).filter(t=>{const m=new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0");return t.month===m;}).reduce((s,t)=>s+(t.type==="receita"?+t.amount:-+t.amount),0).toFixed(0)} euros.
-
-Podes executar ACOES REAIS. Quando o utilizador pede uma acao, devolves JSON estruturado para execucao.
-Formato de resposta quando ha acao a executar:
-{"action":"TIPO","params":{...},"mensagem":"descricao do que fizeste"}
-
-Tipos de acao disponiveis:
-- criar_tarefa: {"action":"criar_tarefa","params":{"name":"...","priority":"urgent|high|normal|low"},"mensagem":"..."}
-- fechar_tarefa: {"action":"fechar_tarefa","params":{"task_id":"...","task_name":"..."},"mensagem":"..."}
-- ver_emails: {"action":"ver_emails","params":{},"mensagem":"A verificar emails nao lidos..."}
-- criar_evento: {"action":"criar_evento","params":{"title":"...","date":"...","time":"..."},"mensagem":"..."}
-- resumo_dia: {"action":"resumo_dia","params":{},"mensagem":"..."}
-- navegar: {"action":"navegar","params":{"pagina":"hoje|tarefas|calendario|notas|financas|habitos|assistente"},"mensagem":"..."}
-
-Para perguntas/conversas normais sem acao, responde normalmente em texto (sem JSON).
-Responde SEMPRE em portugues europeu. Age diretamente sem pedir confirmacao excessiva.`;
+  const SYS=`Chamas-te Beirafonte (assistente pessoal do Vasco, BBTOP20 — Borja on Stocks + Investidor Prudente com César Borja).
+Data: ${["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][n.getDay()]} ${n.getDate()} ${["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][n.getMonth()]} ${n.getFullYear()}.
+Contexto actual:
+- ${act.length} tarefas abertas${late.length>0?`, ${late.length} atrasadas`:""}${urg.length>0?`, ${urg.length} urgentes: ${urg.slice(0,3).map(t=>t.name).join(", ")}`:""}
+- Hábitos hoje: ${habDone}/${(habits||[]).length}
+- Saldo este mês: ${saldo>=0?"+":""}${saldo.toFixed(0)} €
+- Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}
+Podes executar acções reais. Para criar tarefa responde: {"action":"criar_tarefa","params":{"name":"...","priority":"urgent|high|normal|low"},"msg":"..."}
+Para fechar tarefa: {"action":"fechar_tarefa","params":{"task_name":"..."},"msg":"..."}
+Para ir a uma página: {"action":"navegar","params":{"pagina":"hoje|tarefas|calendario|notas|habitos|financas|assistente"},"msg":"..."}
+Para questões abertas, responde directamente em português europeu. Seja directo, útil e conciso.`;
 
   async function send(){
     if(!inp.trim()||ld)return;
+    const ak=localStorage.getItem("bj-ak")||"";
+    if(!ak){setMsgs(m=>[...m,{role:"assistant",content:"Vai às **Definições** e adiciona a tua chave API Claude para eu funcionar.",ts:Date.now()}]);return;}
     const userMsg={role:"user",content:inp.trim(),ts:Date.now()};
     const newMsgs=[...msgs,userMsg];
     setMsgs(newMsgs);setInp("");setLd(true);
     try{
-      const history=newMsgs.slice(-8).map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.content}));
-      const ak=localStorage.getItem("bj-ak")||"";
-      if(!ak){setMsgs(m=>[...m,{role:"assistant",content:"Configura a chave API nas Definicoes.",ts:Date.now()}]);setLd(false);return;}
-      
-      // Detect if the request is about email — use MCP tools
-      const emailKeywords=["email","mail","emails","caixa","entrada","mensagem","mensagens","lidos","nao lidos","unread","inbox","remetente","assunto"];
-      const needsEmail=emailKeywords.some(k=>inp.toLowerCase().includes(k));
-      
-      let text;
-      if(needsEmail){
-        // Call API with Microsoft 365 MCP server for real email access
-        const body={
-          model:"claude-haiku-4-5-20251001",
-          max_tokens:1000,
-          system:SYSTEM_PROMPT,
-          messages:history,
-          mcp_servers:[{type:"url",url:"https://microsoft365.mcp.claude.com/mcp",name:"microsoft365"}]
-        };
-        const r=await fetch("https://api.anthropic.com/v1/messages",{
-          method:"POST",
-          headers:{"content-type":"application/json","x-api-key":ak,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-          body:JSON.stringify(body)
-        });
-        const data=await r.json();
-        if(data.error)throw new Error(data.error.message);
-        // Extract all text blocks (MCP may return tool_use blocks too)
-        text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n")||"(sem resposta)";
-        // If only tool_use, it means Claude used the tool but needs another round
-        if(!text&&(data.content||[]).some(b=>b.type==="tool_use")){
-          text="A verificar o teu email... (resultado em processamento)";
-        }
-      } else {
-        // Normal request — use regular aiC
-        text=await aiC(history,SYSTEM_PROMPT,600);
-      }
-      
-      // Try to parse as action JSON
+      const history=newMsgs.slice(-12).map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.content}));
+      const res=await fetch("https://api.anthropic.com/v1/messages",{
+        method:"POST",
+        headers:{"content-type":"application/json","x-api-key":ak,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:800,system:SYS,messages:history})
+      });
+      const data=await res.json();
+      if(data.error)throw new Error(data.error.message);
+      let text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n")||"(sem resposta)";
+      // Try action JSON
       let actionResult=null;
       try{
         const clean=text.replace(/```json|```/g,"").trim();
         if(clean.startsWith("{")){
           const parsed=JSON.parse(clean);
-          if(parsed.action){actionResult=await executeAction(parsed);}
+          if(parsed.action){
+            const a=parsed.action,pp=parsed.params||{},msg=parsed.msg||"Feito!";
+            if(a==="criar_tarefa"&&pp.name&&addTask){
+              addTask({id:"l"+Date.now(),name:pp.name,status:"todo",priority:pp.priority||"normal",list:"BBTOP20",due_date:"null"});
+              try{await fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create",task_name:pp.name,priority:pp.priority||"normal"}),mode:"no-cors"});}catch{}
+              if(toast)toast("Criada: "+pp.name);
+              actionResult=msg+" ✓";
+            }else if(a==="fechar_tarefa"&&pp.task_name&&updateTask){
+              const t=tasks.find(x=>x.name.toLowerCase().includes(pp.task_name.toLowerCase()));
+              if(t){updateTask({...t,status:"done"});if(toast)toast("Fechada: "+t.name);actionResult=msg+" ✓";}
+              else actionResult="Não encontrei essa tarefa. Mais específico?";
+            }else if(a==="navegar"&&pp.pagina&&setPage){
+              setPage(pp.pagina);setOpen(false);actionResult=null;
+            }else actionResult=msg;
+          }
         }
       }catch{}
-      setMsgs(m=>[...m,{role:"assistant",content:actionResult||text,ts:Date.now(),isAction:!!actionResult}]);
+      setMsgs(m=>[...m,{role:"assistant",content:actionResult!==null?actionResult:text,ts:Date.now()}]);
     }catch(e){
       setMsgs(m=>[...m,{role:"assistant",content:"Erro: "+e.message,ts:Date.now()}]);
     }
     setLd(false);
   }
 
-  async function executeAction(parsed){
-    const{action,params,mensagem}=parsed;
-    switch(action){
-      case "criar_tarefa":{
-        if(addTask&&params.name){
-          addTask({id:"l"+Date.now(),name:params.name,status:"todo",priority:params.priority||"normal",list:"BBTOP20",due_date:"null"});
-          try{await fetch(WEBHOOK+"?action=create&task_name="+encodeURIComponent(params.name),{mode:"no-cors"});}catch{}
-          toast("Tarefa criada: "+params.name);
-          return "Criei a tarefa **"+params.name+"** no ClickUp com prioridade "+( params.priority||"normal")+". Ja aparece na tua lista.";
-        }
-        return mensagem||"Tarefa criada.";
-      }
-      case "fechar_tarefa":{
-        const t=tasks.find(x=>x.id===params.task_id||x.name.toLowerCase().includes((params.task_name||"").toLowerCase()));
-        if(t&&updateTask){
-          updateTask({...t,status:"done"});
-          try{await fetch(WEBHOOK+"?action=close&task_id="+t.id,{mode:"no-cors"});}catch{}
-          toast("Tarefa fechada: "+t.name);
-          return "Fechei a tarefa **"+t.name+"** no ClickUp.";
-        }
-        return "Nao encontrei essa tarefa. Podes ser mais especifico?";
-      }
-      case "ver_emails":{
-        try{
-          const r=await fetch(WEBHOOK+"?action=get_emails",{mode:"cors"});
-          if(r.ok){const d=await r.json();return d.summary||mensagem||"Email verificado.";}
-        }catch{}
-        // Fallback — tell user to check
-        return "Enviei o pedido ao Make.com para verificar os teus emails. O resultado vai aparecer no email ou aqui em breve. (Garante que o cenario do Make esta configurado para responder a action=get_emails)";
-      }
-      case "resumo_dia":{
-        const act=tasks.filter(t=>t.status!=="done");
-        const late=act.filter(t=>t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<new Date(new Date().setHours(0,0,0,0)));
-        const urg=act.filter(t=>t.priority==="urgent");
-        const lines=[
-          "Resumo do teu dia:",
-          "- "+act.length+" tarefas abertas"+(late.length?" ("+late.length+" atrasadas)":""),
-          urg.length>0?"- Urgentes: "+urg.map(t=>t.name).join(", "):"",
-          calEvents.length>0?"- Hoje: "+calEvents.map(e=>e.summary).join(", "):"- Sem eventos no calendario",
-        ].filter(Boolean).join("\n");
-        return lines;
-      }
-      case "navegar":{
-        if(setPage&&params.pagina){setPage(params.pagina);return "Abrindo "+params.pagina+"...";}
-        return mensagem||"A navegar...";
-      }
-      case "criar_evento":{
-        try{await fetch(WEBHOOK+"?action=create_event&title="+encodeURIComponent(params.title||"")+"&date="+encodeURIComponent(params.date||"")+"&time="+encodeURIComponent(params.time||""),{mode:"no-cors"});}catch{}
-        return mensagem||"Evento enviado para o calendario.";
-      }
-      default:
-        return mensagem||text;
-    }
-  }
-
-  const SUGGESTIONS=[
-    "Quantos emails nao lidos tenho?",
-    "Resume o meu dia",
-    "Qual a minha tarefa mais urgente?",
-    "Cria tarefa: rever emails pendentes",
-    "Abre as financas",
-    "Quais as tarefas atrasadas?",
-  ];
-
-  const fmtTime=ts=>new Date(ts).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"});
+  const SUGESTOES=["O que fazer agora?","Quais as urgentes?","Resume o meu dia","Cria tarefa: ","Quantos emails não lidos?","Analisa o meu backlog"];
+  const fmtT=ts=>new Date(ts).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"});
 
   return ce("div",null,
-    // Floating button
-    ce("button",{
-      onMouseDown:onFabMouseDown,
-      onClick:()=>{if(!isDragging.current)setOpen(!open);},
-      style:{position:"fixed",bottom:pos.bottom,right:pos.right,cursor:isDragging.current?"grabbing":"grab",width:52,height:52,borderRadius:"50%",
-        background:"#7C3AED",border:"none",cursor:"pointer",
+    ce("button",{onMouseDown:onFabMouseDown,onClick:()=>{if(!isDragging.current)setOpen(!open);},
+      style:{position:"fixed",bottom:pos.bottom,right:pos.right,width:52,height:52,borderRadius:"50%",
+        background:"#7C3AED",border:"none",cursor:isDragging.current?"grabbing":"grab",
         display:"flex",alignItems:"center",justifyContent:"center",
-        boxShadow:"0 4px 20px rgba(124,58,237,.4)",zIndex:1000,
-        transition:"transform .2s,box-shadow .2s",
-        transform:open?"scale(0.9)":"scale(1)"}
-    },
-      ce("i",{className:"ti ti-"+(open?"x":"sparkles"),style:{fontSize:22,color:"#fff"}}),
+        boxShadow:"0 4px 20px rgba(124,58,237,.4)",zIndex:1000,transition:"transform .15s"}},
+      ce("i",{className:"ti ti-sparkles",style:{fontSize:22,color:"#fff"}}),
       badge>0&&!open&&ce("div",{style:{position:"absolute",top:-4,right:-4,width:18,height:18,
         borderRadius:"50%",background:"#E53E3E",color:"#fff",fontSize:10,fontWeight:700,
         display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid #FAF9F7"}},badge)
     ),
-    // Panel
-    open&&ce("div",{style:{position:"fixed",bottom:pos.bottom+60,right:Math.max(8,pos.right-180),width:380,maxWidth:"calc(100vw - 48px)",
-      height:520,background:"#fff",borderRadius:16,boxShadow:"0 8px 40px rgba(0,0,0,.18)",
-      zIndex:999,display:"flex",flexDirection:"column",overflow:"hidden",
-      border:"1px solid var(--border)",animation:"fU .2s"}},
-      // Header
-      ce("div",{style:{background:"#1A1A2E",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}},
-        ce("div",{style:{width:32,height:32,borderRadius:8,background:"#7C3AED",
-          display:"flex",alignItems:"center",justifyContent:"center"}},
+    open&&ce("div",{style:{position:"fixed",bottom:pos.bottom+62,right:Math.max(8,pos.right-172),
+      width:380,maxWidth:"calc(100vw - 48px)",height:500,background:"var(--bg-app)",
+      borderRadius:16,boxShadow:"0 8px 40px rgba(0,0,0,.2)",zIndex:999,
+      display:"flex",flexDirection:"column",overflow:"hidden",border:"1px solid var(--border)",animation:"fU .2s"}},
+      ce("div",{style:{background:"#1A1A2E",padding:"12px 16px",display:"flex",alignItems:"center",gap:10,flexShrink:0}},
+        ce("div",{style:{width:32,height:32,borderRadius:8,background:"#7C3AED",display:"flex",alignItems:"center",justifyContent:"center"}},
           ce("i",{className:"ti ti-sparkles",style:{fontSize:16,color:"#fff"}})
         ),
         ce("div",{style:{flex:1}},
-          ce("div",{style:{fontSize:14,fontWeight:600,color:"#fff"}},"\u2600 Assistente"),
-          ce("div",{style:{fontSize:10,color:"#7C8DB5",fontFamily:"monospace"}},"age, cria, resume, verifica")
+          ce("div",{style:{fontSize:14,fontWeight:600,color:"#fff"}},"Beirafonte · Assistente"),
+          ce("div",{style:{fontSize:10,color:"#7C8DB5",fontFamily:"monospace"}},localStorage.getItem("bj-ak")?"IA activa":"configura a API key")
         ),
-        ce("button",{onClick:()=>setOpen(false),style:{border:"none",background:"transparent",
-          cursor:"pointer",color:"#7C8DB5",fontSize:18,lineHeight:1}},"\u00d7")
+        ce("button",{onClick:()=>setMsgs([]),style:{border:"none",background:"rgba(255,255,255,.1)",cursor:"pointer",color:"#7C8DB5",fontSize:11,borderRadius:4,padding:"3px 7px",marginRight:4}},"Limpar"),
+        ce("button",{onClick:()=>setOpen(false),style:{border:"none",background:"transparent",cursor:"pointer",color:"#7C8DB5",fontSize:18,lineHeight:1}},"×")
       ),
-      // Messages
       ce("div",{style:{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10,minHeight:0}},
-        msgs.length===0&&ce("div",{style:{flex:1,display:"flex",flexDirection:"column",
-          alignItems:"center",justifyContent:"center",gap:12,padding:"8px 0"}},
-          ce("div",{style:{fontSize:13,color:"var(--text-3)",textAlign:"center",lineHeight:1.6,marginBottom:4}},
-            "O teu assistente de acao.\nPede-me qualquer coisa."
-          ),
+        msgs.length===0&&ce("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10,padding:"8px 0"}},
+          ce("div",{style:{fontSize:13,color:"var(--text-3)",textAlign:"center",lineHeight:1.6,marginBottom:4}},"Beirafonte, o teu assistente pessoal.\nPergunta qualquer coisa ou pede uma acção."),
           ce("div",{style:{display:"flex",flexDirection:"column",gap:5,width:"100%"}},
-            SUGGESTIONS.map((s,i)=>ce("button",{key:i,onClick:()=>setInp(s),
+            SUGESTOES.map((s,i)=>ce("button",{key:i,onClick:()=>setInp(s),
               style:{textAlign:"left",padding:"7px 11px",borderRadius:8,border:"1px solid var(--border)",
-                background:"#F9F7F4",fontSize:12,cursor:"pointer",color:"var(--text-1)",fontFamily:"inherit",
-                transition:"background .1s"}},s))
+                background:"var(--bg-surface)",fontSize:12,cursor:"pointer",color:"var(--text-1)",fontFamily:"inherit"}},s))
           )
         ),
-        msgs.map((m,i)=>ce("div",{key:i,style:{display:"flex",
-          justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}},
-          m.role==="assistant"&&ce("div",{style:{width:26,height:26,borderRadius:6,background:"#EDE9FE",
-            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}},
-            ce("i",{className:"ti ti-sparkles",style:{fontSize:13,color:"#7C3AED"}})
+        msgs.map((m,i)=>ce("div",{key:i,style:{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",gap:8}},
+          m.role==="assistant"&&ce("div",{style:{width:26,height:26,borderRadius:6,background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}},
+            ce("i",{className:"ti ti-sparkles",style:{fontSize:13,color:"var(--purple)"}})
           ),
           ce("div",{style:{maxWidth:"82%"}},
             ce("div",{style:{padding:"9px 12px",borderRadius:m.role==="user"?"12px 12px 4px 12px":"12px 12px 12px 4px",
-              background:m.role==="user"?"#1A1A2E":"#F5F3FF",
-              color:m.role==="user"?"#fff":"#1A1A2E",
-              fontSize:13,lineHeight:1.6,whiteSpace:"pre-wrap"}},m.content),
-            ce("div",{style:{fontSize:10,color:"#C8C4BC",marginTop:3,
-              textAlign:m.role==="user"?"right":"left"}},fmtTime(m.ts||Date.now()))
+              background:m.role==="user"?"#1A1A2E":"var(--bg-surface)",
+              color:m.role==="user"?"#fff":"var(--text-1)",fontSize:13,lineHeight:1.6,whiteSpace:"pre-wrap"}},m.content),
+            ce("div",{style:{fontSize:10,color:"var(--text-3)",marginTop:3,textAlign:m.role==="user"?"right":"left"}},fmtT(m.ts||Date.now()))
           )
         )),
         ld&&ce("div",{style:{display:"flex",alignItems:"center",gap:8,color:"var(--text-3)",fontSize:12}},
-          ce("div",{style:{width:26,height:26,borderRadius:6,background:"#EDE9FE",
-            display:"flex",alignItems:"center",justifyContent:"center"}},
-            ce("span",{className:"sp"})
-          ),
-          "a processar..."
+          ce("div",{style:{width:26,height:26,borderRadius:6,background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center"}},ce("span",{className:"sp"})),
+          "a pensar..."
         ),
         ce("div",{ref:endRef})
       ),
-      // Input
-      ce("div",{style:{padding:"10px 12px",borderTop:"1px solid #F0EEE8",
-        display:"flex",gap:8,alignItems:"flex-end"}},
-        ce("textarea",{
-          className:"ip",
-          value:inp,
-          onChange:e=>setInp(e.target.value),
+      ce("div",{style:{padding:"10px 12px",borderTop:"1px solid var(--border)",display:"flex",gap:8,alignItems:"flex-end",flexShrink:0}},
+        ce("textarea",{className:"ip",value:inp,onChange:e=>setInp(e.target.value),
           onKeyDown:e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}},
-          placeholder:"Pede uma acao ou faz uma pergunta...",
-          rows:2,
-          style:{flex:1,resize:"none",lineHeight:1.5,fontSize:12,padding:"7px 10px"}
-        }),
-        ce("button",{className:"bt dk",onClick:send,disabled:ld||!inp.trim(),
-          style:{padding:"9px 11px",flexShrink:0}},
+          placeholder:"Pergunta ou pede uma acção... (Enter)",rows:2,
+          style:{flex:1,resize:"none",lineHeight:1.5,fontSize:12,padding:"7px 10px"}}),
+        ce("button",{className:"bt dk",onClick:send,disabled:ld||!inp.trim(),style:{padding:"9px 11px",flexShrink:0}},
           ce("i",{className:"ti ti-send",style:{fontSize:14}})
         )
       )
     )
   );
 }
-
-
-
-function PPrevisoes({tasks,habits,logs,fin,toast}){
-  const[prevs,setPrevs]=useState(()=>{try{const v=localStorage.getItem("bj-prevs");return v?JSON.parse(v):[]}catch{return[];}});
-  const[ld,setLd]=useState(false);
-  const n=new Date();
-  const MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-  const savePrevs=v=>{setPrevs(v);try{localStorage.setItem("bj-prevs",JSON.stringify(v));}catch{}};
-  function gerar(){
-    setLd(true);
-    var act=tasks.filter(function(t){return t.status!=="done";});
-    var late=act.filter(function(t){return t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n;});
-    var urg=act.filter(function(t){return t.priority==="urgent";});
-    var byDue=act.filter(function(t){return t.due_date&&t.due_date!=="null";}).sort(function(a,b){return +a.due_date-+b.due_date;});
-    var DIAS_SEMANA=["Dom","Seg","Ter","Qua","Qui","Sex","Sab"];
-    var dias=Array.from({length:7},function(_,i){
-      var d=new Date(n);d.setDate(n.getDate()+1+i);
-      var tasksDia=byDue.filter(function(t){return new Date(+t.due_date).toDateString()===d.toDateString();});
-      var isWeekend=d.getDay()===0||d.getDay()===6;
-      var risco=tasksDia.filter(function(t){return t.priority==="urgent";}).length>0?"alto":isWeekend?"baixo":tasksDia.length>3?"medio":"baixo";
-      return {
-        data:DIAS_SEMANA[d.getDay()]+" "+d.getDate()+" "+MC[d.getMonth()],
-        foco:isWeekend?"Recuperacao e planeamento":urg.length>0&&i<2?"Resolver urgencias":"Avanco em tarefas abertas",
-        tarefas:tasksDia.slice(0,3).map(function(t){return t.name;}).concat(isWeekend?["Descanso e revisao"]:[]),
-        risco:risco,
-        nota:tasksDia.length===0?"Dia livre para foco profundo":tasksDia.length>2?"Dia carregado - prioriza o essencial":""
-      };
-    });
-    var alertas=[];
-    if(late.length>0)alertas.push(late.length+" tarefa"+(late.length!==1?"s":"")+" em atraso que precisam de atencao");
-    if(urg.length>0)alertas.push("Urgentes: "+urg.slice(0,2).map(function(t){return t.name;}).join(", "));
-    var moKey=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
-    var saldo=(fin||[]).filter(function(t){return t.month===moKey;}).reduce(function(s,t){return s+(t.type==="receita"?+t.amount:-+t.amount);},0);
-    if(saldo<0)alertas.push("Saldo mensal negativo: "+saldo.toFixed(0)+" euros");
-    var parsed={
-      dias:dias,
-      resumo:"Semana com "+act.length+" tarefas abertas"+(late.length>0?", "+late.length+" atrasadas":"")+(urg.length>0?" e "+urg.length+" urgentes":"")+". Foco em concluir o que esta em atraso e manter o ritmo diario.",
-      alertas:alertas
-    };
-    var ws=new Date(n);ws.setDate(n.getDate()-n.getDay()+(n.getDay()===0?-6:1));
-    var we=new Date(ws);we.setDate(ws.getDate()+6);
-    var prev={id:"p"+Date.now(),title:"Previsao "+ws.getDate()+" "+MC[ws.getMonth()]+" - "+we.getDate()+" "+MC[we.getMonth()]+" "+we.getFullYear(),created:Date.now(),data:parsed};
-    savePrevs([prev,...prevs.slice(0,4)]);
-    toast("Previsao gerada!");
-    setLd(false);
-  }
-  const RC={baixo:"#38A169",medio:"#DD6B20",alto:"#E53E3E"};
-  const RB={baixo:"#F0FFF4",medio:"#FFFAF0",alto:"#FFF5F5"};
-  return ce("div",{style:{display:"flex",flexDirection:"column",height:"100%",animation:"fU .2s"}},
-    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexShrink:0}},
-      ce("div",{style:{display:"flex",alignItems:"center",gap:14}},
-        ce("div",{style:{width:40,height:40,borderRadius:10,background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-telescope",style:{fontSize:20,color:"#7C3AED"}})),
-        ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Previsoes"),ce("div",{className:"ps"},"Um olhar sobre os proximos dias."))
-      ),
-      ce("button",{className:"bt dk",onClick:gerar,disabled:ld,style:{gap:6}},ld?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:13}})," Prever 7 dias")
-    ),
-    ce("div",{style:{flex:1,overflowY:"auto",minHeight:0}},
-      prevs.length===0?ce("div",{style:{textAlign:"center",padding:"60px 20px",color:"var(--text-3)"}},
-        ce("i",{className:"ti ti-telescope",style:{fontSize:48,display:"block",marginBottom:16,opacity:.3}}),
-        ce("p",{style:{fontSize:15,marginBottom:8}},"Sem previsoes ainda."),
-        ce("p",{style:{fontSize:13,color:"#C8C4BC",marginBottom:20}},"A IA analisa as tuas tarefas, habitos e financas para gerar uma previsao personalizada."),
-        ce("button",{className:"bt dk",onClick:gerar,disabled:ld,style:{gap:6,margin:"0 auto",display:"flex"}},ld?ce(Sp):ce("i",{className:"ti ti-sparkles",style:{fontSize:13}})," Gerar primeira previsao")
-      ):
-      ce("div",null,prevs.map(prev=>
-        ce("div",{key:prev.id,style:{marginBottom:20}},
-          ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}},
-            ce("span",{style:{fontWeight:600,fontSize:14}},prev.title),
-            ce("div",{style:{display:"flex",gap:8,alignItems:"center"}},
-              ce("span",{style:{fontSize:10,color:"var(--text-3)"}},new Date(prev.created).toLocaleDateString("pt-PT")),
-              ce("button",{onClick:()=>savePrevs(prevs.filter(p=>p.id!==prev.id)),style:{border:"none",background:"transparent",cursor:"pointer",color:"#CBD5E0"}},ce("i",{className:"ti ti-trash",style:{fontSize:12}}))
-            )
-          ),
-          prev.data.alertas?.length>0&&ce("div",{style:{padding:"10px 14px",borderRadius:8,background:"#FFF5F5",border:"1px solid #FED7D7",marginBottom:10}},prev.data.alertas.map((a,i)=>ce("div",{key:i,style:{display:"flex",gap:8,fontSize:13,color:"#C53030"}},ce("i",{className:"ti ti-alert-triangle",style:{fontSize:12}}),a))),
-          prev.data.resumo&&ce("div",{className:"cd",style:{padding:"12px 16px",marginBottom:10,background:"#F5F3FF",border:"1px solid #DDD6FE"}},ce("p",{style:{fontSize:13,color:"var(--text-1)",lineHeight:1.6,fontStyle:"italic"}},prev.data.resumo)),
-          ce("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-            (prev.data.dias||[]).map((dia,di)=>
-              ce("div",{key:di,className:"cd"},
-                ce("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderLeft:"4px solid "+(RC[dia.risco]||"#CBD5E0"),background:RB[dia.risco]||"#fff"}},
-                  ce("div",{style:{minWidth:70,flexShrink:0}},
-                    ce("div",{style:{fontSize:12,fontWeight:600}},dia.data||`Dia ${di+1}`),
-                    dia.risco&&ce("div",{style:{fontSize:10,color:RC[dia.risco],marginTop:1}},dia.risco)
-                  ),
-                  ce("div",{style:{flex:1}},
-                    ce("div",{style:{fontSize:13,fontWeight:500,marginBottom:3}},dia.foco||""),
-                    (dia.tarefas||[]).length>0&&ce("div",{style:{display:"flex",gap:4,flexWrap:"wrap",marginBottom:2}},(dia.tarefas||[]).map((t,ti)=>ce("span",{key:ti,style:{fontSize:10,padding:"2px 7px",borderRadius:10,background:"#F5F2EC",color:"#5A5750"}},t))),
-                    dia.nota&&ce("div",{style:{fontSize:11,color:"var(--text-3)",fontStyle:"italic"}},dia.nota)
-                  )
-                )
-              )
-            )
-          )
-        )
-      ))
-    )
-  );
-}
-
 
 function GlobalSearch({tasks,notes,mem,prios,fin,pessoal,searchQ,setSearchQ,searchOpen,setSearchOpen,setPage,toast}){
   const ref=useRef(null);
