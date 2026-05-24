@@ -87,22 +87,7 @@ const fmtD=ms=>{if(!ms||ms==="null")return"";const d=new Date(+ms);return`${d.ge
 const fmtT=dt=>{if(!dt)return"";try{return new Date(dt).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"})}catch{return""}};
 const sg=async k=>{const pm={'bj-notes':'data/notes.json','bj-habits':'data/habits.json','bj-logs':'data/habits.json','bj-mem':'data/mem.json','bj-cvs':'data/convs.json','bj-tasks':'data/tasks.json'};try{if(pm[k]){const r=await fetch('https://raw.githubusercontent.com/vasco-cell/cafe-matinal/main/'+pm[k]+'?t='+Date.now());if(!r.ok){const v=localStorage.getItem(k);return v?JSON.parse(v):null;}const d=await r.json();if(k==='bj-notes')return d.notes;if(k==='bj-habits')return d.habits;if(k==='bj-logs')return d.logs;if(k==='bj-mem')return d.items;if(k==='bj-cvs')return d.convs;if(k==='bj-tasks')return d.tasks;}const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}};
 const ss=async(k,v)=>{const _t=['ghp', '_i69NK4x5cr', 'swgJ7Amo3Km', 'iJm4Qky8T4c5Up7'];const _gt=()=>_t.join('');const _repo='vasco-cell/cafe-matinal';async function _gw(p,d){try{const r1=await fetch('https://api.github.com/repos/'+_repo+'/contents/'+p,{headers:{'Authorization':'token '+_gt()}});let sha=r1.ok?(await r1.json()).sha:null;const ct=btoa(unescape(encodeURIComponent(JSON.stringify(d,null,2))));const b={message:'update: '+p,content:ct};if(sha)b.sha=sha;await fetch('https://api.github.com/repos/'+_repo+'/contents/'+p,{method:'PUT',headers:{'Authorization':'token '+_gt(),'Content-Type':'application/json'},body:JSON.stringify(b)});}catch{}}try{localStorage.setItem(k,JSON.stringify(v));if(k==='bj-notes')_gw('data/notes.json',{notes:v});else if(k==='bj-habits'){fetch('https://raw.githubusercontent.com/'+_repo+'/main/data/habits.json?t='+Date.now()).then(r=>r.json()).then(e=>_gw('data/habits.json',{...e,habits:v})).catch(()=>_gw('data/habits.json',{habits:v,logs:{}}));}else if(k==='bj-logs'){fetch('https://raw.githubusercontent.com/'+_repo+'/main/data/habits.json?t='+Date.now()).then(r=>r.json()).then(e=>_gw('data/habits.json',{...e,logs:v})).catch(()=>_gw('data/habits.json',{habits:[],logs:v}));}else if(k==='bj-mem')_gw('data/mem.json',{items:v});else if(k==='bj-cvs')_gw('data/convs.json',{convs:v});}catch{}};
-async function aiC(msgs,sys,max){
-  var ak=localStorage.getItem("bj-ak")||"";
-  if(!ak)return "Adiciona a tua chave API Claude nas Definicoes para usar a IA.";
-  try{
-    var r=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"content-type":"application/json","x-api-key":ak,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:max||900,system:sys||"",messages:msgs})
-    });
-    var d=await r.json();
-    if(d.error)return "Erro API: "+d.error.message;
-    return (d.content&&d.content[0]&&d.content[0].text)||"(sem resposta)";
-  }catch(e){
-    return "Erro: "+e.message;
-  }
-}
+async function aiC(msgs,sys,max){var ak=localStorage.getItem("bj-ak")||"";if(!ak)return "Configura a chave API nas Definicoes.";try{var r2=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":ak,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:max||900,system:sys||"",messages:msgs})});var d2=await r2.json();if(d2.error)return "Erro: "+d2.error.message;return (d2.content&&d2.content[0]&&d2.content[0].text)||"(sem resposta)";}catch(e){return "Erro: "+e.message;}}
 
 async function whF(p){try{const url=WH+"?"+new URLSearchParams(p).toString();const r=await fetch(url,{mode:"cors"});if(r.ok)return await r.json();return null}catch{return null}}
 const wh=p=>{try{fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"cors"}).catch(()=>fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"no-cors"}))}catch{}};
@@ -677,7 +662,7 @@ function PAnalytics({tasks,habits,logs,fin,focoSessions,setPage}){
 }
 
 // ── RELATÓRIOS ────────────────────────────────────────────────────────────────
-function PRelatorios({tasks,toast,habits,logs}){
+function PRelatorios({tasks,toast,habits,logs,fin}){
   const[tab,setTab]=useState("semana");const[reps,setReps]=useState([]);const[ld,setLd]=useState(false);
   useEffect(()=>{sg("bj-reps").then(r=>{if(r)setReps(r)});},[]);
   function gen(){
@@ -730,47 +715,7 @@ function PRelatorios({tasks,toast,habits,logs}){
 }
 
 // ── DEFINIÇÕES ────────────────────────────────────────────────────────────────
-function PDefs({tasks,calEvents,loading,lastSync}){
-  return ce("div",{style:{animation:"fU .2s"}},
-    ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#E5E3DC",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-settings",style:{fontSize:20,color:"var(--text-2)"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Definições"),ce("div",{className:"ps"},"A tua conta e preferências."))),
-    ce("div",{className:"cd",style:{padding:20,marginBottom:14}},
-      ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:16}},ce("div",{style:{width:44,height:44,borderRadius:"50%",background:"#EDE9FE",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:600,fontSize:16,color:"#6B46C1"}},"VN"),ce("div",null,ce("div",{style:{fontSize:15,fontWeight:500}},"Vasco Neves"),ce("div",{style:{fontSize:13,color:"var(--text-3)"}},"vasco@borjaonstocks.com"))),
-      [["Nome","Vasco Neves"],["Email","vasco@borjaonstocks.com"],["Workspace","BBTOP20"]].map(([k,v])=>ce("div",{key:k,style:{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid var(--border-light)",fontSize:13}},ce("span",{style:{color:"var(--text-3)"}},k),ce("span",null,v)))
-    ),
-    ce("div",{className:"cd",style:{padding:20,marginBottom:14}},
-      ce("h3",{style:{fontSize:15,fontWeight:500,marginBottom:12}},"Estado das integrações"),
-      ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-        ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:tasks.length>0?"#F0FFF4":"#FFF5F5",border:`1px solid ${tasks.length>0?"#9AE6B4":"#FEB2B2"}`}},
-          ce("i",{className:"ti ti-brand-clickup",style:{fontSize:18,color:"#7B68EE"}}),
-          ce("div",{style:{flex:1}}),ce("div",{style:{fontWeight:500,fontSize:13}},"ClickUp BBTOP20"),ce("div",{style:{fontSize:11,color:"var(--text-3)"}}),),
-          ce("div",{style:{fontSize:12,color:tasks.length>0?"#276749":"#C53030"}}),
-          ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:tasks.length>0?"#F0FFF4":"#FFF5F5",border:`1px solid ${tasks.length>0?"#9AE6B4":"#FEB2B2"}`}},
-            ce("i",{className:"ti ti-brand-clickup",style:{fontSize:18,color:"#7B68EE"}}),
-            ce("span",{style:{flex:1,fontSize:13,fontWeight:500}},"ClickUp — "+tasks.length+" tarefas"),
-            ce("span",{style:{fontSize:11,color:tasks.length>0?"#38A169":"#E53E3E"}},tasks.length>0?"✓ Ligado":"Offline")
-          ),
-          ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:calEvents.length>0?"#EBF8FF":"#F5F5F5",border:`1px solid ${calEvents.length>0?"#90CDF4":"#E5E3DC"}`}},
-            ce("i",{className:"ti ti-calendar",style:{fontSize:18,color:"#4285F4"}}),
-            ce("span",{style:{flex:1,fontSize:13,fontWeight:500}},"Google Calendar — "+calEvents.length+" eventos hoje"),
-            ce("span",{style:{fontSize:11,color:calEvents.length>0?"#2B6CB0":"#9B9890"}},calEvents.length>0?"✓ Ligado":"Sem eventos hoje")
-          ),
-          ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:"#F5F3FF",border:"1px solid #DDD6FE"}},
-            ce("i",{className:"ti ti-mail",style:{fontSize:18,color:"#7C3AED"}}),
-            ce("span",{style:{flex:1,fontSize:13,fontWeight:500}},"Microsoft Email (Outlook)"),
-            ce("span",{style:{fontSize:11,color:"#6D28D9"}},"✓ Ligado — vasco@borjaonstocks.com")
-          )
-        )
-    ),
-    ce("div",{className:"cd",style:{padding:20}},
-      ce("h3",{style:{fontSize:15,fontWeight:500,marginBottom:8}},"Sobre Café Matinal"),
-      ce("p",{style:{fontSize:13,color:"var(--text-2)",lineHeight:1.6}},"Sistema de produtividade do Vasco para as marcas BBTOP20 (Borja on Stocks + Investidor Prudente). Dados reais do ClickUp via Make.com. Actualização automática a cada 5 minutos."),
-      ce("div",{style:{marginTop:12,fontSize:11,color:"var(--text-3)"}},`v2.1 · sync ${lastSync||"—"} · feito com calma`)
-    )
-  )
-}
-
-// ── NAV ───────────────────────────────────────────────────────────────────────
-
+function PDefs({tasks,calEvents,loading,lastSync,setPage}){var aks=useState(function(){return localStorage.getItem("bj-ak")||"";});var ak=aks[0],setAkRaw=aks[1];var akis=useState(ak);var akInput=akis[0],setAkInput=akis[1];var shs=useState(false);var showAk=shs[0],setShowAk=shs[1];function saveKey(){var v=akInput.trim();setAkRaw(v);localStorage.setItem("bj-ak",v);toast(v?"IA activa!":"Chave removida.");}return ce("div",{style:{animation:"fU .2s",maxWidth:640}},ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"var(--border)",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-settings",style:{fontSize:20,color:"var(--text-2)"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Definicoes"),ce("div",{className:"ps"},"A tua conta e preferencias."))),ce("div",{className:"cd",style:{padding:20,marginBottom:14}},ce("div",{style:{display:"flex",alignItems:"center",gap:12}},ce("div",{style:{width:40,height:40,borderRadius:"50%",background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:14,color:"var(--purple)"}},"VN"),ce("div",null,ce("div",{style:{fontSize:14,fontWeight:600}},"Vasco Neves"),ce("div",{style:{fontSize:12,color:"var(--text-3)"}},"vasco@borjaonstocks.com")))),ce("div",{className:"cd",style:{padding:20,marginBottom:14}},ce("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},ce("div",{style:{width:32,height:32,borderRadius:8,background:"var(--purple-bg)",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-key",style:{fontSize:15,color:"var(--purple)"}})),ce("div",null,ce("div",{style:{fontSize:14,fontWeight:600}},"Chave API Claude"),ce("div",{style:{fontSize:12,color:"var(--text-3)"}},"Para IA · console.anthropic.com"))),ak&&ce("div",{style:{padding:"7px 12px",borderRadius:8,background:"#F0FFF4",border:"1px solid #9AE6B4",marginBottom:10,fontSize:12,color:"#276749",display:"flex",gap:6,alignItems:"center"}},ce("i",{className:"ti ti-circle-check",style:{fontSize:13}}),"Activa: sk-..."+ak.slice(-6)),ce("div",{style:{display:"flex",gap:8,marginBottom:6}},ce("input",{className:"ip",type:showAk?"text":"password",value:akInput,onChange:function(e){setAkInput(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")saveKey();},placeholder:"sk-ant-api03-...",style:{flex:1,fontSize:12,fontFamily:"monospace"}}),ce("button",{className:"bt",onClick:function(){setShowAk(!showAk);},style:{padding:"6px 10px"}},ce("i",{className:"ti ti-"+(showAk?"eye-off":"eye"),style:{fontSize:14}})),ce("button",{className:"bt dk",onClick:saveKey,style:{gap:5}},ce("i",{className:"ti ti-check",style:{fontSize:12}})," Guardar")),ak&&ce("button",{onClick:function(){setAkInput("");setAkRaw("");localStorage.removeItem("bj-ak");toast("Chave removida.");},style:{border:"none",background:"transparent",cursor:"pointer",fontSize:11,color:"#E53E3E",fontFamily:"inherit"}},"Remover chave")),ce("div",{className:"cd",style:{padding:20,marginBottom:14}},ce("div",{style:{fontSize:14,fontWeight:600,marginBottom:10}},"Integracoes"),ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:tasks.length>0?"#F0FFF4":"#FFF5F5",border:"1px solid "+(tasks.length>0?"#9AE6B4":"#FEB2B2")}},ce("i",{className:"ti ti-brand-clickup",style:{fontSize:17,color:"#7B68EE"}}),ce("span",{style:{flex:1,fontSize:13}},"ClickUp - "+tasks.length+" tarefas"),ce("span",{style:{fontSize:11,fontWeight:600,color:tasks.length>0?"#38A169":"#E53E3E"}},tasks.length>0?"Ligado":"Offline")),ce("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:8,background:"var(--purple-bg)",border:"1px solid var(--border)"}},ce("i",{className:"ti ti-mail",style:{fontSize:17,color:"var(--purple)"}}),ce("span",{style:{flex:1,fontSize:13}},"vasco@borjaonstocks.com"),ce("span",{style:{fontSize:11,fontWeight:600,color:"var(--purple)"}},"Activo")))),ce("div",{className:"cd",style:{padding:20}},ce("p",{style:{fontSize:13,color:"var(--text-2)",lineHeight:1.6}},"Cafe Matinal v2.5 - sync "+(lastSync||"no"))));}
 function PPrios({prios,savePrios,tasks,toast}){
   var[showNew,setShowNew]=React.useState(false);
   var[newName,setNewName]=React.useState("");
@@ -2294,7 +2239,7 @@ function App(){
     notas:()=>ce(PNotas,{notes,saveNotes,toast,addTask,setPage:sp}),
     habitos:()=>ce(PHabitos,{habits,saveHabits,logs,saveLogs,toast,tasks}),
     analytics:()=>ce(PAnalytics,{tasks,habits,logs,fin,focoSessions,setPage:sp}),
-    relatorios:()=>ce(PRelatorios,{tasks,toast,habits,logs}),
+    relatorios:()=>ce(PRelatorios,{tasks,toast,habits,logs,fin}),
     definicoes:()=>ce(PDefs,{tasks,calEvents,loading,lastSync,setPage:sp}),
     memoria:()=>ce(PMemoria,{mem,saveMem,toast}),
     prioridades:()=>ce(PPrios,{prios,savePrios,tasks,toast,setPage:sp}),
