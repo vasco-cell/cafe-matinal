@@ -167,10 +167,7 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
           ce("span",{style:{fontSize:10,fontWeight:600,color:"#7C3AED",minWidth:34,fontFamily:"monospace"}},fmtT(e.start?.dateTime||e.start?.date)),
           ce("span",{style:{fontSize:12,color:"#1A1A2E",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.summary||"(sem título)")
         )):
-        [{t:"09h30",l:"Call equipa BOS"},{t:"14h30",l:"Revisão IP"},{t:"16h00",l:"Bloco trabalho"}].map((e,i)=>ce("div",{key:i,style:{display:"flex",alignItems:"center",gap:8,padding:"4px 0",borderLeft:"2px solid #E5E3DC",paddingLeft:8,marginBottom:4}},
-          ce("span",{style:{fontSize:10,fontWeight:600,color:"#9B9890",minWidth:34,fontFamily:"monospace"}},e.t),
-          ce("span",{style:{fontSize:12,color:"#9B9890",fontStyle:"italic"}},e.l+" (simulado)")
-        ))
+        ce("p",{style:{fontSize:12,color:"#9B9890",textAlign:"center",padding:"12px 0"}},"Sem eventos hoje.")
       )
     ),
     ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},SB.map(s=>ce("div",{key:s.l,className:"cd",style:{padding:"11px 14px"}},ce("div",{style:{fontFamily:"DM Serif Display,serif",fontSize:26,color:s.c,lineHeight:1,marginBottom:3}},s.n),ce("div",{style:{fontSize:10,color:"#9B9890",letterSpacing:".04em"}},s.l)))),
@@ -351,6 +348,7 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
       ce("p",{style:{fontSize:11,color:"#9B9890"}},list.length+" tarefa"+(list.length!==1?"s":"")+(prio!=="todas"?" · "+PRIOS.find(p=>p.v===prio)?.l:"")),
       prio!=="todas"&&ce("button",{onClick:()=>setPrio("todas"),style:{fontSize:11,color:"#7C3AED",background:"none",border:"none",cursor:"pointer",fontFamily:"inherit"}},"✕ Limpar filtro")
     ),
+    ce("div",{style:{flex:1,overflowY:"auto",minHeight:0}},
     list.length===0?ce("div",{style:{textAlign:"center",padding:"48px 20px",color:"#9B9890"}},
       ce("i",{className:"ti ti-"+(prio!=="todas"?"filter-off":"checkbox"),style:{fontSize:36,display:"block",marginBottom:10,opacity:.4}}),
       ce("p",{style:{fontSize:14,marginBottom:4}},prio!=="todas"?"Nenhuma tarefa com esta prioridade":"Nenhuma tarefa nesta categoria."),
@@ -374,6 +372,9 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
         ce("button",{className:"bt pu2",onClick:()=>setAT(t),style:{fontSize:10,padding:"3px 7px"}},"✦ Agente")
       )
     ))
+  );
+}
+    )
   );
 }
 function PInbox({tasks,addTask,notes,saveNotes,mem,saveMem,toast}){
@@ -541,7 +542,7 @@ function PRelatorios({tasks,toast,habits,logs}){
 }
 
 // ── DEFINIÇÕES ────────────────────────────────────────────────────────────────
-function PDefsOLD({tasks,calEvents,loading,lastSync}){
+function PDefs({tasks,calEvents,loading,lastSync}){
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:20}},ce("div",{style:{width:40,height:40,borderRadius:10,background:"#E5E3DC",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-settings",style:{fontSize:20,color:"#6B6860"}})),ce("div",null,ce("div",{className:"pt",style:{fontSize:28}},"Definições"),ce("div",{className:"ps"},"A tua conta e preferências."))),
     ce("div",{className:"cd",style:{padding:20,marginBottom:14}},
