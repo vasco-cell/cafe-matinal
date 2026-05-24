@@ -138,7 +138,7 @@ function TC({t,onUpdate,onAgent,showQ,aguarda,setAguardaItem}){
 }
 
 // ── HOJE ─────────────────────────────────────────────────────────────────────
-function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage,darkMode,setDarkMode}){
+function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage,darkMode,setDarkMode,aguarda,setAguardaItem}){
   const n=new Date();const h=n.getHours();
   const gr=h<12?"Bom dia.":h<17?"Boa tarde.":"Boa noite.";
   const act=tasks.filter(t=>t.status!=="done");
@@ -280,7 +280,7 @@ function PHoje({tasks,calEvents,loading,lastSync,refresh,toast,setAT,setPage,add
 }
 
 // ── ASSISTENTE ───────────────────────────────────────────────────────────────
-function PAssist({tasks,calEvents}){
+function PAssist({tasks,calEvents,pessoal,setPage}){
   const[convs,setCvs]=useState([]);const[cur,setCur]=useState(null);const[inp,setInp]=useState("");const[ld,setLd]=useState(false);const end=useRef(null);const n=new Date();
   useEffect(()=>{sg("bj-cvs").then(c=>{if(c?.length){setCvs(c);setCur(c[0])}else nC()});},[]);
   useEffect(()=>{end.current?.scrollIntoView({behavior:"smooth"});},[cur?.messages]);
@@ -1295,7 +1295,7 @@ function PDefsOLD({tasks,calEvents,loading,lastSync}){
 
 
 
-function FloatingAssistant({tasks,recentTasks,calEvents,habits,logs,fin,prios,addTask,updateTask,setPage,toast}){
+function FloatingAssistant({tasks,recentTasks,calEvents,habits,logs,fin,prios,pessoal,addTask,updateTask,setPage,toast}){
   const[open,setOpen]=useState(false);
   const[msgs,setMsgs]=useState([]);
   const[inp,setInp]=useState("");
@@ -1604,7 +1604,7 @@ function PPrevisoes({tasks,habits,logs,fin,toast}){
 }
 
 
-function GlobalSearch({tasks,notes,mem,prios,fin,searchQ,setSearchQ,searchOpen,setSearchOpen,setPage,toast}){
+function GlobalSearch({tasks,notes,mem,prios,fin,pessoal,searchQ,setSearchQ,searchOpen,setSearchOpen,setPage,toast}){
   const ref=useRef(null);
   useEffect(()=>{if(searchOpen&&ref.current)ref.current.focus();},[searchOpen]);
   if(!searchOpen)return ce("input",{id:"gs-inp",style:{position:"fixed",top:-99,opacity:0},onFocus:()=>setSearchOpen(true)});
@@ -1849,7 +1849,7 @@ function App(){
   const sp=setPg;
   const PageMap={
     hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage:()=>setTriageOpen(true),aguarda,setAguardaItem,darkMode,setDarkMode}),
-    assistente:()=>ce(PAssist,{tasks,calEvents,setPage:sp}),
+    assistente:()=>ce(PAssist,{tasks,calEvents,pessoal,setPage:sp}),
     tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios,aguarda,setAguardaItem}),
     inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast,setPage:sp}),
     foco:()=>ce(PFoco,{tasks,focoSessions,saveFocoSessions,setPage:sp,toast}),
@@ -1938,8 +1938,8 @@ function App(){
       )
     ),
     triageOpen&&ce(TriagemModal,{tasks,updateTask,toast,onClose:()=>setTriageOpen(false)}),
-    ce(GlobalSearch,{tasks,notes,mem,prios,fin,searchQ,setSearchQ,searchOpen,setSearchOpen,setPage:setPg,toast}),
-    ce(FloatingAssistant,{tasks,recentTasks,calEvents,habits,logs,fin,prios,addTask,updateTask,setPage:setPg,toast}),
+    ce(GlobalSearch,{tasks,notes,mem,prios,fin,pessoal,searchQ,setSearchQ,searchOpen,setSearchOpen,setPage:setPg,toast}),
+    ce(FloatingAssistant,{tasks,recentTasks,calEvents,habits,logs,fin,prios,pessoal,addTask,updateTask,setPage:setPg,toast}),
         toast_&&ce("div",{style:{position:"fixed",bottom:86,right:84,background:"#1A1A2E",color:"#fff",padding:"10px 16px",borderRadius:9,fontSize:13,zIndex:9999,animation:"fU .2s",maxWidth:320,lineHeight:1.4}},toast_),
     agentTask&&ce(AgentModal,{task:agentTask,onClose:()=>setAT(null),toast})
   )
