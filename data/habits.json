@@ -1,8 +1,19 @@
 {
-  "habits": [],
-  "logs": {
-    "Sun May 24 2026": {
-      "h1779645224304": true
+  "habits": [
+    {
+      "id": "h1779645224304",
+      "name": "não fumar",
+      "emoji": "⭐",
+      "color": "#E97C0A",
+      "created": 1779645224304
+    },
+    {
+      "id": "h1779645294629",
+      "name": "fazer exercicio",
+      "emoji": "⭐",
+      "color": "#7C3AED",
+      "created": 1779645294629
     }
-  }
+  ],
+  "logs": {}
 }
