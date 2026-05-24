@@ -1926,7 +1926,7 @@ function App(){
         ce("div",{style:{display:"flex",alignItems:"center",gap:10}},
           ce("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:20,border:"1px solid var(--border)",background:"var(--bg-page)",color:"var(--text-3)",fontSize:11}},ce("i",{className:"ti ti-search",style:{fontSize:13}}),"Pesquisar..."),
           loading?ce(Sp):ce(Ld),
-          ce("span",{style:{fontSize:11,color:"var(--text-3)",fontFamily:"monospace"}},"sáb, "+n.getDate()+" "+MC[n.getMonth()])
+          ce("span",{style:{fontSize:11,color:"var(--text-3)",fontFamily:"monospace"}},DC[n.getDay()]+" "+n.getDate()+" "+MC[n.getMonth()])
         )
       ),
       ce("div",{style:{flex:1,overflowY:"auto",minHeight:0,padding:pg==="foco"?"0":"20px 24px",background:pg==="foco"?"transparent":"#FAF9F7"}},
