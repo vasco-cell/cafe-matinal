@@ -1741,9 +1741,10 @@ function PPrevisoes({tasks,habits,logs,fin,toast}){
     const habDone=(habits||[]).filter(h=>(logs||{})[n.toDateString()]?.[h.id]).length;
     const ctx=`Hoje: ${n.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"})}. ${act.length} tarefas, ${late.length} atrasadas. Habitos: ${habDone}/${(habits||[]).length}. Saldo: ${saldo.toFixed(0)} euros.`;
     const schema='{"dias":[{"data":"string","foco":"string","tarefas":["string"],"risco":"baixo|medio|alto","nota":"string"}],"resumo":"string","alertas":["string"]}';
-    const res=await aiC([{role:"user",content:"Contexto: "+ctx+" Gera previsao 7 dias. JSON schema: "+schema}],"Assistente BBTOP20 pt-pt. Responde so JSON.",800);
+    const n7=Array.from({length:7},(_,i)=>{const d=new Date(n);d.setDate(n.getDate()+1+i);return d.toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"short"});}).join(", ");const res=await aiC([{role:"user",content:"Cria uma previsao de produtividade para o Vasco nos proximos 7 dias ("+n7+") com base neste contexto: "+ctx+" Devolve APENAS um JSON no formato: {dias:[{data:string,foco:string,tarefas:[string],risco:baixo|medio|alto,nota:string}],resumo:string,alertas:[string]}"}],"Responde APENAS com JSON valido. Sem texto antes ou depois. Sem markdown. So o objeto JSON.",1400);if(!res||res.startsWith("Erro:")){toast(res||"Sem resposta da IA");setLd(false);return;}
     try{
-      const parsed=JSON.parse(res.replace(/```json|```/g,"").trim());
+      let parsed;const clean2=res.replace(/```json|```/g,"").trim();try{parsed=JSON.parse(clean2);}catch(e1){  const m=clean2.match(/\{[\s\S]*\}/);
+  if(m){try{parsed=JSON.parse(m[0]);}catch(e2){throw new Error("JSON invalido: "+clean2.slice(0,60));}}  else throw new Error("Sem JSON: "+clean2.slice(0,80));}
       const ws=new Date(n);ws.setDate(n.getDate()-n.getDay()+(n.getDay()===0?-6:1));
       const we=new Date(ws);we.setDate(ws.getDate()+6);
       savePrevs([{id:"p"+Date.now(),title:`Previsao ${ws.getDate()} ${MC[ws.getMonth()]} - ${we.getDate()} ${MC[we.getMonth()]} ${we.getFullYear()}`,created:Date.now(),data:parsed},...prevs.slice(0,4)]);
