@@ -2183,8 +2183,8 @@ function App(){
   },[]);
 
   const CU_TEAM='24309030',CU_USER='206530598';
-  async function fetchData(){
-    setLoading(true);
+  async function fetchData(silent){
+    if(!silent)setLoading(true);
     const key=localStorage.getItem('cu_key');
     if(key){
       try{
