@@ -17,11 +17,18 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:var(--bg-page)}
 :root{
-  --bg-page:#F5F3F0;--bg-app:#fff;--bg-nav:#fff;--bg-surface:#F8F7F4;
-  --border:#E8E6E1;--border-light:#F0EEE8;
-  --text-1:#1A1A2E;--text-2:#6B6860;--text-3:#9B9890;
-  --purple:#7C3AED;--purple-bg:#EDE9FE;
-  --accent:#1A1A2E;--accent-fg:#fff;
+  --bg-page:#fbfaf8;
+  --bg-app:#ffffff;
+  --bg-nav:#fbfaf8;
+  --bg-surface:#f5f4f1;
+  --border:#e5e7eb;
+  --border-light:#f0eff0;
+  --text-1:#0d1520;
+  --text-2:#6b7280;
+  --text-3:#9ca3af;
+  --purple:#7C3AED;
+  --purple-bg:#f5f3ff;
+  --accent:#101729;
 }
 html.dark{
   --bg-page:#0F0F0F;--bg-app:#1A1A2E;--bg-nav:#111118;--bg-surface:#1E1E2E;
@@ -38,20 +45,20 @@ a{text-decoration:none}
 @keyframes fU{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @keyframes sp{to{transform:rotate(360deg)}}
 @keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
-.bn{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;width:100%;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:400;color:var(--text-2);transition:background .1s;font-family:inherit;position:relative;}
+.bn{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;width:100%;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:400;color:var(--text-2);transition:background .1s;font-family:inherit;}
 .bn:hover{background:var(--border-light);color:var(--text-1)}
 .bn.on{background:var(--accent);color:var(--accent-fg)}
-.cd{background:var(--bg-app);border:0.5px solid var(--border);border-radius:10px;overflow:hidden}
-.bt{font-size:11.5px;padding:5px 12px;border-radius:7px;border:0.5px solid var(--border);background:var(--bg-surface);color:var(--text-1);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .1s;white-space:nowrap}
+.cd{background:var(--bg-app);border:1px solid var(--border);border-radius:12px;}
+.bt{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-app);color:var(--text-2);font-size:13px;cursor:pointer;font-family:inherit;font-weight:400;transition:background .1s;}
 .bt:hover{background:var(--border-light)}.bt.dk{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}.bt.dk:hover{background:#2D2D45}
 .bt.gn{background:#F0FFF4;color:#276749;border-color:#9AE6B4}.bt.pu2{background:#F5F3FF;color:#6D28D9;border-color:#DDD6FE}
 .bt:disabled{opacity:.4;cursor:not-allowed}
-.ip{width:100%;padding:8px 11px;border:0.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-1);background:var(--bg-app);transition:border .15s}
+.ip{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg-app);color:var(--text-1);outline:none;transition:border-color .15s;}.ip:focus{border-color:#7C3AED;box-shadow:0 0 0 3px rgba(124,58,237,.08);}
 .ip:focus{border-color:#7C3AED}
 .sp{display:inline-block;width:11px;height:11px;border:1.5px solid #C4B5FD;border-top-color:#7C3AED;border-radius:50%;animation:sp .7s linear infinite}
 .ld{width:6px;height:6px;border-radius:50%;background:#38A169;animation:pu 2s infinite;display:inline-block}
-.pt{font-family:'DM Serif Display',Georgia,serif;font-size:34px;font-weight:400;color:var(--text-1);letter-spacing:-.5px}
-.ps{font-size:13px;color:var(--text-2);margin-top:3px}
+.pt{font-size:36px;font-weight:700;color:var(--text-1);font-family:'DM Serif Display',serif;letter-spacing:-.5px;line-height:1.1;}
+.ps{font-size:13px;color:var(--text-3);margin-top:2px;font-weight:400;}
 .po{transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset 1s linear}
 .mob-ham{display:none;align-items:center;justify-content:center;width:36px;height:36px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:8px;flex-shrink:0}
 .mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none}
