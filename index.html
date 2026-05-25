@@ -1525,7 +1525,17 @@ function PMemoria({mem,saveMem,toast}){
       items.map(function(m){
         return ce("div",{key:m.id,style:{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 14px",borderRadius:8,background:"var(--bg-app)",border:"1px solid var(--border)"}},
           ce("span",{style:{fontSize:11,padding:"2px 8px",borderRadius:20,background:TAG_COLORS[m.tag]||"#F2F3F4",color:TAG_TEXT[m.tag]||"#555",flexShrink:0,marginTop:1}},m.tag||"Nota"),
-          ce("span",{style:{fontSize:13,color:"var(--text-1)",flex:1,lineHeight:1.5}},m.content),
+          ce("div",{style:{fontSize:13,color:"var(--text-1)",flex:1,lineHeight:1.5}},
+          (function(){
+            if(!m.content)return null;
+            var urls=m.content.match(/https?:\/\/[^\s]+/g);
+            if(!urls||!urls.length)return ce("span",{style:{whiteSpace:"pre-wrap"}},m.content);
+            return ce("div",null,
+              ce("span",{style:{whiteSpace:"pre-wrap"}},m.content.replace(/https?:\/\/[^\s]+/g,"").trim()),
+              urls.map(function(u,i){return ce("a",{key:i,href:u,target:"_blank",rel:"noreferrer",style:{color:"var(--purple)",fontSize:11,display:"block",wordBreak:"break-all",marginTop:3}},u);})
+            );
+          })()
+        ),
           ce("button",{onClick:function(){setEditMem(m);},style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",marginRight:4}},ce("i",{className:"ti ti-pencil",style:{fontSize:11}})),ce("button",{onClick:function(){saveMem((mem||[]).filter(function(x){return x.id!==m.id;}));},style:{border:"none",background:"transparent",cursor:"pointer",color:"#CBD5E0",flexShrink:0}},
             ce("i",{className:"ti ti-trash",style:{fontSize:12}})
           )
