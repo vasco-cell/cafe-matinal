@@ -2891,6 +2891,7 @@ function App(){
       )
     ),
         
+    notifOpen&&ce(NotificationsPanel,{tasks,calEvents,habits,logs,open:notifOpen,onClose:()=>setNotifOpen(false),setPage:sp}),
     ce(FloatingAssistant,{tasks,recentTasks,calEvents,habits,logs,fin,prios,pessoal,addTask,updateTask,setPage:setPg,toast}),
         toast_&&ce("div",{style:{position:"fixed",bottom:86,right:84,background:"#1A1A2E",color:"#fff",padding:"10px 16px",borderRadius:9,fontSize:13,zIndex:9999,animation:"fU .2s",maxWidth:320,lineHeight:1.4}},toast_),
     agentTask&&ce(AgentModal,{task:agentTask,onClose:()=>setAT(null),toast})
