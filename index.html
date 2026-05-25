@@ -2414,26 +2414,26 @@ function App(){
   }
   async function genBrief(ts){
     const dk=new Date().toDateString();
-    // Check localStorage first to avoid sending email on every page refresh
     const lsCache=localStorage.getItem("bj-brief-sent");
-    if(lsCache===dk)return; // Already sent today
-    const cached=await sg('bj-brief');
-    if(cached&&cached.date===dk){setDailyBrief(cached);localStorage.setItem("bj-brief-sent",dk);return;}
+    if(lsCache===dk)return;
+    // Check GitHub cache
+    const cached=await sg("bj-brief");
+    if(cached&&cached.date===dk){
+      setDailyBrief(cached);
+      localStorage.setItem("bj-brief-sent",dk);
+      return;
+    }
     const now=new Date();
     const parts=(ts||[]).slice(0,20).map(function(t){
-      var late=t.due_date&&t.due_date!=='null'&&(new Date(+t.due_date))<now;
-      var tod=t.due_date&&t.due_date!=='null'&&(new Date(+t.due_date)).toDateString()===now.toDateString();
-      return t.name+' ['+t.priority+']'+(late?' ATRASADA':tod?' HOJE':'');
-    }).join('; ');
-    var dateStr=now.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
-    var prompt='Hoje '+dateStr+'. Tarefas do Vasco BBTOP20: '+parts
-      +'. Responde APENAS em JSON sem markdown: {"top3":[{"name":"x","reason":"y"}],"motivacao":"z"}';
-    var res=await aiC([{role:'user',content:prompt}],'Assistente BBTOP20 pt-pt. So JSON.',500);
-    try{
-      var clean=res.replace(/```json|```/g,'').trim();
-      var b=Object.assign(JSON.parse(clean),{date:dk});
-      setDailyBrief(b);ss('bj-brief',b);
-    }catch(e){}
+      var late=t.due_date&&t.due_date!=="null"&&(new Date(+t.due_date))<now;
+      var tod=t.due_date&&t.due_date!=="null"&&(new Date(+t.due_date)).toDateString()===now.toDateString();
+      return t.name+" ["+t.priority+"]"+(late?" ATRASADA":tod?" HOJE":"");
+    }).join("; ");
+    var brief={date:dk,tasks:parts,generated:now.toISOString()};
+    setDailyBrief(brief);
+    localStorage.setItem("bj-brief-sent",dk);
+    await ss("bj-brief",brief);
+    // EMAIL DESACTIVADO — o brief está disponível no separador Hoje
   }
 
   useEffect(()=>{fetchData();const iv=setInterval(()=>fetchData(true),60*1000);return()=>clearInterval(iv);},[]);useEffect(()=>{sg('bj-notes').then(v=>{if(v&&v.length)setNotes(v);});sg('bj-habits').then(v=>{if(v&&v.length)setHabits(v);});sg('bj-logs').then(v=>{if(v&&Object.keys(v).length)setLogs(v);});sg('bj-mem').then(v=>{if(v&&v.length)setMem(v);});sg('bj-prios').then(v=>{if(v&&v.length)setPrios(v);});sg('bj-pessoal').then(v=>{if(v&&v.length)setPessoal(v);});sg('bj-fin').then(v=>{if(v&&v.length)setFin(v);});sg('bj-reps').then(v=>{if(v&&v.length)setReps(v);});sg('bj-convs').then(v=>{if(v&&v.length){try{localStorage.setItem('bj-convs',JSON.stringify(v));}catch{}}});},[]);
