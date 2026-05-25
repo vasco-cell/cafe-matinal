@@ -32,7 +32,7 @@ a{text-decoration:none}
 @keyframes fU{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @keyframes sp{to{transform:rotate(360deg)}}
 @keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
-.bn{display:flex;align-items:center;gap:9px;padding:7px 12px;border:none;background:transparent;color:var(--text-2);font-size:12.5px;text-align:left;cursor:pointer;width:100%;transition:all .1s;border-radius:6px;white-space:nowrap}
+.bn{display:flex;align-items:center;gap:9px;padding:7px 12px;border:none;background:transparent;color:var(--text-2);font-size:16px;text-align:left;cursor:pointer;width:100%;transition:all .1s;border-radius:6px;white-space:nowrap}
 .bn:hover{background:var(--border-light);color:var(--text-1)}
 .bn.on{background:var(--accent);color:var(--accent-fg)}
 .cd{background:var(--bg-app);border:0.5px solid var(--border);border-radius:10px;overflow:hidden}
@@ -53,7 +53,7 @@ a{text-decoration:none}
 .nav-mob{transition:transform .28s cubic-bezier(.4,0,.2,1)}
 @media(max-width:820px){
   .mob-ham{display:flex}
-  .nav-mob{position:fixed!important;left:0;top:0;bottom:0;z-index:600;transform:translateX(-100%);width:220px!important;box-shadow:4px 0 24px rgba(0,0,0,.2)}
+  .nav-mob{position:fixed!important;left:0;top:0;bottom:0;z-index:600;transform:translateX(-100%);width:240px!important;box-shadow:4px 0 24px rgba(0,0,0,.2)}
   .nav-mob.open{transform:translateX(0)}
 }
 
@@ -562,7 +562,7 @@ function PTarefas(props){
         };
         var pb=PBADGE[t.priority]||PBADGE.normal;
         return ce("div",{key:t.id,
-          style:{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",
+          style:{display:"flex",alignItems:"center",gap:12,padding:"14px 18px",
             borderBottom:"1px solid var(--border-light)",
             background:late?"rgba(229,62,62,.025)":"var(--bg-app)",
             opacity:isDone?.45:1,transition:"background .12s"},
@@ -580,7 +580,7 @@ function PTarefas(props){
             ce("div",{style:{fontSize:13,fontWeight:500,color:"var(--text-1)",
               overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
               textDecoration:isDone?"line-through":"none",marginBottom:2}},t.name),
-            ce("div",{style:{display:"flex",alignItems:"center",gap:5,fontSize:11}},
+            ce("div",{style:{display:"flex",alignItems:"center",gap:5,fontSize:14}},
               t.list?ce("span",{style:{color:"var(--text-3)"}},t.list):null,
               (t.list&&t.due_date&&t.due_date!=="null")?ce("span",{style:{color:"var(--border-light)"}},"·"):null,
               (t.due_date&&t.due_date!=="null")?
@@ -593,8 +593,8 @@ function PTarefas(props){
             )
           ),
           ce("div",{style:{display:"flex",alignItems:"center",gap:8,flexShrink:0}},
-            ce("div",{style:{padding:"3px 10px",borderRadius:20,background:pb.bg,color:pb.color,
-              fontSize:11,fontWeight:500,border:"1px solid "+pb.color+"33",whiteSpace:"nowrap"}},pb.label),
+            ce("div",{style:{padding:"4px 12px",borderRadius:20,background:pb.bg,color:pb.color,
+              fontSize:13,fontWeight:500,border:"1px solid "+pb.color+"33",whiteSpace:"nowrap"}},pb.label),
             t.url?ce("a",{href:t.url,target:"_blank",rel:"noreferrer",
               onClick:function(e){e.stopPropagation();},
               style:{color:"var(--text-3)",padding:"3px",display:"flex",lineHeight:1}},
