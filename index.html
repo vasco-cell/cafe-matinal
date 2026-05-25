@@ -2892,10 +2892,7 @@ function App(){
       })
       )
     ),
-    ce("div",{style:{position:"fixed",left:pg==="foco"?"50%":-9999,bottom:0,right:"auto",transform:pg==="foco"?"translateX(-50%)":"none",width:pg==="foco"?460:"1px",height:160,background:pg==="foco"?"rgba(15,12,41,0.95)":"transparent",borderRadius:"12px 12px 0 0",backdropFilter:"blur(10px)",padding:"0 0 0",display:"flex",alignItems:"flex-end",zIndex:20}},ce("iframe",{src:"https://open.spotify.com/embed/playlist/3Xea2Lx3iyn9C2lpzC0MVy?utm_source=generator&theme=0",width:460,height:152,frameBorder:"0",allow:"autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",style:{borderRadius:12,border:"none"}})),
-    ce(NotificationsPanel,{tasks,calEvents,habits,logs,open:notifOpen,onClose:()=>setNotifOpen(false),setPage:setPg}),
-    triageOpen&&ce(TriagemModal,{tasks,updateTask,toast,onClose:()=>setTriageOpen(false)}),
-    ce(GlobalSearch,{tasks,notes,mem,prios,fin,pessoal,searchQ,setSearchQ,searchOpen,setSearchOpen,setPage:setPg,toast}),
+        
     ce(FloatingAssistant,{tasks,recentTasks,calEvents,habits,logs,fin,prios,pessoal,addTask,updateTask,setPage:setPg,toast}),
         toast_&&ce("div",{style:{position:"fixed",bottom:86,right:84,background:"#1A1A2E",color:"#fff",padding:"10px 16px",borderRadius:9,fontSize:13,zIndex:9999,animation:"fU .2s",maxWidth:320,lineHeight:1.4}},toast_),
     agentTask&&ce(AgentModal,{task:agentTask,onClose:()=>setAT(null),toast})
