@@ -599,7 +599,7 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
 
   return ce("div",{style:{height:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 24px 0",color:"#fff",overflowY:"auto"}},
 
-    ce("div",{style:{display:"flex",background:"rgba(255,255,255,.1)",borderRadius:30,padding:3,marginBottom:24,flexShrink:0}},
+    ce("div",{style:{display:"flex",background:"rgba(255,255,255,.1)",borderRadius:30,padding:3,marginBottom:24,flexShrink:0,overflowX:"auto",maxWidth:"100%"}},
       MODES.map((md,i)=>ce("button",{key:md.l,onClick:()=>changeMode(i),style:{padding:"7px 16px",borderRadius:24,border:"none",background:mode===i?"#fff":"transparent",color:mode===i?"#1A1A2E":"rgba(255,255,255,.7)",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},md.l))
     ),
 
@@ -731,9 +731,9 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
     const days=Array.from({length:35},(_,i)=>{
       const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;
     });
-    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,80px)",gap:6,marginTop:10,justifyContent:"start"}},
+    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,clamp(36px,10vw,80px))",gap:6,marginTop:10,justifyContent:"start"}},
       ["S","T","Q","Q","S","S","D"].map((d,i)=>
-        ce("div",{key:i,style:{fontSize:11,color:"var(--text-3)",textAlign:"center",marginBottom:4,width:80,fontWeight:600}},d)),
+        ce("div",{key:i,style:{fontSize:9,color:"var(--text-3)",textAlign:"center",marginBottom:4,width:"clamp(34px,9.5vw,80px)",fontWeight:600}},d)),
       days.map((d,i)=>{
         const k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
         const done=logs[k]&&logs[k][id];
@@ -742,7 +742,7 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
         return ce("div",{key:i,
           title:d.toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"short"}),
           style:{
-            width:80,height:80,borderRadius:10,
+            width:"clamp(34px,9.5vw,80px)",height:"clamp(34px,9.5vw,80px)",borderRadius:8,
             background:isFuture?"var(--border-light)":done?(color||"#7C3AED"):"var(--border)",
             boxShadow:isToday?"0 0 0 2px "+(color||"#7C3AED"):"none",
             opacity:isFuture?0.25:done?1:0.55,
