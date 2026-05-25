@@ -90,6 +90,19 @@ const ss=async(k,v)=>{const _t=['ghp', '_i69NK4x5cr', 'swgJ7Amo3Km', 'iJm4Qky8T4
 async function aiC(msgs,sys,max){var ak=localStorage.getItem("bj-ak")||"";if(!ak)return "Configura a chave API nas Definicoes.";try{var r2=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":ak,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:max||900,system:sys||"",messages:msgs})});var d2=await r2.json();if(d2.error)return "Erro: "+d2.error.message;return (d2.content&&d2.content[0]&&d2.content[0].text)||"(sem resposta)";}catch(e){return "Erro: "+e.message;}}
 
 async function whF(p){try{const url=WH+"?"+new URLSearchParams(p).toString();const r=await fetch(url,{mode:"cors"});if(r.ok)return await r.json();return null}catch{return null}}
+async function cuClose(taskId){
+  const key=localStorage.getItem("cu_key");
+  if(!key||!taskId||taskId.startsWith("l"))return false; // local task, no ClickUp ID
+  try{
+    const r=await fetch("https://api.clickup.com/api/v2/task/"+taskId,{
+      method:"PUT",
+      headers:{"Authorization":key,"Content-Type":"application/json"},
+      body:JSON.stringify({status:"closed"})
+    });
+    return r.ok;
+  }catch{return false;}
+}
+
 const wh=p=>{try{fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"cors"}).catch(()=>fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"no-cors"}))}catch{}};
 function Sp(){return ce("span",{className:"sp"})}
 function Ld(){return ce("span",{className:"ld"})}
@@ -117,7 +130,7 @@ function AgentModal({task,onClose,toast}){
 // ── TASK CARD ────────────────────────────────────────────────────────────────
 function TC({t,onUpdate,onAgent,showQ,aguarda,setAguardaItem}){
   const[cl,setCl]=useState(t.status==="done");const[cl_,setCl_]=useState(false);const[dl,setDl]=useState(false);const[qa,setQa]=useState(null);
-  async function doClose(){setCl_(true);await whF({action:"close",task_id:t.id});setCl(true);setCl_(false);if(onUpdate)onUpdate(t.id,"done")}
+  async function doClose(){setCl_(true);await cuClose(t.id);setCl(true);setCl_(false);if(onUpdate)onUpdate(t.id,"done");}
   async function doDelay(){setDl(true);await whF({action:"delay",task_id:t.id});setDl(false);if(onUpdate)onUpdate(t.id,"delay")}
   return ce("div",{style:{background:"var(--bg-app)",border:"1px solid var(--border)",borderLeft:`4px solid ${PA(t.priority)}`,borderRadius:10,marginBottom:7,opacity:cl?.4:1,overflow:"hidden"}},
     ce("div",{style:{padding:"11px 13px",display:"flex",alignItems:"center",gap:10}},
@@ -505,7 +518,7 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
         prio!=="todas"&&ce("button",{className:"bt",onClick:()=>setPrio("todas"),style:{marginTop:8}},"Ver todas as tarefas")
       ):
       list.map(t=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,background:"var(--bg-app)",border:"1px solid var(--border)",borderLeft:"3px solid "+PA2(t.priority||"normal"),marginBottom:6,opacity:t.status==="done"?.45:1}},
-        ce("button",{onClick:async()=>{if(t.status!=="done"){await whF({action:"close",task_id:t.id});updateTask({...t,status:"done"});}},style:{width:18,height:18,borderRadius:"50%",border:"2px solid "+(t.status==="done"?"#38A169":PA2(t.priority||"normal")),background:t.status==="done"?"#38A169":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},
+        ce("button",{onClick:async()=>{if(t.status!=="done"){cuClose(t.id);updateTask({...t,status:"done"});toast&&toast("Tarefa fechada ✓");}},style:{width:18,height:18,borderRadius:"50%",border:"2px solid "+(t.status==="done"?"#38A169":PA2(t.priority||"normal")),background:t.status==="done"?"#38A169":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},
           t.status==="done"&&ce("i",{className:"ti ti-check",style:{fontSize:10,color:"#fff"}})
         ),
         ce("div",{style:{flex:1,minWidth:0}},
@@ -1860,7 +1873,7 @@ Para questões abertas, responde directamente em português europeu. Seja direct
               actionResult=msg+" ✓";
             }else if(a==="fechar_tarefa"&&pp.task_name&&updateTask){
               const t=tasks.find(x=>x.name.toLowerCase().includes(pp.task_name.toLowerCase()));
-              if(t){updateTask({...t,status:"done"});if(toast)toast("Fechada: "+t.name);actionResult=msg+" ✓";}
+              if(t){cuClose(t.id);updateTask({...t,status:"done"});if(toast)toast("Fechada: "+t.name+" ✓");actionResult=msg+" ✓";}
               else actionResult="Não encontrei essa tarefa. Mais específico?";
             }else if(a==="navegar"&&pp.pagina&&setPage){
               setPage(pp.pagina);setOpen(false);actionResult=null;
