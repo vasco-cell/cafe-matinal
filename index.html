@@ -729,7 +729,8 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
   function changeDur(d){setDur(d);setSec(d*60);setRun(false);}
   const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss_=String(sec%60).padStart(2,"0");
 
-  return ce("div",{style:{height:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 24px 180px",color:"#fff",overflowY:"auto"}},
+  return ce("div",{style:{height:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"row",color:"#fff",overflow:"hidden"}},
+    ce("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",padding:"28px 24px 24px",overflowY:"auto",color:"#fff"}},
 
     ce("div",{style:{display:"flex",background:"rgba(255,255,255,.1)",borderRadius:30,padding:3,marginBottom:24,flexShrink:0,overflowX:"auto",maxWidth:"100%"}},
       MODES.map((md,i)=>ce("button",{key:md.l,onClick:()=>changeMode(i),style:{padding:"7px 16px",borderRadius:24,border:"none",background:mode===i?"#fff":"transparent",color:mode===i?"#1A1A2E":"rgba(255,255,255,.7)",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},md.l))
@@ -774,6 +775,17 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
       ce("div",{style:{fontSize:11,color:"rgba(255,255,255,.3)"}},
         "Total: "+focoSessions.length+" sessão"+(focoSessions.length!==1?"s":"")+" · "+focoSessions.reduce((s,x)=>s+(x.dur||25),0)+" min focado"
       )
+    )
+    ),
+    ce("div",{style:{width:300,flexShrink:0,display:"flex",flexDirection:"column",
+      borderLeft:"1px solid rgba(255,255,255,.08)",background:"rgba(0,0,0,.2)"}},
+      ce("div",{style:{padding:"12px 14px 4px",fontSize:9,fontWeight:700,letterSpacing:".1em",color:"rgba(255,255,255,.35)",display:"flex",alignItems:"center",gap:5}},
+        ce("svg",{width:10,height:10,viewBox:"0 0 24 24",fill:"#1DB954"},ce("path",{d:"M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"})),
+        "SPOTIFY"),
+      ce("iframe",{src:"https://open.spotify.com/embed/playlist/3Xea2Lx3iyn9C2lpzC0MVy?utm_source=generator&theme=0",
+        width:"100%",height:"100%",frameBorder:"0",
+        allow:"autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",
+        loading:"lazy",style:{border:"none",display:"block",flex:1}})
     )
   );
 }
@@ -1302,6 +1314,7 @@ function PPrios({prios,savePrios,tasks,toast}){
 
 
 
+
 function PCal(props){
   var tasks=props.tasks||[];var calEvents=props.calEvents||[];
   var habits=props.habits||[];var logs=props.logs||{};
@@ -1520,58 +1533,22 @@ function PCal(props){
       ),
       ce(DayPanel,null)
     ),
-    newItem?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setNewItem(null);}},
-      ce("div",{style:{background:"var(--bg-app)",borderRadius:14,padding:24,width:440,maxWidth:"94vw",border:"1px solid var(--border)",boxShadow:"0 8px 32px rgba(0,0,0,.15)"}},
-        ce("div",{style:{fontSize:15,fontWeight:600,marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}},
-          ce("div",null,
-            ce("div",{style:{fontSize:15,fontWeight:600}},newItem.type==="tarefa"?"Nova tarefa":"Novo evento"),
-            ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:2}},newItem.date.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}))
-          ),
-          ce("button",{onClick:function(){setNewItem(null);},style:{border:"none",background:"transparent",cursor:"pointer",fontSize:20,color:"var(--text-3)"}},"x")
+    newItem?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16},onClick:function(e){if(e.target===e.currentTarget)setNewItem(null);}},
+      ce("div",{style:{background:"var(--bg-app)",borderRadius:16,padding:24,width:520,maxWidth:"94vw",maxHeight:"90vh",overflowY:"auto",border:"1px solid var(--border)",boxShadow:"0 8px 40px rgba(0,0,0,.18)"}},
+        ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}},
+          ce("div",null,ce("div",{style:{fontSize:16,fontWeight:600}},"Nova "+newItem.type),ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:2}},newItem.date.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}))),
+          ce("button",{onClick:function(){setNewItem(null);},style:{border:"none",background:"transparent",cursor:"pointer",fontSize:20,color:"var(--text-3)"}},ce("i",{className:"ti ti-x"}))),
+        ce("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+          ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:5}},"Titulo *"),ce("input",{className:"ip",value:niName,autoFocus:true,onChange:function(e){setNiName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")createFromCal();},placeholder:newItem.type==="tarefa"?"Nome da tarefa...":"Nome do evento..."})),
+          newItem.type==="tarefa"?ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:5}},"Descricao"),ce("textarea",{className:"ip",rows:3,placeholder:"Detalhes opcionais...",style:{resize:"vertical"}})):null,
+          newItem.type==="tarefa"?ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:5}},"Importancia"),ce("select",{className:"ip",value:niPrio,onChange:function(e){setNiPrio(e.target.value);}},ce("option",{value:"urgent"},"Urgente"),ce("option",{value:"high"},"Alta"),ce("option",{value:"normal"},"Media"),ce("option",{value:"low"},"Baixa"))),ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:5}},"Estado"),ce("select",{className:"ip"},ce("option",{value:"por iniciar"},"A fazer"),ce("option",{value:"a trabalhar"},"Em progresso"),ce("option",{value:"pendente"},"Pendente")))):null,
+          ce("div",{style:{display:"grid",gridTemplateColumns:newItem.type==="tarefa"?"1fr 1fr":"1fr",gap:12}},newItem.type==="tarefa"?ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:5}},"Duracao (min)"),ce("input",{className:"ip",type:"number",placeholder:"Ex: 30"})):null,ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:5}},newItem.type==="tarefa"?"Data limite":"Data"),ce("input",{className:"ip",type:"date",defaultValue:newItem.date.toISOString().slice(0,10)}))),
+          newItem.type==="evento"?ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:5}},"Hora"),ce("input",{className:"ip",type:"time",value:niTime,onChange:function(e){setNiTime(e.target.value);}})):null,
+          newItem.type==="tarefa"?ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:5}},ce("i",{className:"ti ti-bell",style:{fontSize:11,marginRight:4}}),"Lembrete"),ce("input",{className:"ip",type:"datetime-local"})):null,
+          newItem.type==="tarefa"?ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:6}},"Criar em"),ce("div",{style:{display:"flex",gap:6}},[["ambos","Ambos"],["clickup","ClickUp"],["local","So Cafe"]].map(function(arr){return ce("button",{key:arr[0],onClick:function(){setNiDest(arr[0]);},style:{flex:1,padding:"7px",borderRadius:8,border:"1.5px solid "+(niDest===arr[0]?"var(--purple)":"var(--border)"),background:niDest===arr[0]?"var(--purple-bg)":"transparent",fontSize:11,cursor:"pointer",fontFamily:"inherit",color:niDest===arr[0]?"var(--purple)":"var(--text-2)",fontWeight:niDest===arr[0]?600:400,textAlign:"center"}},arr[1]);}))):null,
+          newItem.type==="evento"?ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:6}},"Guardar em qual calendario"),ce("div",{style:{display:"flex",gap:8}},[["gcal1","Principal (BOS)","#4285F4"],["gcal2","Pessoal (gmail)","#0F9D58"]].map(function(arr){return ce("button",{key:arr[0],onClick:function(){setNiDest(arr[0]);},style:{flex:1,padding:"10px 8px",borderRadius:10,border:"2px solid "+(niDest===arr[0]?arr[2]:"var(--border)"),background:niDest===arr[0]?arr[2]+"15":"var(--bg-surface)",cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,color:niDest===arr[0]?arr[2]:"var(--text-2)",fontWeight:niDest===arr[0]?600:400,fontSize:12}},ce("div",{style:{width:10,height:10,borderRadius:"50%",background:arr[2]}}),arr[1]);}))):null
         ),
-        ce("input",{className:"ip",value:niName,autoFocus:true,onChange:function(e){setNiName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")createFromCal();},placeholder:newItem.type==="tarefa"?"Nome da tarefa...":"Nome do evento...",style:{marginBottom:12}}),
-        newItem.type==="tarefa"?
-          ce("div",{style:{display:"flex",flexDirection:"column",gap:10,marginBottom:12}},
-            ce("div",null,
-              ce("label",{style:{fontSize:11,color:"var(--text-3)",display:"block",marginBottom:4,fontWeight:500}},"Prioridade"),
-              ce("select",{className:"ip",value:niPrio,onChange:function(e){setNiPrio(e.target.value);},style:{fontSize:12}},
-                ce("option",{value:"urgent"},"Urgente"),ce("option",{value:"high"},"Alta"),ce("option",{value:"normal"},"Normal"),ce("option",{value:"low"},"Baixa"))
-            ),
-            ce("div",null,
-              ce("label",{style:{fontSize:11,color:"var(--text-3)",display:"block",marginBottom:4,fontWeight:500}},"Criar em"),
-              ce("div",{style:{display:"flex",gap:6}},
-                [["ambos","Ambos","#7C3AED"],["clickup","ClickUp","#7B68EE"],["local","So Cafe","#64748B"]].map(function(arr){
-                  return ce("button",{key:arr[0],onClick:function(){setNiDest(arr[0]);},
-                    style:{flex:1,padding:"7px 4px",borderRadius:8,border:"1.5px solid "+(niDest===arr[0]?arr[2]:"var(--border)"),
-                      background:niDest===arr[0]?arr[2]+"12":"transparent",fontSize:11,cursor:"pointer",
-                      fontFamily:"inherit",color:niDest===arr[0]?arr[2]:"var(--text-2)",fontWeight:niDest===arr[0]?600:400,textAlign:"center"}},arr[1]);
-                })
-              )
-            )
-          ):
-          ce("div",{style:{display:"flex",flexDirection:"column",gap:10,marginBottom:12}},
-            ce("div",null,
-              ce("label",{style:{fontSize:11,color:"var(--text-3)",display:"block",marginBottom:4,fontWeight:500}},"Hora"),
-              ce("input",{className:"ip",type:"time",value:niTime,onChange:function(e){setNiTime(e.target.value);},style:{fontSize:12}})
-            ),
-            ce("div",null,
-              ce("label",{style:{fontSize:11,color:"var(--text-3)",display:"block",marginBottom:6,fontWeight:500}},"Guardar em qual calendario"),
-              ce("div",{style:{display:"flex",gap:8}},
-                [["gcal1","Principal (BOS)","#4285F4"],["gcal2","Pessoal (gmail)","#0F9D58"]].map(function(arr){
-                  return ce("button",{key:arr[0],onClick:function(){setNiDest(arr[0]);},
-                    style:{flex:1,padding:"10px 8px",borderRadius:10,border:"2px solid "+(niDest===arr[0]?arr[2]:"var(--border)"),
-                      background:niDest===arr[0]?arr[2]+"15":"var(--bg-surface)",cursor:"pointer",
-                      fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                      color:niDest===arr[0]?arr[2]:"var(--text-2)",fontWeight:niDest===arr[0]?600:400}},
-                    ce("div",{style:{width:10,height:10,borderRadius:"50%",background:arr[2]}}),
-                    arr[1]);
-                })
-              )
-            )
-          ),
-        ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end",marginTop:4}},
-          ce("button",{className:"bt",onClick:function(){setNewItem(null);}},"Cancelar"),
-          ce("button",{className:"bt dk",onClick:createFromCal,disabled:!niName.trim()},ce("i",{className:"ti ti-plus",style:{fontSize:12}})," Criar"))
+        ce("div",{style:{display:"flex",gap:10,marginTop:20}},ce("button",{className:"bt",onClick:function(){setNewItem(null);},style:{flex:1,padding:"12px",fontSize:13}},"Cancelar"),ce("button",{className:"bt dk",onClick:createFromCal,disabled:!niName.trim(),style:{flex:1,padding:"12px",fontSize:13,gap:6}},ce("i",{className:"ti ti-check"}),"Guardar"))
       )
     ):null
   );
