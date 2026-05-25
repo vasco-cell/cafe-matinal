@@ -772,7 +772,7 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
         ce("svg",{width:10,height:10,viewBox:"0 0 24 24",fill:"#1DB954"},
           ce("path",{d:"M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"}))
         ,"SPOTIFY"),
-      ce("iframe",{src:"https://open.spotify.com/embed/playlist/3Xea2Lx3iyn9C2lpzC0MVy?utm_source=generator&theme=0",
+      ce("iframe",{src:function(){var raw=localStorage.getItem("bj-spotify-url")||"https://open.spotify.com/playlist/3Xea2Lx3iyn9C2lpzC0MVy";var m=raw.match(/spotify\.com\/(playlist|album|artist|track)\/([A-Za-z0-9]+)/);return m?"https://open.spotify.com/embed/"+m[1]+"/"+m[2]+"?utm_source=generator&theme=0":"https://open.spotify.com/embed/playlist/3Xea2Lx3iyn9C2lpzC0MVy?utm_source=generator&theme=0";}(),
         width:"100%",height:152,frameBorder:"0",
         allow:"autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",
         loading:"lazy",style:{border:"none",display:"block"}})
@@ -1221,6 +1221,28 @@ function PDefs({tasks,calEvents,loading,lastSync,setPage,toast}){var aks=useStat
           style:{gap:5}},
           ce("i",{className:"ti ti-send",style:{fontSize:13}})," Enviar agora")
       )
+    ),
+ce("div",{className:"cd",style:{padding:20,marginBottom:14}},
+      ce("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
+        ce("div",{style:{width:32,height:32,borderRadius:8,background:"#F0FFF4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}},"🎵"),
+        ce("div",null,
+          ce("div",{style:{fontSize:14,fontWeight:600}},"Spotify — Playlist do Foco"),
+          ce("div",{style:{fontSize:12,color:"var(--text-3)"}},"Cola o URL da playlist que queres ouvir no Foco"))
+      ),
+      ce("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+        ce("input",{className:"ip",id:"bj-sp-inp",
+          defaultValue:localStorage.getItem("bj-spotify-url")||"https://open.spotify.com/playlist/3Xea2Lx3iyn9C2lpzC0MVy",
+          placeholder:"https://open.spotify.com/playlist/...",style:{fontSize:12,flex:1}}),
+        ce("button",{className:"bt dk",style:{gap:5,flexShrink:0},
+          onClick:function(){
+            var inp=document.getElementById("bj-sp-inp");
+            if(!inp||!inp.value.trim()){toast&&toast("Cola um URL do Spotify");return;}
+            localStorage.setItem("bj-spotify-url",inp.value.trim());
+            toast&&toast("Playlist guardada! Abre o Foco para ouvir.");
+          }},
+          ce("i",{className:"ti ti-check",style:{fontSize:13}})," Guardar")
+      ),
+      ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:8}},"Suporta playlists, albuns e artistas. Exemplo: https://open.spotify.com/playlist/37i9...")
     ),
 ce("div",{className:"cd",style:{padding:20}},ce("p",{style:{fontSize:13,color:"var(--text-2)",lineHeight:1.6}},"Cafe Matinal v2.5 - sync "+(lastSync||"no"))));}
 function PPrios({prios,savePrios,tasks,toast}){
