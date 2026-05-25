@@ -163,7 +163,7 @@ function TC({t,onUpdate,onAgent,showQ,aguarda,setAguardaItem}){
         ce("a",{href:"https://app.clickup.com/t/"+t.id,target:"_blank",rel:"noreferrer",style:{fontSize:13,fontWeight:500,color:cl?"#9B9890":"#1A1A2E",textDecoration:cl?"line-through":"none",display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.name),
         ce("div",{style:{display:"flex",gap:8,marginTop:3,flexWrap:"wrap",alignItems:"center"}},
           isLate(t.due_date)&&!cl&&ce("span",{style:{fontSize:10,color:"#E53E3E"}},"Em atraso · "+fmtD(t.due_date)),
-          !isLate(t.due_date)&&t.due_date&&t.due_date!=="null"&&ce("span",{style:{fontSize:10,color:"var(--text-3)"}},"prazo "+fmtD(t.due_date)),
+          !isLate(t.due_date)&&t.due_date&&t.due_date!=="null"&&ce("span",{style:{fontSize:14,color:"var(--text-3)"}},"prazo "+fmtD(t.due_date)),
           t.list&&ce("span",{style:{fontSize:10,color:"var(--text-3)",background:"var(--bg-surface)",padding:"1px 6px",borderRadius:8,border:"0.5px solid var(--border)"}},t.list),
           (onUpdate&&aguarda&&aguarda[t.id])&&ce("span",{style:{fontSize:10,padding:"1px 7px",borderRadius:8,background:"#FEF9E7",border:"0.5px solid #F6AD55",color:"#C05621",display:"flex",alignItems:"center",gap:3}},
             ce("i",{className:"ti ti-clock",style:{fontSize:10}}),"aguarda "+aguarda[t.id]
