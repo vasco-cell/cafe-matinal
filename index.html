@@ -689,7 +689,7 @@ function PFoco({tasks,focoSessions,saveFocoSessions,setPage,toast}){
   function changeDur(d){setDur(d);setSec(d*60);setRun(false);}
   const mm=String(Math.floor(sec/60)).padStart(2,"0"),ss_=String(sec%60).padStart(2,"0");
 
-  return ce("div",{style:{height:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 24px 0",color:"#fff",overflowY:"auto"}},
+  return ce("div",{style:{height:"100%",background:"linear-gradient(135deg,#0f0c29,#302b63,#24243e)",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 24px 180px",color:"#fff",overflowY:"auto"}},
 
     ce("div",{style:{display:"flex",background:"rgba(255,255,255,.1)",borderRadius:30,padding:3,marginBottom:24,flexShrink:0,overflowX:"auto",maxWidth:"100%"}},
       MODES.map((md,i)=>ce("button",{key:md.l,onClick:()=>changeMode(i),style:{padding:"7px 16px",borderRadius:24,border:"none",background:mode===i?"#fff":"transparent",color:mode===i?"#1A1A2E":"rgba(255,255,255,.7)",fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"all .2s"}},md.l))
@@ -1678,19 +1678,22 @@ function PRotinas(props){
   var freq_s=useState("Diaria");var freq=freq_s[0],setFreq=freq_s[1];
   var hora_s=useState("07:00");var hora=hora_s[0],setHora=hora_s[1];
   var inst_s=useState("");var inst=inst_s[0],setInst=inst_s[1];
-  function save(rs){setRotinas(rs);try{localStorage.setItem("bj-rotinas",JSON.stringify(rs));}catch{}}
-  function create(){
-    if(!nm.trim())return;
-    save(rotinas.concat([{id:"r"+Date.now(),name:nm.trim(),freq:freq,hora:hora,instructions:inst,active:true,created:Date.now()}]));
-    setNm("");setInst("");setShow(false);toast&&toast("Rotina criada!");
-  }
-  function toggle(id){save(rotinas.map(function(r){return r.id===id?Object.assign({},r,{active:!r.active}):r;}));}
-  function del(id){save(rotinas.filter(function(r){return r.id!==id;}));toast&&toast("Rotina removida");}
+  function saveR(v){setRotinas(v);try{localStorage.setItem("bj-rotinas",JSON.stringify(v));}catch{}}
+  function create(){if(!nm.trim())return;saveR(rotinas.concat([{id:"r"+Date.now(),name:nm.trim(),freq:freq,hora:hora,instructions:inst,active:true,created:Date.now()}]));setNm("");setInst("");setShow(false);toast&&toast("Rotina criada!");}
+  function toggle(id){saveR(rotinas.map(function(r){return r.id===id?Object.assign({},r,{active:!r.active}):r;}));}
+  function del(id){saveR(rotinas.filter(function(r){return r.id!==id;}));toast&&toast("Rotina removida");}
   var TEMPLATES=[
-    {name:"Manha produtiva",freq:"Diaria",hora:"07:00",instructions:"Resume as tarefas urgentes do dia e os eventos do calendario."},
-    {name:"Revisao semanal",freq:"Semanal",hora:"09:00",instructions:"Faz um resumo da semana: conquistas, pendentes e proximos passos."},
-    {name:"Revisao mensal",freq:"Mensal",hora:"09:00",instructions:"Analisa o progresso mensal: tarefas, habitos e financas."}
+    {name:"Resumo Matinal",desc:"Um briefing motivacional de 5 minutos para arrancar o dia com as prioridades, calendario e inspiracao.",freq:"Diaria",hora:"07:00",popular:true,instructions:"Resume as tarefas urgentes, eventos de hoje e habitos pendentes. Tom motivacional e direto."},
+    {name:"Resumo Semanal de Atividade",desc:"Analisa a tua atividade semanal, areas de foco e sugestoes de melhoria.",freq:"Semanal",hora:"06:00",dia:"segunda",popular:false,instructions:"Faz um resumo da semana: conquistas, pendentes, habitos cumpridos e proximos passos."},
+    {name:"Resumo de Fim de Dia",desc:"Briefing reflexivo de fim de dia com triagem de comunicacoes, prioridades para amanha e insights de crescimento.",freq:"Diaria",hora:"17:00",popular:false,instructions:"Resume o que foi feito hoje, o que ficou pendente e sugere as 3 prioridades para amanha."},
+    {name:"Revisao Mensal",desc:"Dashboard de desempenho mensal, revisao reflexiva e reset estrategico para o mes seguinte.",freq:"Mensal",hora:"07:00",dia:"1",popular:false,instructions:"Analisa o mes: tarefas concluidas, habitos cumpridos, saldo financeiro e definir metas para o proximo mes."}
   ];
+  function freqLabel(r){
+    if(r.freq==="Diaria")return "Diaria as "+r.hora;
+    if(r.freq==="Semanal")return "Semanal a "+(r.dia||"segunda")+" as "+r.hora;
+    if(r.freq==="Mensal")return "Mensal no dia "+(r.dia||"1")+" as "+r.hora;
+    return r.freq+" as "+r.hora;
+  }
   return ce("div",{style:{display:"flex",flexDirection:"column",height:"100%",animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexShrink:0}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:14}},
@@ -1699,42 +1702,59 @@ function PRotinas(props){
       ),
       ce("button",{className:"bt dk",onClick:function(){setShow(true);},style:{gap:5}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Nova rotina")
     ),
-    rotinas.length===0?ce("div",null,
-      ce("div",{style:{fontSize:12,fontWeight:600,color:"var(--text-3)",letterSpacing:".06em",marginBottom:12}},"TEMPLATES SUGERIDOS"),
-      ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-        TEMPLATES.map(function(t){
-          return ce("div",{key:t.name,className:"cd",style:{padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}},
-            ce("div",null,
-              ce("div",{style:{fontSize:14,fontWeight:500,marginBottom:2}},t.name),
-              ce("div",{style:{fontSize:12,color:"var(--text-3)"}},t.freq+" · "+t.hora)
-            ),
-            ce("button",{className:"bt",onClick:function(){save(rotinas.concat([Object.assign({},t,{id:"r"+Date.now(),active:true,created:Date.now()})]));toast&&toast("Rotina adicionada!");},style:{gap:5}},ce("i",{className:"ti ti-plus",style:{fontSize:12}})," Adicionar")
-          );
-        })
-      )
-    ):
-    ce("div",{style:{display:"flex",flexDirection:"column",gap:8,flex:1,overflowY:"auto"}},
-      rotinas.map(function(r){
-        return ce("div",{key:r.id,className:"cd",style:{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,opacity:r.active?1:0.5}},
-          ce("div",{style:{flex:1}},
-            ce("div",{style:{fontSize:14,fontWeight:500,marginBottom:2}},r.name),
-            ce("div",{style:{fontSize:12,color:"var(--text-3)"}},r.freq+" · "+r.hora+(r.instructions?" · "+r.instructions.slice(0,40)+"...":"")),
-            r.lastRun?ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:2}},"Ultima execucao: "+new Date(r.lastRun).toLocaleDateString("pt-PT")):null
-          ),
-          ce("button",{onClick:function(){toggle(r.id);},style:{border:"none",background:r.active?"#F0FFF4":"var(--bg-surface)",cursor:"pointer",borderRadius:6,padding:"4px 10px",fontSize:11,color:r.active?"#38A169":"var(--text-3)",fontFamily:"inherit"}},r.active?"Activa":"Pausada"),
-          ce("button",{onClick:function(){del(r.id);},style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E",padding:"4px"}},ce("i",{className:"ti ti-trash",style:{fontSize:14}}))
-        );
-      })
+    ce("div",{style:{flex:1,overflowY:"auto",minHeight:0}},
+      rotinas.length===0?
+        ce("div",null,
+          ce("div",{style:{fontSize:11,fontWeight:600,color:"var(--text-3)",letterSpacing:".06em",marginBottom:14}},"TEMPLATES SUGERIDOS"),
+          ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:16}},
+            TEMPLATES.map(function(t){
+              return ce("div",{key:t.name,className:"cd",style:{padding:20,display:"flex",flexDirection:"column",gap:8}},
+                ce("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:8}},
+                  ce("div",{style:{fontSize:15,fontWeight:600,color:"var(--text-1)"}},t.name),
+                  t.popular?ce("div",{style:{fontSize:10,fontWeight:700,background:"#1A1A2E",color:"#fff",borderRadius:4,padding:"2px 8px",flexShrink:0}},"Popular"):null
+                ),
+                ce("div",{style:{fontSize:13,color:"var(--text-2)",lineHeight:1.6}},t.desc),
+                ce("div",{style:{fontSize:12,color:"#DD6B20",fontWeight:500}},freqLabel(t)),
+                ce("button",{className:"bt dk",onClick:function(){saveR(rotinas.concat([Object.assign({},t,{id:"r"+Date.now(),active:true,created:Date.now()})]));toast&&toast("Rotina adicionada!");},style:{gap:5,marginTop:4,alignSelf:"flex-start"}},
+                  ce("i",{className:"ti ti-plus",style:{fontSize:12}})," Adicionar")
+              );
+            })
+          )
+        ):
+        ce("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+          rotinas.map(function(r){
+            return ce("div",{key:r.id,className:"cd",style:{padding:"16px 18px",display:"flex",alignItems:"center",gap:12,opacity:r.active?1:0.55}},
+              ce("div",{style:{flex:1}},
+                ce("div",{style:{fontSize:14,fontWeight:600,marginBottom:3}},r.name),
+                ce("div",{style:{fontSize:12,color:"#DD6B20",fontWeight:500,marginBottom:r.instructions?4:0}},freqLabel(r)),
+                r.instructions?ce("div",{style:{fontSize:12,color:"var(--text-3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:500}},r.instructions):null
+              ),
+              ce("button",{onClick:function(){toggle(r.id);},style:{border:"1px solid "+(r.active?"#9AE6B4":"var(--border)"),background:r.active?"#F0FFF4":"var(--bg-surface)",cursor:"pointer",borderRadius:6,padding:"4px 12px",fontSize:11,color:r.active?"#38A169":"var(--text-3)",fontFamily:"inherit",whiteSpace:"nowrap"}},r.active?"Activa":"Pausada"),
+              ce("button",{onClick:function(){del(r.id);},style:{border:"none",background:"transparent",cursor:"pointer",color:"#E53E3E",padding:"4px"}},ce("i",{className:"ti ti-trash",style:{fontSize:14}}))
+            );
+          }),
+          ce("div",{style:{marginTop:16,paddingTop:16,borderTop:"1px solid var(--border-light)"}},
+            ce("div",{style:{fontSize:11,fontWeight:600,color:"var(--text-3)",letterSpacing:".06em",marginBottom:12}},"ADICIONAR TEMPLATE"),
+            ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10}},
+              TEMPLATES.filter(function(t){return !rotinas.find(function(r){return r.name===t.name;});}).map(function(t){
+                return ce("div",{key:t.name,className:"cd",style:{padding:14,display:"flex",flexDirection:"column",gap:6}},
+                  ce("div",{style:{fontSize:13,fontWeight:600}},t.name),
+                  ce("div",{style:{fontSize:11,color:"#DD6B20"}},freqLabel(t)),
+                  ce("button",{onClick:function(){saveR(rotinas.concat([Object.assign({},t,{id:"r"+Date.now(),active:true,created:Date.now()})]));toast&&toast("Adicionada!");},style:{border:"1px solid var(--border)",background:"transparent",cursor:"pointer",borderRadius:6,padding:"4px 10px",fontSize:11,fontFamily:"inherit",display:"flex",alignItems:"center",gap:4,alignSelf:"flex-start"}},"+  Adicionar")
+                );
+              })
+            )
+          )
+        )
     ),
     show?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16},onClick:function(e){if(e.target===e.currentTarget)setShow(false);}},
-      ce("div",{style:{background:"var(--bg-app)",borderRadius:14,padding:24,width:540,maxWidth:"100%",border:"1px solid var(--border)"}},
+      ce("div",{style:{background:"var(--bg-app)",borderRadius:14,padding:24,width:560,maxWidth:"100%",border:"1px solid var(--border)"}},
         ce("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:18}},ce("div",{style:{fontSize:16,fontWeight:600}},"Criar nova rotina"),ce("button",{onClick:function(){setShow(false);},style:{border:"none",background:"transparent",cursor:"pointer",fontSize:20,color:"var(--text-3)"}},"x")),
         ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}},
           ce("div",{style:{display:"flex",flexDirection:"column",gap:12}},
             ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:4}},"Nome"),ce("input",{className:"ip",value:nm,autoFocus:true,onChange:function(e){setNm(e.target.value);},placeholder:"ex: Revisao semanal de trabalho"})),
-            ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:6}},"Frequencia"),ce("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},["Diaria","Dias uteis","Semanal","Mensal"].map(function(f){return ce("button",{key:f,onClick:function(){setFreq(f);},style:{padding:"5px 12px",borderRadius:20,border:"1px solid "+(freq===f?"var(--purple)":"var(--border)"),background:freq===f?"var(--purple-bg)":"transparent",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:freq===f?"var(--purple)":"var(--text-2)"}},f);}))),
-            ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:4}},"Hora"),ce("input",{className:"ip",type:"time",value:hora,onChange:function(e){setHora(e.target.value);}})),
-            ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:4}},"Selecionar template"),ce("select",{className:"ip",onChange:function(e){var t=TEMPLATES[+e.target.value];if(t){setNm(t.name);setFreq(t.freq);setHora(t.hora);setInst(t.instructions);}}},ce("option",{value:""},"Personalizada"),TEMPLATES.map(function(t,i){return ce("option",{key:i,value:i},t.name);})))
+            ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:6}},"Frequencia"),ce("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},[["Diaria","Diaria"],["Dias uteis","Dias uteis"],["Semanal","Semanal"],["Mensal","Mensal"]].map(function(arr){return ce("button",{key:arr[0],onClick:function(){setFreq(arr[0]);},style:{padding:"5px 12px",borderRadius:20,border:"1px solid "+(freq===arr[0]?"var(--purple)":"var(--border)"),background:freq===arr[0]?"var(--purple-bg)":"transparent",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:freq===arr[0]?"var(--purple)":"var(--text-2)"}},arr[1]);}))),
+            ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:4}},"Hora"),ce("input",{className:"ip",type:"time",value:hora,onChange:function(e){setHora(e.target.value);}}))
           ),
           ce("div",null,
             ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:4}},"Instrucoes para o assistente"),
@@ -1745,7 +1765,7 @@ function PRotinas(props){
         ),
         ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end",marginTop:20}},
           ce("button",{className:"bt",onClick:function(){setShow(false);}},"Cancelar"),
-          ce("button",{className:"bt dk",onClick:create,disabled:!nm.trim(),style:{gap:5}},ce("i",{className:"ti ti-check",style:{fontSize:12}})," Criar Rotina")
+          ce("button",{className:"bt dk",onClick:create,disabled:!nm.trim()},ce("i",{className:"ti ti-check",style:{fontSize:12}})," Criar Rotina")
         )
       )
     ):null
