@@ -2532,7 +2532,7 @@ function App(){
         ):ce(PgComp)
       )
     ),
-    ce("div",{style:{position:"fixed",left:pg==="foco"?200:-9999,bottom:0,right:pg==="foco"?0:"auto",width:pg==="foco"?"auto":"1px",height:168,background:"linear-gradient(135deg,#0f0c29,#302b63)",padding:"0 24px 16px",display:"flex",alignItems:"flex-end",zIndex:20}},ce("iframe",{src:"https://open.spotify.com/embed/playlist/3Xea2Lx3iyn9C2lpzC0MVy?utm_source=generator&theme=0",width:pg==="foco"?"100%":"1px",height:152,frameBorder:"0",allow:"autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",style:{borderRadius:12,border:"none"}})),
+    ce("div",{style:{position:"fixed",left:pg==="foco"?"50%":-9999,bottom:0,right:"auto",transform:pg==="foco"?"translateX(-50%)":"none",width:pg==="foco"?380:"1px",height:168,background:"linear-gradient(135deg,#0f0c29,#302b63)",borderRadius:"12px 12px 0 0",padding:"0 16px 16px",display:"flex",alignItems:"flex-end",zIndex:20,boxShadow:"0 -4px 20px rgba(0,0,0,.3)"}},ce("iframe",{src:"https://open.spotify.com/embed/playlist/3Xea2Lx3iyn9C2lpzC0MVy?utm_source=generator&theme=0",width:348,height:152,frameBorder:"0",allow:"autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",style:{borderRadius:12,border:"none"}})),
     ce(NotificationsPanel,{tasks,calEvents,habits,logs,open:notifOpen,onClose:()=>setNotifOpen(false),setPage:setPg}),
     triageOpen&&ce(TriagemModal,{tasks,updateTask,toast,onClose:()=>setTriageOpen(false)}),
     ce(GlobalSearch,{tasks,notes,mem,prios,fin,pessoal,searchQ,setSearchQ,searchOpen,setSearchOpen,setPage:setPg,toast}),
