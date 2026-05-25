@@ -2408,9 +2408,9 @@ function App(){
         const r2=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?date_updated_gt='+since+'&include_closed=false&page=0&order_by=updated&reverse=true',{headers:{'Authorization':key}});
         if(r2.ok){const d2=await r2.json();setRecentTasks((d2.tasks||[]).map(function(t){return{id:t.id,name:t.name,priority:(t.priority?.priority||'normal'),list:t.list?.name||'',url:t.url||('https://app.clickup.com/t/'+t.id)};}).slice(0,12));}
         const now=new Date();setSync(String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0'));
-      }catch(e){const c=await sg('bj-tasks');if(c)setTasks(c);}
-    } else {const c=await sg('bj-tasks');if(c&&c.length)setTasks(c);}
-    setLoading(false);setReady(true);
+      }catch(e){const c=await sg('bj-tasks');if(c){const j=JSON.stringify(c);setTasks(prev=>{if(JSON.stringify(prev)===j)return prev;return c;});}}
+    } else {const c=await sg('bj-tasks');if(c&&c.length){const j=JSON.stringify(c);setTasks(prev=>{if(JSON.stringify(prev)===j)return prev;return c;});}}
+    if(!silent||loading)setLoading(false);setReady(true);
   }
   async function genBrief(ts){
     const dk=new Date().toDateString();
@@ -2477,25 +2477,12 @@ function App(){
 
   const sp=setPg;
   const PageMap={
-    hoje:()=>ce(PHoje,{tasks,calEvents,loading,lastSync,refresh:fetchData,toast,setAT,setPage:sp,addTask,recentTasks,dailyBrief,genBrief,habits,logs,prios,fin,openTriage:()=>setTriageOpen(true),aguarda,setAguardaItem,darkMode,setDarkMode}),
-    assistente:()=>ce(PAssist,{tasks,calEvents,pessoal,setPage:sp,toast,fin}),
-    tarefas:()=>ce(PTarefas,{tasks,addTask,updateTask,toast,setAT,setPage:sp,prios,aguarda,setAguardaItem}),
-    inbox:()=>ce(PInbox,{tasks,addTask,notes,saveNotes,mem,saveMem,toast,setPage:sp}),
-    foco:()=>ce(PFoco,{tasks,focoSessions,saveFocoSessions,setPage:sp,toast}),
-    notas:()=>ce(PNotas,{notes,saveNotes,toast,addTask,setPage:sp}),
-    habitos:()=>ce(PHabitos,{habits,saveHabits,logs,saveLogs,toast,tasks}),
-    analytics:()=>ce(PAnalytics,{tasks,habits,logs,fin,focoSessions,setPage:sp}),
-    relatorios:()=>ce(PRelatorios,{tasks,toast,habits,logs,fin}),
-    definicoes:()=>ce(PDefs,{tasks,calEvents,loading,lastSync,setPage:sp,toast}),
-    memoria:()=>ce(PMemoria,{mem,saveMem,toast}),
-    prioridades:()=>ce(PPrios,{prios,savePrios,tasks,toast,setPage:sp}),
-    calendario:()=>ce(PCal,{tasks,calEvents,habits,logs,setPage:sp,addTask,toast}),
-    revisao:()=>ce(PRevisao,{tasks,toast,saveMem,mem,habits,logs}),
-    previsoes:()=>ce(PPrevisoes,{tasks,habits,logs,fin,toast}),
-    templates:()=>ce(PTemplates,{addTask,toast,setPage:sp}),
-    rotinas:()=>ce(PRotinas,{toast,setPage:sp}),
-    pessoal:()=>ce(PPessoal,{pessoal,savePessoal,toast,prios,savePrios}),
-    financas:()=>ce(PFinancas,{fin,saveFin,toast,setPage:sp}),
+    hoje:PHoje,assistente:PAssist,tarefas:PTarefas,calendario:PCal,
+    inbox:PInbox,foco:PFoco,notas:PNotas,memoria:PMemoria,
+    revisao:PRevisao,relatorios:PRelatorios,previsoes:PPrevisoes,
+    templates:PTemplates,rotinas:PRotinas,pessoal:PPessoal,
+    financas:PFinancas,habitos:PHabitos,analytics:PAnalytics,
+    definicoes:PDefs,prioridades:PPrios
   };
 
   const PgComp=PageMap[pg]||PageMap.hoje;
@@ -2569,7 +2556,17 @@ function App(){
           ce(Sp),
           ce("div",null,"A ligar ao ClickUp e Google Calendar..."),
           ce("div",{style:{fontSize:11,color:"#CCC"}},"Pode demorar até 15 segundos na primeira vez")
-        ):ce(PgComp)
+        ):ce(PgComp,{
+        tasks,addTask,updateTask,calEvents,loading,lastSync,
+        toast,setAT,setPage:sp,recentTasks,dailyBrief,genBrief,
+        habits,saveHabits,logs,saveLogs,notes,saveNotes,
+        mem,saveMem,prios,savePrios,pessoal,savePessoal,
+        fin,saveFin,focoSessions,saveFocoSessions,
+        openTriage:()=>setTriageOpen(true),
+        aguarda,setAguardaItem,darkMode,setDarkMode,
+        refresh:fetchData,
+        setPage2:sp
+      })
       )
     ),
     ce("div",{style:{position:"fixed",left:pg==="foco"?"50%":-9999,bottom:0,right:"auto",transform:pg==="foco"?"translateX(-50%)":"none",width:pg==="foco"?380:"1px",height:168,background:"linear-gradient(135deg,#0f0c29,#302b63)",borderRadius:"12px 12px 0 0",padding:"0 16px 16px",display:"flex",alignItems:"flex-end",zIndex:20,boxShadow:"0 -4px 20px rgba(0,0,0,.3)"}},ce("iframe",{src:"https://open.spotify.com/embed/playlist/3Xea2Lx3iyn9C2lpzC0MVy?utm_source=generator&theme=0",width:348,height:152,frameBorder:"0",allow:"autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",style:{borderRadius:12,border:"none"}})),
