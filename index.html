@@ -731,9 +731,9 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
     const days=Array.from({length:35},(_,i)=>{
       const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;
     });
-    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,14px)",gap:3,marginTop:8,justifyContent:"start"}},
+    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,80px)",gap:6,marginTop:10,justifyContent:"start"}},
       ["S","T","Q","Q","S","S","D"].map((d,i)=>
-        ce("div",{key:i,style:{fontSize:9,color:"var(--text-3)",textAlign:"center",marginBottom:3,width:14,fontWeight:500}},d)),
+        ce("div",{key:i,style:{fontSize:11,color:"var(--text-3)",textAlign:"center",marginBottom:4,width:80,fontWeight:600}},d)),
       days.map((d,i)=>{
         const k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
         const done=logs[k]&&logs[k][id];
@@ -742,7 +742,7 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
         return ce("div",{key:i,
           title:d.toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"short"}),
           style:{
-            width:14,height:14,borderRadius:3,
+            width:80,height:80,borderRadius:10,
             background:isFuture?"var(--border-light)":done?(color||"#7C3AED"):"var(--border)",
             boxShadow:isToday?"0 0 0 2px "+(color||"#7C3AED"):"none",
             opacity:isFuture?0.25:done?1:0.55,
