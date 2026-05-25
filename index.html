@@ -92,15 +92,21 @@ async function aiC(msgs,sys,max){var ak=localStorage.getItem("bj-ak")||"";if(!ak
 async function whF(p){try{const url=WH+"?"+new URLSearchParams(p).toString();const r=await fetch(url,{mode:"cors"});if(r.ok)return await r.json();return null}catch{return null}}
 async function cuClose(taskId){
   const key=localStorage.getItem("cu_key");
-  if(!key||!taskId||taskId.startsWith("l"))return false; // local task, no ClickUp ID
+  if(!key||!taskId||String(taskId).startsWith("l"))return false;
   try{
-    const r=await fetch("https://api.clickup.com/api/v2/task/"+taskId,{
+    // Try dedicated close endpoint first
+    const r1=await fetch("https://api.clickup.com/api/v2/task/"+taskId+"/close",{
+      method:"POST",headers:{"Authorization":key}
+    });
+    if(r1.ok)return true;
+    // Fallback: PUT with status closed
+    const r2=await fetch("https://api.clickup.com/api/v2/task/"+taskId,{
       method:"PUT",
       headers:{"Authorization":key,"Content-Type":"application/json"},
       body:JSON.stringify({status:"closed"})
     });
-    return r.ok;
-  }catch{return false;}
+    return r2.ok;
+  }catch(e){console.warn("cuClose error:",e);return false;}
 }
 
 const wh=p=>{try{fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"cors"}).catch(()=>fetch(WH+"?"+new URLSearchParams(p).toString(),{mode:"no-cors"}))}catch{}};
@@ -518,7 +524,7 @@ function PTarefas({tasks,addTask,updateTask,toast,setAT,setPage,prios}){
         prio!=="todas"&&ce("button",{className:"bt",onClick:()=>setPrio("todas"),style:{marginTop:8}},"Ver todas as tarefas")
       ):
       list.map(t=>ce("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,background:"var(--bg-app)",border:"1px solid var(--border)",borderLeft:"3px solid "+PA2(t.priority||"normal"),marginBottom:6,opacity:t.status==="done"?.45:1}},
-        ce("button",{onClick:async()=>{if(t.status!=="done"){cuClose(t.id);updateTask({...t,status:"done"});toast&&toast("Tarefa fechada ✓");}},style:{width:18,height:18,borderRadius:"50%",border:"2px solid "+(t.status==="done"?"#38A169":PA2(t.priority||"normal")),background:t.status==="done"?"#38A169":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},
+        ce("button",{onClick:async()=>{if(t.status!=="done"){cuClose(t.id).then(ok=>{if(!ok&&t.id&&!String(t.id).startsWith("l"))console.warn("cuClose failed for",t.id);});updateTask({...t,status:"done"});toast&&toast("Tarefa fechada ✓");}},style:{width:18,height:18,borderRadius:"50%",border:"2px solid "+(t.status==="done"?"#38A169":PA2(t.priority||"normal")),background:t.status==="done"?"#38A169":"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},
           t.status==="done"&&ce("i",{className:"ti ti-check",style:{fontSize:10,color:"#fff"}})
         ),
         ce("div",{style:{flex:1,minWidth:0}},
