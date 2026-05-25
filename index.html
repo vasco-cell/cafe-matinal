@@ -1230,167 +1230,197 @@ function PPrios({prios,savePrios,tasks,toast}){
   );
 }
 
-function PCal({tasks,calEvents,habits,logs,setPage,addTask,toast}){
-  const n=new Date();
-  const[yr,setYr]=useState(n.getFullYear());
-  const[newItem,setNewItem]=useState(null); // {date, type:'tarefa'|'evento'}
-  const[niName,setNiName]=useState('');
-  const[niPrio,setNiPrio]=useState('normal');
-  const[niTime,setNiTime]=useState('09:00');
-  async function createFromCal(){
-    if(!niName.trim()||!newItem)return;
-    if(newItem.type==='tarefa'){
-      const due=String(newItem.date.getTime());
-      await whF({action:'create',task_name:niName,priority:niPrio});
-      if(addTask)addTask({id:'l'+Date.now(),name:niName,status:'todo',priority:niPrio,list:'BBTOP20',due_date:due});
-      if(toast)toast('Tarefa criada para '+newItem.date.toLocaleDateString('pt-PT'));
-    } else {
-      await whF({action:'create_event',title:niName,date:newItem.date.toISOString().slice(0,10),time:niTime});
-      if(toast)toast('Evento enviado para o calendario');
-    }
-    setNiName('');setNewItem(null);
-  }
 
-  const[mo,setMo]=useState(n.getMonth());
-  const[selDay,setSel]=useState(n.getDate());
-  const[view,setView]=useState("month"); // month | week | agenda
-  const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-  const MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-  const DC2=["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
-  const PA=p=>({urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE",low:"#38A169"}[p]||"#CBD5E0");
+function PCal(props){
+  var tasks=props.tasks||[];var calEvents=props.calEvents||[];
+  var habits=props.habits||[];var logs=props.logs||{};
+  var addTask=props.addTask;var toast=props.toast;
+  var n=new Date();
+  var yr_s=useState(n.getFullYear());var yr=yr_s[0],setYr=yr_s[1];
+  var mo_s=useState(n.getMonth());var mo=mo_s[0],setMo=mo_s[1];
+  var selDay_s=useState(n.getDate());var selDay=selDay_s[0],setSel=selDay_s[1];
+  var view_s=useState("month");var view=view_s[0],setView=view_s[1];
+  var newItem_s=useState(null);var newItem=newItem_s[0],setNewItem=newItem_s[1];
+  var niName_s=useState("");var niName=niName_s[0],setNiName=niName_s[1];
+  var niPrio_s=useState("normal");var niPrio=niPrio_s[0],setNiPrio=niPrio_s[1];
+  var niTime_s=useState("09:00");var niTime=niTime_s[0],setNiTime=niTime_s[1];
+  var niDest_s=useState("ambos");var niDest=niDest_s[0],setNiDest=niDest_s[1];
+
+  var MESES=["Janeiro","Fevereiro","Marco","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  var MC=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  var DC2=["Seg","Ter","Qua","Qui","Sex","Sab","Dom"];
+  var CAL1_COLOR="#4285F4";var CAL2_COLOR="#0F9D58";
+
+  function PA(p){return({urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE",low:"#38A169"}[p]||"#CBD5E0");}
   function daysInMonth(y,m){return new Date(y,m+1,0).getDate();}
-  function firstDay(y,m){const d=new Date(y,m,1).getDay();return d===0?6:d-1;}
-  function tasksOnDay(d,m2,y2){
-    const dk=new Date(y2,m2,d).toDateString();
-    return tasks.filter(t=>t.due_date&&t.due_date!=="null"&&new Date(+t.due_date).toDateString()===dk);
-  }
-  function eventsOnDay(d,m2,y2){
-    const dk=new Date(y2,m2,d).toDateString();
-    return (calEvents||[]).filter(e=>{try{return new Date(e.start?.dateTime||e.start?.date).toDateString()===dk;}catch{return false;}});
-  }
-  function habitsDoneOnDay(d,m2,y2){
-    const dk=new Date(y2,m2,d).toDateString();
-    const dl=(logs||{})[dk]||{};
-    return (habits||[]).filter(h=>dl[h.id]).length;
-  }
+  function firstDay(y,m){var d=new Date(y,m,1).getDay();return d===0?6:d-1;}
+  function tasksOnDay(d,m2,y2){var dk=new Date(y2,m2,d).toDateString();return tasks.filter(function(t){return t.due_date&&t.due_date!=="null"&&new Date(+t.due_date).toDateString()===dk;});}
+  function eventsOnDay(d,m2,y2){var dk=new Date(y2,m2,d).toDateString();return (calEvents||[]).filter(function(e){try{return new Date(e.start&&(e.start.dateTime||e.start.date)).toDateString()===dk;}catch{return false;}});}
+  function habitsDoneOnDay(d,m2,y2){var dk=new Date(y2,m2,d).toDateString();var dl=(logs||{})[dk]||{};return (habits||[]).filter(function(h){return dl[h.id];}).length;}
+
   function prevPeriod(){
-    if(view==="week"){const d=new Date(yr,mo,selDay-7);setYr(d.getFullYear());setMo(d.getMonth());setSel(d.getDate());}
+    if(view==="week"){var d=new Date(yr,mo,selDay-7);setYr(d.getFullYear());setMo(d.getMonth());setSel(d.getDate());}
     else{if(mo===0){setYr(yr-1);setMo(11);}else setMo(mo-1);setSel(1);}
   }
   function nextPeriod(){
-    if(view==="week"){const d=new Date(yr,mo,selDay+7);setYr(d.getFullYear());setMo(d.getMonth());setSel(d.getDate());}
+    if(view==="week"){var d=new Date(yr,mo,selDay+7);setYr(d.getFullYear());setMo(d.getMonth());setSel(d.getDate());}
     else{if(mo===11){setYr(yr+1);setMo(0);}else setMo(mo+1);setSel(1);}
   }
-  const selDate=new Date(yr,mo,selDay);
-  const selKey=selDate.toDateString();
-  const selTasks=tasksOnDay(selDay,mo,yr);
-  const selEvents=eventsOnDay(selDay,mo,yr);
 
-  // ── MONTH VIEW ──────────────────────────────────────────────────────────
-  function MonthView(){
-    const days=daysInMonth(yr,mo);
-    const first=firstDay(yr,mo);
-    return ce("div",{className:"cd",style:{overflow:"hidden",flex:1}},
-      ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",borderBottom:"1px solid var(--border)"}},
-        DC2.map(d=>ce("div",{key:d,style:{textAlign:"center",fontSize:10,color:"var(--text-3)",padding:"6px 0",fontWeight:600,letterSpacing:".05em"}},d))
-      ),
-      ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)"}},
-        Array.from({length:first}).map((_,i)=>ce("div",{key:"e"+i,style:{borderRight:"1px solid var(--border-light)",borderBottom:"1px solid var(--border-light)",minHeight:80}})),
-        Array.from({length:days}).map((_,i)=>{
-          const d=i+1;
-          const isToday=yr===n.getFullYear()&&mo===n.getMonth()&&d===n.getDate();
-          const isSel=d===selDay&&yr===n.getFullYear()&&mo===n.getMonth();
-          const td=tasksOnDay(d,mo,yr);
-          const ev=eventsOnDay(d,mo,yr);
-          const hd=habitsDoneOnDay(d,mo,yr);
-          return ce("div",{key:d,onClick:()=>setSel(d),
-            style:{borderRight:"1px solid var(--border-light)",borderBottom:"1px solid var(--border-light)",minHeight:80,padding:"4px 5px",cursor:"pointer",background:isSel?"#F5F3FF":isToday?"rgba(124,58,237,.04)":"transparent",transition:"background .1s"}},
-            ce("div",{style:{width:22,height:22,borderRadius:"50%",background:isSel?"#7C3AED":isToday?"var(--purple-bg)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:3}},
-              ce("span",{style:{fontSize:12,fontWeight:isToday||isSel?600:400,color:isSel?"#fff":isToday?"#7C3AED":"var(--text-1)"}},d)
-            ),
-            td.slice(0,2).map((t,ti)=>ce("div",{key:ti,style:{fontSize:9,padding:"1px 4px",borderRadius:3,background:PA(t.priority)+"22",color:PA(t.priority),overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:1}},t.name)),
-            ev.slice(0,1).map((e,ei)=>ce("div",{key:ei,style:{fontSize:9,padding:"1px 4px",borderRadius:3,background:"#EDE9FE",color:"#7C3AED",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:1}},e.summary||"evento")),
-            (td.length>2||ev.length>1)&&ce("div",{style:{fontSize:9,color:"var(--text-3)"}},"+"+(td.length+ev.length-3)+" mais"),
-            hd>0&&ce("div",{style:{width:5,height:5,borderRadius:"50%",background:"#38A169",marginTop:2}})
-          );
-        })
-      )
-    );
+  async function createFromCal(){
+    if(!niName.trim()||!newItem)return;
+    if(newItem.type==="tarefa"){
+      var due=String(newItem.date.getTime());
+      addTask&&addTask({id:"l"+Date.now(),name:niName,status:"por iniciar",priority:niPrio,list:"BBTOP20",list_id:"",due_date:due,url:"",date_updated:"0"});
+      if(niDest==="clickup"||niDest==="ambos"){try{await whF({action:"create",task_name:niName,priority:niPrio,due_date:newItem.date.toISOString().slice(0,10)});}catch{}}
+      toast&&toast("Tarefa criada!");
+    }else{
+      // Create Google Calendar event via Make webhook
+      try{
+        await fetch("https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu",{
+          method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({action:"create_event",title:niName,date:newItem.date.toISOString().slice(0,10),time:niTime,calendar:niDest==="cal2"?"gcal2":"gcal1"}),
+          mode:"no-cors"
+        });
+        toast&&toast("Evento enviado para o Google Calendar!");
+      }catch(e){toast&&toast("Evento criado localmente (webhook indisponivel)");}
+    }
+    setNiName("");setNewItem(null);
   }
 
-  // ── WEEK VIEW ────────────────────────────────────────────────────────────
-  function WeekView(){
-    // Find Monday of current week
-    const d=new Date(yr,mo,selDay);
-    const dow=d.getDay();
-    const monday=new Date(d);monday.setDate(d.getDate()-(dow===0?6:dow-1));
-    const weekDays=Array.from({length:7},(_,i)=>{const day=new Date(monday);day.setDate(monday.getDate()+i);return day;});
-    return ce("div",{style:{flex:1,display:"flex",flexDirection:"column",minHeight:0}},
-      ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6,marginBottom:10,flexShrink:0}},
-        weekDays.map((day,i)=>{
-          const isTod=day.toDateString()===n.toDateString();
-          const isSel=day.toDateString()===selKey;
-          const td=tasksOnDay(day.getDate(),day.getMonth(),day.getFullYear());
-          const ev=eventsOnDay(day.getDate(),day.getMonth(),day.getFullYear());
-          return ce("div",{key:i,onClick:()=>{setYr(day.getFullYear());setMo(day.getMonth());setSel(day.getDate());},
-            className:"cd",style:{padding:"10px 8px",cursor:"pointer",background:isSel?"#7C3AED":isTod?"var(--purple-bg)":"var(--bg-app)",textAlign:"center",transition:"all .15s"}},
-            ce("div",{style:{fontSize:10,color:isSel?"rgba(255,255,255,.7)":isTod?"#7C3AED":"var(--text-3)",marginBottom:2}},DC2[i]),
-            ce("div",{style:{fontSize:16,fontWeight:600,color:isSel?"#fff":isTod?"#7C3AED":"var(--text-1)",marginBottom:4}},day.getDate()),
-            ce("div",{style:{display:"flex",justifyContent:"center",gap:3}},
-              td.length>0&&ce("div",{style:{width:5,height:5,borderRadius:"50%",background:isSel?"#fff":PA(td[0].priority)}}),
-              ev.length>0&&ce("div",{style:{width:5,height:5,borderRadius:"50%",background:isSel?"rgba(255,255,255,.7)":"#7C3AED"}})
+  var selDate=new Date(yr,mo,selDay);
+  var selKey=selDate.toDateString();
+  var selTasks=tasksOnDay(selDay,mo,yr);
+  var selEvents=eventsOnDay(selDay,mo,yr);
+
+  // ── DAY PANEL (always visible on right) ─────────────────────────────────
+  function DayPanel(){
+    var todayTasks=tasksOnDay(n.getDate(),n.getMonth(),n.getFullYear());
+    var todayEvents=eventsOnDay(n.getDate(),n.getMonth(),n.getFullYear());
+    var isToday=selKey===n.toDateString();
+    return ce("div",{style:{width:240,flexShrink:0,borderLeft:"1px solid var(--border)",paddingLeft:16,display:"flex",flexDirection:"column",gap:12,overflowY:"auto"}},
+      ce("div",{style:{fontSize:12,fontWeight:600,color:"var(--text-3)",letterSpacing:".05em",marginBottom:4}},
+        isToday?"HOJE":"DIA SELECIONADO"),
+      ce("div",{style:{fontSize:15,fontWeight:600,color:"var(--text-1)"}},
+        DC2[selDate.getDay()===0?6:selDate.getDay()-1]+" "+selDay+" "+MC[mo]),
+      // Create buttons
+      ce("div",{style:{display:"flex",gap:6}},
+        ce("button",{onClick:function(){setNewItem({date:selDate,type:"tarefa"});},style:{flex:1,padding:"6px 8px",borderRadius:7,border:"1px solid var(--border)",background:"var(--bg-surface)",fontSize:11,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:4,color:"var(--text-2)"}},ce("i",{className:"ti ti-checkbox",style:{fontSize:12}}),"+ Tarefa"),
+        ce("button",{onClick:function(){setNewItem({date:selDate,type:"evento"});},style:{flex:1,padding:"6px 8px",borderRadius:7,border:"1px solid var(--border)",background:"var(--bg-surface)",fontSize:11,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:4,color:"var(--text-2)"}},ce("i",{className:"ti ti-calendar-plus",style:{fontSize:12}}),"+ Evento")
+      ),
+      // Events
+      selEvents.length>0?ce("div",null,
+        ce("div",{style:{fontSize:10,fontWeight:600,color:"var(--text-3)",letterSpacing:".05em",marginBottom:6}},"EVENTOS"),
+        selEvents.map(function(e,i){
+          var cal2=e._cal===2;
+          return ce("div",{key:i,style:{padding:"7px 10px",borderRadius:8,background:cal2?"#E8F5E9":"#EBF8FF",borderLeft:"3px solid "+(cal2?CAL2_COLOR:CAL1_COLOR),marginBottom:5}},
+            ce("div",{style:{fontSize:12,fontWeight:500,color:"var(--text-1)"}},e.summary||"Evento"),
+            ce("div",{style:{fontSize:10,color:cal2?CAL2_COLOR:CAL1_COLOR,marginTop:2}},
+              e.start&&e.start.dateTime?new Date(e.start.dateTime).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"}):"Dia inteiro"
             )
           );
         })
+      ):null,
+      // Tasks
+      selTasks.length>0?ce("div",null,
+        ce("div",{style:{fontSize:10,fontWeight:600,color:"var(--text-3)",letterSpacing:".05em",marginBottom:6}},"TAREFAS"),
+        selTasks.map(function(t,i){
+          return ce("div",{key:i,style:{padding:"7px 10px",borderRadius:8,background:"var(--bg-surface)",borderLeft:"3px solid "+PA(t.priority),marginBottom:5}},
+            ce("div",{style:{fontSize:12,fontWeight:500,color:"var(--text-1)",lineHeight:1.3}},t.name),
+            ce("div",{style:{fontSize:10,color:PA(t.priority),marginTop:2}},({urgent:"Urgente",high:"Alta",normal:"Normal",low:"Baixa"}[t.priority]||t.priority))
+          );
+        })
+      ):null,
+      selEvents.length===0&&selTasks.length===0?ce("div",{style:{fontSize:12,color:"var(--text-3)",textAlign:"center",padding:"20px 0"}},"Sem compromissos neste dia."):null
+    );
+  }
+
+  // ── MONTH VIEW ───────────────────────────────────────────────────────────
+  function MonthView(){
+    var days=daysInMonth(yr,mo);
+    var first=firstDay(yr,mo);
+    return ce("div",{style:{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}},
+      ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",borderBottom:"1px solid var(--border)"}},
+        DC2.map(function(d){return ce("div",{key:d,style:{textAlign:"center",fontSize:10,color:"var(--text-3)",padding:"6px 0",fontWeight:600,letterSpacing:".05em"}},d);})
       ),
-      ce("div",{style:{flex:1,overflowY:"auto",minHeight:0}},
-        ce("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-          [...selTasks,...selEvents].length===0?
-            ce("div",{style:{textAlign:"center",padding:"40px 20px",color:"var(--text-3)",fontSize:13}},"Nenhuma tarefa ou evento neste dia."):
-          [
-            selEvents.map((e,i)=>ce("div",{key:"ev"+i,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:8,background:"var(--bg-app)",border:"1px solid var(--border)",borderLeft:"3px solid #7C3AED"}},
-              ce("div",{style:{width:8,height:8,borderRadius:"50%",background:"#7C3AED",flexShrink:0}}),
-              ce("div",{style:{flex:1}},
-                ce("div",{style:{fontSize:13,fontWeight:500}},e.summary||"(evento)"),
-                ce("div",{style:{fontSize:11,color:"var(--text-3)"}},e.start?.dateTime?new Date(e.start.dateTime).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"}):"dia inteiro")
-              )
-            )),
-            selTasks.map((t,i)=>ce("div",{key:"tk"+i,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:8,background:"var(--bg-app)",border:"1px solid var(--border)",borderLeft:"3px solid "+PA(t.priority)}},
-              ce("div",{style:{width:8,height:8,borderRadius:"50%",background:PA(t.priority),flexShrink:0}}),
-              ce("a",{href:t.url,target:"_blank",rel:"noreferrer",style:{flex:1,fontSize:13,color:"var(--text-1)"}},t.name)
-            ))
-          ]
-        )
+      ce("div",{style:{flex:1,display:"grid",gridTemplateColumns:"repeat(7,1fr)",overflowY:"auto"}},
+        Array.from({length:first},function(_,i){return ce("div",{key:"e"+i,style:{borderRight:"1px solid var(--border-light)",borderBottom:"1px solid var(--border-light)",minHeight:70}});}),
+        Array.from({length:days},function(_,i){
+          var d=i+1;
+          var isToday=yr===n.getFullYear()&&mo===n.getMonth()&&d===n.getDate();
+          var isSel=d===selDay&&yr===n.getFullYear()&&mo===n.getMonth();
+          var td=tasksOnDay(d,mo,yr);
+          var ev=eventsOnDay(d,mo,yr);
+          var hd=habitsDoneOnDay(d,mo,yr);
+          var ev1=ev.filter(function(e){return e._cal!==2;});
+          var ev2=ev.filter(function(e){return e._cal===2;});
+          return ce("div",{key:d,onClick:function(){setSel(d);},
+            style:{borderRight:"1px solid var(--border-light)",borderBottom:"1px solid var(--border-light)",minHeight:70,padding:"4px 5px",cursor:"pointer",background:isSel?"#F5F3FF":isToday?"rgba(124,58,237,.04)":"transparent",transition:"background .1s"}},
+            ce("div",{style:{width:22,height:22,borderRadius:"50%",background:isSel?"#7C3AED":isToday?"var(--purple-bg)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:2}},
+              ce("span",{style:{fontSize:12,fontWeight:isToday||isSel?600:400,color:isSel?"#fff":isToday?"#7C3AED":"var(--text-1)"}},d)
+            ),
+            td.slice(0,2).map(function(t,ti){return ce("div",{key:ti,style:{fontSize:9,padding:"1px 4px",borderRadius:3,background:PA(t.priority)+"22",color:PA(t.priority),overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:1}},t.name);}),
+            ev1.slice(0,1).map(function(e,ei){return ce("div",{key:"e1"+ei,style:{fontSize:9,padding:"1px 4px",borderRadius:3,background:"#EBF8FF",color:CAL1_COLOR,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:1}},e.summary||"evento");}),
+            ev2.slice(0,1).map(function(e,ei){return ce("div",{key:"e2"+ei,style:{fontSize:9,padding:"1px 4px",borderRadius:3,background:"#E8F5E9",color:CAL2_COLOR,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginBottom:1}},e.summary||"evento");}),
+            hd>0?ce("div",{style:{width:5,height:5,borderRadius:"50%",background:"#38A169",marginTop:2}}):null
+          );
+        })
       )
     );
   }
 
-  // ── AGENDA VIEW ──────────────────────────────────────────────────────────
+  // ── WEEK VIEW ─────────────────────────────────────────────────────────────
+  function WeekView(){
+    var d=new Date(yr,mo,selDay);
+    var dow=d.getDay();
+    var monday=new Date(d);monday.setDate(d.getDate()-(dow===0?6:dow-1));
+    var weekDays=Array.from({length:7},function(_,i){var day=new Date(monday);day.setDate(monday.getDate()+i);return day;});
+    return ce("div",{style:{flex:1,display:"flex",flexDirection:"column",minHeight:0}},
+      ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:8,flexShrink:0}},
+        weekDays.map(function(day,i){
+          var isTod=day.toDateString()===n.toDateString();
+          var isSel=day.toDateString()===selKey;
+          var td=tasksOnDay(day.getDate(),day.getMonth(),day.getFullYear());
+          var ev=eventsOnDay(day.getDate(),day.getMonth(),day.getFullYear());
+          return ce("div",{key:i,onClick:function(){setYr(day.getFullYear());setMo(day.getMonth());setSel(day.getDate());},
+            className:"cd",style:{padding:"8px 6px",cursor:"pointer",background:isSel?"#7C3AED":isTod?"var(--purple-bg)":"var(--bg-app)",textAlign:"center",transition:"all .15s"}},
+            ce("div",{style:{fontSize:10,color:isSel?"rgba(255,255,255,.7)":isTod?"#7C3AED":"var(--text-3)",marginBottom:1}},DC2[i]),
+            ce("div",{style:{fontSize:15,fontWeight:600,color:isSel?"#fff":isTod?"#7C3AED":"var(--text-1)",marginBottom:3}},day.getDate()),
+            ce("div",{style:{display:"flex",justifyContent:"center",gap:2}},
+              td.length>0?ce("div",{style:{width:5,height:5,borderRadius:"50%",background:isSel?"#fff":PA(td[0].priority)}}):null,
+              ev.length>0?ce("div",{style:{width:5,height:5,borderRadius:"50%",background:isSel?"rgba(255,255,255,.7)":CAL1_COLOR}}):null
+            )
+          );
+        })
+      )
+    );
+  }
+
+  // ── AGENDA VIEW ───────────────────────────────────────────────────────────
   function AgendaView(){
-    const upcoming=[];
-    for(let i=0;i<30;i++){
-      const day=new Date(n);day.setDate(n.getDate()+i);
-      const td=tasksOnDay(day.getDate(),day.getMonth(),day.getFullYear());
-      const ev=eventsOnDay(day.getDate(),day.getMonth(),day.getFullYear());
-      if(td.length||ev.length)upcoming.push({day,tasks:td,events:ev});
-    }
+    var upcoming=[];
+    for(var i=0;i<30;i++){var day=new Date(n);day.setDate(n.getDate()+i);var td=tasksOnDay(day.getDate(),day.getMonth(),day.getFullYear());var ev=eventsOnDay(day.getDate(),day.getMonth(),day.getFullYear());if(td.length||ev.length)upcoming.push({day:day,tasks:td,events:ev});}
+    if(upcoming.length===0)return ce("div",{style:{textAlign:"center",padding:"40px",color:"var(--text-3)",fontSize:13}},"Sem compromissos nos proximos 30 dias.");
     return ce("div",{style:{flex:1,overflowY:"auto",minHeight:0}},
-      upcoming.length===0?ce("div",{style:{textAlign:"center",padding:"40px",color:"var(--text-3)",fontSize:13}},"Sem compromissos nos próximos 30 dias."):
       ce("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-        upcoming.map((item,ii)=>{
-          const isToday=item.day.toDateString()===n.toDateString();
+        upcoming.map(function(item,ii){
+          var isToday=item.day.toDateString()===n.toDateString();
           return ce("div",{key:ii},
             ce("div",{style:{fontSize:11,fontWeight:600,color:isToday?"#7C3AED":"var(--text-3)",letterSpacing:".06em",padding:"8px 0 4px",borderBottom:"1px solid var(--border-light)",marginBottom:4}},
-              (isToday?"HOJE · ":"")+DC2[item.day.getDay()===0?6:item.day.getDay()-1]+" "+item.day.getDate()+" "+MC[item.day.getMonth()]
-            ),
-            item.events.map((e,i)=>ce("div",{key:"e"+i,style:{display:"flex",gap:10,padding:"6px 10px",borderRadius:6,background:"var(--purple-bg)",marginBottom:4}},
-              ce("div",{style:{width:3,borderRadius:2,background:"#7C3AED",flexShrink:0}}),
-              ce("div",null,ce("div",{style:{fontSize:12,fontWeight:500,color:"#6B46C1"}},e.summary||"evento"),ce("div",{style:{fontSize:10,color:"var(--text-3)"}},e.start?.dateTime?new Date(e.start.dateTime).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"}):"dia inteiro"))
-            )),
-            item.tasks.map((t,i)=>ce("div",{key:"t"+i,style:{display:"flex",gap:10,padding:"6px 10px",borderRadius:6,background:PA(t.priority)+"11",marginBottom:4}},
-              ce("div",{style:{width:3,borderRadius:2,background:PA(t.priority),flexShrink:0}}),
-              ce("a",{href:t.url,target:"_blank",rel:"noreferrer",style:{fontSize:12,fontWeight:500,color:"var(--text-1)"}},t.name)
-            ))
+              (isToday?"HOJE · ":"")+DC2[item.day.getDay()===0?6:item.day.getDay()-1]+" "+item.day.getDate()+" "+MC[item.day.getMonth()]),
+            item.events.map(function(e,i){
+              var cal2=e._cal===2;
+              return ce("div",{key:"ev"+i,style:{display:"flex",gap:8,padding:"5px 8px",borderRadius:6,background:cal2?"#E8F5E9":"#EBF8FF",marginBottom:3}},
+                ce("div",{style:{width:3,borderRadius:2,background:cal2?CAL2_COLOR:CAL1_COLOR,flexShrink:0}}),
+                ce("div",null,ce("div",{style:{fontSize:12,fontWeight:500,color:"var(--text-1)"}},e.summary||"evento"),ce("div",{style:{fontSize:10,color:cal2?CAL2_COLOR:CAL1_COLOR}},e.start&&e.start.dateTime?new Date(e.start.dateTime).toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"}):"dia inteiro"))
+              );
+            }),
+            item.tasks.map(function(t,i){
+              return ce("div",{key:"tk"+i,style:{display:"flex",gap:8,padding:"5px 8px",borderRadius:6,background:PA(t.priority)+"11",marginBottom:3}},
+                ce("div",{style:{width:3,borderRadius:2,background:PA(t.priority),flexShrink:0}}),
+                ce("a",{href:t.url,target:"_blank",rel:"noreferrer",style:{fontSize:12,fontWeight:500,color:"var(--text-1)"}},t.name)
+              );
+            })
           );
         })
       )
@@ -1398,40 +1428,60 @@ function PCal({tasks,calEvents,habits,logs,setPage,addTask,toast}){
   }
 
   return ce("div",{style:{display:"flex",flexDirection:"column",height:"100%",animation:"fU .2s"}},
-    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexShrink:0}},
+    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexShrink:0}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:14}},
-        ce("div",{style:{width:36,height:36,borderRadius:8,background:"#EBF8FF",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-calendar",style:{fontSize:18,color:"#3182CE"}})),
-        ce("div",null,ce("div",{className:"pt",style:{fontSize:22}},MESES[mo]+" "+yr),ce("div",{className:"ps"},view==="agenda"?"Próximos 30 dias":""))
+        ce("div",{style:{width:40,height:40,borderRadius:10,background:"#EBF8FF",display:"flex",alignItems:"center",justifyContent:"center"}},ce("i",{className:"ti ti-calendar",style:{fontSize:18,color:"#3182CE"}})),
+        ce("div",null,ce("div",{className:"pt",style:{fontSize:22}},MESES[mo]+" "+yr),ce("div",{className:"ps"},view==="agenda"?"Proximos 30 dias":""))
       ),
-      ce("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+      ce("div",{style:{display:"flex",gap:6,alignItems:"center"}},
         ce("div",{style:{display:"flex",border:"1px solid var(--border)",borderRadius:8,overflow:"hidden"}},
-          [["month","Mês"],["week","Semana"],["agenda","Agenda"]].map(([v,l])=>ce("button",{key:v,onClick:()=>setView(v),style:{padding:"5px 12px",border:"none",borderRight:v!=="agenda"?"1px solid var(--border)":"none",background:view===v?"#1A1A2E":"transparent",color:view===v?"#fff":"var(--text-2)",fontSize:11,cursor:"pointer",fontFamily:"inherit"}},l))
+          [["month","Mes"],["week","Semana"],["agenda","Agenda"]].map(function(arr){var v=arr[0],l=arr[1];return ce("button",{key:v,onClick:function(){setView(v);},style:{padding:"5px 10px",border:"none",borderRight:v!=="agenda"?"1px solid var(--border)":"none",background:view===v?"#1A1A2E":"transparent",color:view===v?"#fff":"var(--text-2)",fontSize:11,cursor:"pointer",fontFamily:"inherit"}},l);})
         ),
-        view!=="agenda"&&ce("button",{className:"bt",onClick:prevPeriod},ce("i",{className:"ti ti-chevron-left",style:{fontSize:13}})),
-        view!=="agenda"&&ce("button",{className:"bt",onClick:nextPeriod},ce("i",{className:"ti ti-chevron-right",style:{fontSize:13}})),
-        ce("button",{className:"bt",onClick:function(){setNewItem({date:selDate,type:"tarefa"});},style:{gap:5}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Criar"),
-        ce("button",{className:"bt",onClick:()=>{setYr(n.getFullYear());setMo(n.getMonth());setSel(n.getDate());},style:{fontSize:11}},"Hoje")
+        view!=="agenda"?ce("button",{className:"bt",onClick:prevPeriod},ce("i",{className:"ti ti-chevron-left",style:{fontSize:13}})):null,
+        view!=="agenda"?ce("button",{className:"bt",onClick:nextPeriod},ce("i",{className:"ti ti-chevron-right",style:{fontSize:13}})):null,
+        ce("button",{className:"bt",onClick:function(){setYr(n.getFullYear());setMo(n.getMonth());setSel(n.getDate());},style:{fontSize:11}},"Hoje"),
+        ce("button",{className:"bt dk",onClick:function(){setNewItem({date:selDate,type:"tarefa"});},style:{gap:4,fontSize:11}},ce("i",{className:"ti ti-plus",style:{fontSize:12}})," Criar")
       )
     ),
-    view==="month"?ce(MonthView):view==="week"?ce(WeekView):ce(AgendaView),
-    newItem&&ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},onClick:e=>{if(e.target===e.currentTarget)setNewItem(null);}},
-      ce("div",{style:{background:"var(--bg-app)",borderRadius:12,padding:24,width:400,maxWidth:"92vw",border:"1px solid var(--border)"}},
+    ce("div",{style:{display:"flex",gap:16,flex:1,minHeight:0}},
+      ce("div",{style:{flex:1,display:"flex",flexDirection:"column",minHeight:0,minWidth:0}},
+        view==="month"?ce(MonthView,null):view==="week"?ce(WeekView,null):ce(AgendaView,null)
+      ),
+      ce(DayPanel,null)
+    ),
+    newItem?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setNewItem(null);}},
+      ce("div",{style:{background:"var(--bg-app)",borderRadius:12,padding:24,width:420,maxWidth:"92vw",border:"1px solid var(--border)"}},
         ce("div",{style:{fontSize:15,fontWeight:600,marginBottom:12,display:"flex",justifyContent:"space-between"}},
-          (newItem?.type==="tarefa"?"Nova tarefa":"Novo evento")+" · "+(newItem?.date.toLocaleDateString("pt-PT",{day:"numeric",month:"short"})||""),
-          ce("button",{onClick:()=>setNewItem(null),style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},"x")),
-        ce("input",{className:"ip",value:niName,autoFocus:true,onChange:e=>setNiName(e.target.value),onKeyDown:e=>{if(e.key==="Enter")createFromCal();},placeholder:newItem?.type==="tarefa"?"Nome da tarefa...":"Nome do evento...",style:{marginBottom:10}}),
-        newItem?.type==="tarefa"?ce("select",{className:"ip",value:niPrio,onChange:e=>setNiPrio(e.target.value),style:{marginBottom:14,fontSize:12}},
-          ce("option",{value:"urgent"},"Urgente"),ce("option",{value:"high"},"Alta"),
-          ce("option",{value:"normal"},"Normal"),ce("option",{value:"low"},"Baixa")
-        ):ce("input",{className:"ip",type:"time",value:niTime,onChange:e=>setNiTime(e.target.value),style:{marginBottom:14,fontSize:12}}),
+          (newItem.type==="tarefa"?"Nova tarefa":"Novo evento")+" - "+(newItem.date.toLocaleDateString("pt-PT",{day:"numeric",month:"short"})||""),
+          ce("button",{onClick:function(){setNewItem(null);},style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},"x")),
+        ce("input",{className:"ip",value:niName,autoFocus:true,onChange:function(e){setNiName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")createFromCal();},placeholder:newItem.type==="tarefa"?"Nome da tarefa...":"Nome do evento...",style:{marginBottom:10}}),
+        newItem.type==="tarefa"?ce("div",{style:{marginBottom:10}},
+          ce("label",{style:{fontSize:11,color:"var(--text-3)",display:"block",marginBottom:3}},"Prioridade"),
+          ce("select",{className:"ip",value:niPrio,onChange:function(e){setNiPrio(e.target.value);},style:{fontSize:12}},
+            ce("option",{value:"urgent"},"Urgente"),ce("option",{value:"high"},"Alta"),ce("option",{value:"normal"},"Normal"),ce("option",{value:"low"},"Baixa"))
+        ):ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}},
+          ce("div",null,ce("label",{style:{fontSize:11,color:"var(--text-3)",display:"block",marginBottom:3}},"Hora"),ce("input",{className:"ip",type:"time",value:niTime,onChange:function(e){setNiTime(e.target.value);},style:{fontSize:12}})),
+          ce("div",null,ce("label",{style:{fontSize:11,color:"var(--text-3)",display:"block",marginBottom:3}},"Calendario"),
+            ce("select",{className:"ip",value:niDest,onChange:function(e){setNiDest(e.target.value);},style:{fontSize:12}},
+              ce("option",{value:"gcal1"},"Principal (borjaonstocks)"),
+              ce("option",{value:"gcal2"},"Pessoal (gmail)")
+            )
+          )
+        ),
+        newItem.type==="tarefa"?ce("div",{style:{marginBottom:12}},
+          ce("label",{style:{fontSize:11,color:"var(--text-3)",display:"block",marginBottom:3}},"Criar em"),
+          ce("div",{style:{display:"flex",gap:6}},
+            [["ambos","Ambos"],["clickup","ClickUp"],["local","Cafe"]].map(function(arr){return ce("button",{key:arr[0],onClick:function(){setNiDest(arr[0]);},style:{flex:1,padding:"5px",borderRadius:7,border:"1px solid "+(niDest===arr[0]?"var(--purple)":"var(--border)"),background:niDest===arr[0]?"var(--purple-bg)":"transparent",fontSize:11,cursor:"pointer",fontFamily:"inherit",color:niDest===arr[0]?"var(--purple)":"var(--text-2)"}},arr[1]);})
+          )
+        ):null,
         ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end"}},
-          ce("button",{className:"bt",onClick:()=>setNewItem(null)},"Cancelar"),
-          ce("button",{className:"bt dk",onClick:createFromCal,disabled:!niName.trim()},
-            ce("i",{className:"ti ti-plus",style:{fontSize:12}})," Criar"))
+          ce("button",{className:"bt",onClick:function(){setNewItem(null);}},"Cancelar"),
+          ce("button",{className:"bt dk",onClick:createFromCal,disabled:!niName.trim()},ce("i",{className:"ti ti-plus",style:{fontSize:12}})," Criar"))
       )
-    )
+    ):null
   );
 }
+
 function PMemoria({mem,saveMem,toast}){
   var[tab,setTab]=React.useState("nota");var[editMem,setEditMem]=useState(null);
   var[inp,setInp]=React.useState("");
