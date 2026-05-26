@@ -1339,6 +1339,7 @@ function PPrios({prios,savePrios,tasks,toast}){
 
 
 
+
 function PCal(props){
   var tasks=props.tasks||[];var calEvents=props.calEvents||[];
   var habits=props.habits||[];var logs=props.logs||{};
@@ -1378,34 +1379,30 @@ function PCal(props){
   async function createFromCal(){
     if(!niName.trim()||!newItem)return;
     var WH="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
+    var dateStr=(function(){var d=newItem.date;return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})();
+    var dateTs=String(newItem.date.getTime());
     if(newItem.type==="tarefa"){
-      var due=String(newItem.date.getTime());
-      var newT={id:"l"+Date.now(),name:niName,status:"por iniciar",priority:niPrio,list:"BBTOP20",list_id:"",due_date:due,url:"",date_updated:"0"};
-      // Always add to Café Matinal
+      var newT={id:"l"+Date.now(),name:niName,status:"por iniciar",priority:niPrio,list:"BBTOP20",list_id:"",due_date:dateTs,url:"",date_updated:"0"};
+      // 1. Café Matinal — always
       addTask&&addTask(newT);
-      // ClickUp
+      // 2. ClickUp
       if(niDest==="clickup"||niDest==="ambos"){
-        try{await whF({action:"create",task_name:niName,priority:niPrio,list:"BBTOP20",due_date:newItem.date.toISOString().slice(0,10)});}catch{}
+        try{await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create",task_name:niName,priority:niPrio,list:"BBTOP20",due_date:dateStr}),mode:"no-cors"});}catch{}
       }
-      // Google Calendar
-      try{
-        await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({action:"create_event",title:niName,
-            date:newItem.date.toISOString().slice(0,10),
-            time:"09:00",calendar:"gcal1",type:"tarefa",priority:niPrio}),
-          mode:"no-cors"});
-      }catch{}
-      toast&&toast("Tarefa criada"+(niDest==="ambos"?" no Cafe Matinal, ClickUp e Calendario":niDest==="clickup"?" no ClickUp e Cafe Matinal":" no Cafe Matinal")+"!");
+      // 3. Google Calendar (both configured calendars for tasks)
+      var gcal1=localStorage.getItem("bj-gcal1")||"";
+      var gcal2=localStorage.getItem("bj-gcal2")||"";
+      try{await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create_event",title:niName,date:dateStr,time:"09:00",calendar:"gcal1",email:gcal1,type:"tarefa",priority:niPrio,description:"Criado no Cafe Matinal"}),mode:"no-cors"});}catch{}
+      if(gcal2){try{await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create_event",title:niName,date:dateStr,time:"09:00",calendar:"gcal2",email:gcal2,type:"tarefa",priority:niPrio}),mode:"no-cors"});}catch{}}
+      var dest=niDest==="ambos"?"Cafe Matinal + ClickUp + Google Calendar":niDest==="clickup"?"Cafe Matinal + ClickUp + Google Calendar":"Cafe Matinal + Google Calendar";
+      toast&&toast("Tarefa criada em: "+dest+"!");
     }else{
-      // Event → Google Calendar only
+      // Evento → Google Calendar escolhido
+      var calEmail=niDest==="gcal2"?(localStorage.getItem("bj-gcal2")||""):(localStorage.getItem("bj-gcal1")||"");
       try{
-        await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({action:"create_event",title:niName,
-            date:newItem.date.toISOString().slice(0,10),
-            time:niTime,calendar:niDest||"gcal1"}),
-          mode:"no-cors"});
-        toast&&toast("Evento enviado para o Google Calendar!");
-      }catch(e){toast&&toast("Erro ao criar evento: "+e.message);}
+        await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create_event",title:niName,date:dateStr,time:niTime,calendar:niDest,email:calEmail,type:"evento"}),mode:"no-cors"});
+        toast&&toast("Evento criado no Google Calendar"+(niDest==="gcal2"?" pessoal":" principal")+"!");
+      }catch(e){toast&&toast("Erro ao criar evento");}
     }
     setNiName("");setNewItem(null);
   }
@@ -2839,7 +2836,31 @@ function App(){
   };
 
   const PgComp=PageMap[pg]||PageMap.hoje;
-  const notifCount=(()=>{if(!tasks||tasks.length===0)return 0;let c=0;const now=new Date();const ov=tasks.filter(function(t){return t.status!=="done"&&t.status!=="feito"&&t.due_date&&t.due_date!=="null"&&+t.due_date<now.setHours(0,0,0,0);});if(ov.length>0)c+=ov.length;const tod=(logs||{})[new Date().toDateString()]||{};const pendHabits=(habits||[]).filter(function(h){return !tod[h.id];}).length;if(pendHabits>0&&new Date().getHours()>=9)c+=pendHabits;return c;})();
+  const notifCount=(()=>{
+    if(!tasks||tasks.length===0)return 0;
+    var lastRead=parseInt(localStorage.getItem("bj-notif-read")||"0");
+    // Only count things that happened/became overdue AFTER last read
+    // For overdue tasks: count how many new overdue since last read
+    var now=new Date();
+    var midnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+    var ov=tasks.filter(function(t){
+      return t.status!=="done"&&t.status!=="feito"&&
+        t.due_date&&t.due_date!=="null"&&+t.due_date<midnight;
+    });
+    // Count = new overdue since read + pending habits
+    var tod=(logs||{})[now.toDateString()]||{};
+    var pendHabits=(habits||[]).filter(function(h){return !tod[h.id];}).length;
+    // If user has read recently (within this session check), show 0
+    // Show badge only if there are real unread items
+    var total=ov.length+(pendHabits>0&&now.getHours()>=9?pendHabits:0);
+    // If last read was AFTER midnight today and nothing changed, show 0
+    if(lastRead>midnight&&total===ov.length+pendHabits){
+      // Still has unread? Check if same count as when they read
+      var savedCount=parseInt(localStorage.getItem("bj-notif-count-at-read")||"-1");
+      if(savedCount>=0&&total<=savedCount)return 0;
+    }
+    return total;
+  })();
 
   return ce("div",{style:{display:"flex",width:"100%",height:"100%"}},
     ce("div",{className:"mob-overlay"+(navOpen?" open":""),onClick:()=>setNavOpen(false)}),
@@ -2896,7 +2917,7 @@ function App(){
         ce("div",{style:{display:"flex",alignItems:"center",gap:10}},
           ce("button",{onClick:()=>setSearchOpen(true),style:{display:"flex",alignItems:"center",gap:6,padding:"6px 14px",borderRadius:20,border:"1px solid var(--border)",background:"var(--bg-surface)",color:"var(--text-3)",fontSize:12,cursor:"pointer",fontFamily:"inherit"}},ce("i",{className:"ti ti-search",style:{fontSize:14}}),"Pesquisar  ",ce("kbd",{style:{fontSize:10,opacity:.6,fontFamily:"monospace",background:"rgba(0,0,0,.06)",padding:"1px 5px",borderRadius:4}},"/")),
           ce("button",{onClick:()=>setDarkMode(d=>!d),style:{width:32,height:32,borderRadius:8,border:"1px solid var(--border)",background:"var(--bg-surface)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"var(--text-2)",flexShrink:0}},ce("i",{className:"ti ti-"+(darkMode?"sun":"moon"),style:{fontSize:16}})),
-          ce("button",{onClick:()=>setNotifOpen(o=>!o),style:{position:"relative",width:32,height:32,borderRadius:8,border:"1px solid var(--border)",background:notifOpen?"#1A1A2E":"var(--bg-surface)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:notifOpen?"#fff":"var(--text-2)",flexShrink:0}},
+          ce("button",{onClick:()=>{setNotifOpen(function(o){if(!o)var _nc=(()=>{var t=tasks||[];var midnight=new Date();midnight.setHours(0,0,0,0);var ov=t.filter(function(x){return x.status!=="done"&&x.due_date&&x.due_date!=="null"&&+x.due_date<midnight.getTime();}).length;var tod=(logs||{})[new Date().toDateString()]||{};var ph=(habits||[]).filter(function(h){return !tod[h.id];}).length;return ov+(ph>0&&new Date().getHours()>=9?ph:0);})();localStorage.setItem("bj-notif-read",Date.now());localStorage.setItem("bj-notif-count-at-read",String(_nc));return !o;});},style:{position:"relative",width:32,height:32,borderRadius:8,border:"1px solid var(--border)",background:notifOpen?"#1A1A2E":"var(--bg-surface)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:notifOpen?"#fff":"var(--text-2)",flexShrink:0}},
             ce("i",{className:"ti ti-bell",style:{fontSize:15}}),
             (!notifOpen&&notifCount>0)&&ce("div",{style:{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#E53E3E",color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid var(--bg-app)"}},notifCount>9?"9+":notifCount)
           ),
