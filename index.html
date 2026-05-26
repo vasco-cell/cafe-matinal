@@ -470,6 +470,7 @@ Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}.
 
 
 
+
 function PTarefas(props){
   var tasks=props.tasks||[];var addTask=props.addTask;var updateTask=props.updateTask;
   var toast=props.toast;var prios=props.prios||[];var savePrios=props.savePrios;
@@ -481,7 +482,7 @@ function PTarefas(props){
   var tDesc_s=useState("");var tDesc=tDesc_s[0],setTDesc=tDesc_s[1];
   var tPrio_s=useState("normal");var tPrio=tPrio_s[0],setTPrio=tPrio_s[1];
   var tStatus_s=useState("por iniciar");var tStatus=tStatus_s[0],setTStatus=tStatus_s[1];
-  var tDue_s=useState("");var tDue=tDue_s[0],setTDue=tDue_s[1];
+  var tDue_s=useState(new Date().toISOString().slice(0,10));var tDue=tDue_s[0],setTDue=tDue_s[1];
   var tList_s=useState("BBTOP20");var tList=tList_s[0],setTList=tList_s[1];
   var tDest_s=useState("ambos");var tDest=tDest_s[0],setTDest=tDest_s[1];
   var tAssocPrio_s=useState("");var tAssocPrio=tAssocPrio_s[0],setTAssocPrio=tAssocPrio_s[1];
@@ -550,7 +551,7 @@ function PTarefas(props){
     if(filtered.length===0)return ce("div",{style:{textAlign:"center",padding:"40px 20px",color:"var(--text-3)"}},
       ce("i",{className:"ti ti-checkbox",style:{fontSize:32,display:"block",marginBottom:8,opacity:.4}}),
       ce("p",{style:{fontSize:13}},"Sem tarefas neste filtro."));
-    return ce("div",{style:{flex:1,overflowY:"auto",minHeight:0,borderRadius:10,border:"1px solid var(--border)",overflow:"hidden"}},
+    return ce("div",{style:{flex:1,overflowY:"auto",minHeight:0,borderRadius:10,border:"1px solid var(--border)"}},
       filtered.map(function(t,idx){
         var late=t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<new Date()&&t.status!=="done"&&t.status!=="feito";
         var isDone=t.status==="done"||t.status==="feito"||t.status==="closed";
@@ -892,7 +893,7 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
   const[newE,setNewE]=useState("⭐");
   const[newC,setNewC]=useState("#7C3AED");
 
-  function tog(id){saveLogs({...logs,[td]:{...tdL,[id]:!tdL[id]}});}
+  function tog(id){var newDay=Object.assign({},tdL);newDay[id]=!newDay[id];var newLogs=Object.assign({},logs);newLogs[td]=newDay;saveLogs(newLogs);}
 
   function streak(id){
     let s=0,d=new Date(today);
@@ -1336,6 +1337,7 @@ function PPrios({prios,savePrios,tasks,toast}){
 
 
 
+
 function PCal(props){
   var tasks=props.tasks||[];var calEvents=props.calEvents||[];
   var habits=props.habits||[];var logs=props.logs||{};
@@ -1374,21 +1376,35 @@ function PCal(props){
 
   async function createFromCal(){
     if(!niName.trim()||!newItem)return;
+    var WH="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
     if(newItem.type==="tarefa"){
       var due=String(newItem.date.getTime());
-      addTask&&addTask({id:"l"+Date.now(),name:niName,status:"por iniciar",priority:niPrio,list:"BBTOP20",list_id:"",due_date:due,url:"",date_updated:"0"});
-      if(niDest==="clickup"||niDest==="ambos"){try{await whF({action:"create",task_name:niName,priority:niPrio,due_date:newItem.date.toISOString().slice(0,10)});}catch{}}
-      toast&&toast("Tarefa criada!");
-    }else{
-      // Create Google Calendar event via Make webhook
+      var newT={id:"l"+Date.now(),name:niName,status:"por iniciar",priority:niPrio,list:"BBTOP20",list_id:"",due_date:due,url:"",date_updated:"0"};
+      // Always add to Café Matinal
+      addTask&&addTask(newT);
+      // ClickUp
+      if(niDest==="clickup"||niDest==="ambos"){
+        try{await whF({action:"create",task_name:niName,priority:niPrio,list:"BBTOP20",due_date:newItem.date.toISOString().slice(0,10)});}catch{}
+      }
+      // Google Calendar
       try{
-        await fetch("https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu",{
-          method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({action:"create_event",title:niName,date:newItem.date.toISOString().slice(0,10),time:niTime,calendar:niDest==="cal2"?"gcal2":"gcal1"}),
-          mode:"no-cors"
-        });
+        await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({action:"create_event",title:niName,
+            date:newItem.date.toISOString().slice(0,10),
+            time:"09:00",calendar:"gcal1",type:"tarefa",priority:niPrio}),
+          mode:"no-cors"});
+      }catch{}
+      toast&&toast("Tarefa criada"+(niDest==="ambos"?" no Cafe Matinal, ClickUp e Calendario":niDest==="clickup"?" no ClickUp e Cafe Matinal":" no Cafe Matinal")+"!");
+    }else{
+      // Event → Google Calendar only
+      try{
+        await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({action:"create_event",title:niName,
+            date:newItem.date.toISOString().slice(0,10),
+            time:niTime,calendar:niDest||"gcal1"}),
+          mode:"no-cors"});
         toast&&toast("Evento enviado para o Google Calendar!");
-      }catch(e){toast&&toast("Evento criado localmente (webhook indisponivel)");}
+      }catch(e){toast&&toast("Erro ao criar evento: "+e.message);}
     }
     setNiName("");setNewItem(null);
   }
@@ -2807,7 +2823,7 @@ function App(){
   };
 
   const PgComp=PageMap[pg]||PageMap.hoje;
-  const notifCount=(()=>{let c=0;const ov=tasks.filter(t=>t.status!=="done"&&t.due_date&&t.due_date!=="null"&&+t.due_date<new Date().setHours(0,0,0,0));if(ov.length)c++;if(tasks.filter(t=>t.status!=="done"&&t.priority==="urgent").length)c++;const tod=(logs||{})[new Date().toDateString()]||{};if((habits||[]).filter(h=>!tod[h.id]).length>0&&new Date().getHours()>=9)c++;return c;})();
+  const notifCount=(()=>{if(!tasks||tasks.length===0)return 0;let c=0;const now=new Date();const ov=tasks.filter(function(t){return t.status!=="done"&&t.status!=="feito"&&t.due_date&&t.due_date!=="null"&&+t.due_date<now.setHours(0,0,0,0);});if(ov.length>0)c+=ov.length;const tod=(logs||{})[new Date().toDateString()]||{};const pendHabits=(habits||[]).filter(function(h){return !tod[h.id];}).length;if(pendHabits>0&&new Date().getHours()>=9)c+=pendHabits;return c;})();
 
   return ce("div",{style:{display:"flex",width:"100%",height:"100%"}},
     ce("div",{className:"mob-overlay"+(navOpen?" open":""),onClick:()=>setNavOpen(false)}),
