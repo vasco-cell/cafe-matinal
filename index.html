@@ -882,64 +882,68 @@ function PNotas(props){
   );
 }
 
-function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
-  const n=new Date();
-  // Normalise to midnight local time
-  const today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
-  const td=today.toDateString();
-  const tdL=logs[td]||{};
-  const EMOJIS=["⭐","💪","📚","🏃","💧","🧘","✍️","🎯","💤","🥗"];
-  const[show,setShow]=useState(false);
-  const[newH,setNewH]=useState("");
-  const[newE,setNewE]=useState("⭐");
-  const[newC,setNewC]=useState("#7C3AED");
 
-  function tog(id){var curDay=Object.assign({},(logs||{})[td]||{});curDay[id]=!curDay[id];var newLogs=Object.assign({},logs||{});newLogs[td]=curDay;saveLogs(newLogs);}
+function PHabitos(props){
+  var habits=props.habits||[];var saveHabits=props.saveHabits;
+  var logs=props.logs||{};var saveLogs=props.saveLogs;var toast=props.toast;
+  var n=new Date();
+  var today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  var td=today.toDateString();
+  var sh=useState(false);var show=sh[0],setShow=sh[1];
+  var nh=useState("");var newH=nh[0],setNewH=nh[1];
+  var ne=useState("⭐");var newE=ne[0],setNewE=ne[1];
+  var nc=useState("#7C3AED");var newC=nc[0],setNewC=nc[1];
+  var EMOJIS=["⭐","💪","📚","🏃","💧","🧘","✍️","🎯","💤","🥗"];
+
+  function tog(id){
+    var safeLogs=logs&&typeof logs==="object"?logs:{};
+    var todayLogs=safeLogs[td]&&typeof safeLogs[td]==="object"?Object.assign({},safeLogs[td]):{};
+    todayLogs[id]=!todayLogs[id];
+    var newLogs=Object.assign({},safeLogs);
+    newLogs[td]=todayLogs;
+    saveLogs&&saveLogs(newLogs);
+  }
+
+  function isDone(id){
+    if(!logs||typeof logs!=="object")return false;
+    var day=logs[td];
+    return !!(day&&day[id]);
+  }
 
   function streak(id){
-    let s=0,d=new Date(today);
-    while(true){
-      const k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
+    var s=0;var d=new Date(today);
+    for(var i=0;i<366;i++){
+      var k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
       if(!(logs[k]&&logs[k][id]))break;
       s++;d.setDate(d.getDate()-1);
     }
     return s;
   }
 
-  // Grid: always show exactly 5 complete Mon→Sun weeks
-  // Find the Monday that starts the week containing today
-  const dow=today.getDay()===0?6:today.getDay()-1; // Mon=0 … Sun=6
-  // Monday of current week
-  const weekStart=new Date(today);weekStart.setDate(today.getDate()-dow);
-  // Go back 4 more weeks → 5 weeks total
-  const gridStart=new Date(weekStart);gridStart.setDate(weekStart.getDate()-28);
+  var dow=today.getDay()===0?6:today.getDay()-1;
+  var weekStart=new Date(today);weekStart.setDate(today.getDate()-dow);
+  var gridStart=new Date(weekStart);gridStart.setDate(weekStart.getDate()-28);
 
-  const grid=(id,color)=>{
-    const days=Array.from({length:35},(_,i)=>{
-      const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;
-    });
-    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,clamp(36px,10vw,80px))",gap:6,marginTop:10,justifyContent:"start"}},
-      ["S","T","Q","Q","S","S","D"].map((d,i)=>
-        ce("div",{key:i,style:{fontSize:9,color:"var(--text-3)",textAlign:"center",marginBottom:4,width:"clamp(34px,9.5vw,80px)",fontWeight:600}},d)),
-      days.map((d,i)=>{
-        const k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
-        const done=(logs||{})[k]&&(logs||{})[k][id];
-        const isToday=k===td;
-        const isFuture=d>today;
+  function grid(id,color){
+    var days=Array.from({length:35},function(_,i){var d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;});
+    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,clamp(34px,9.5vw,80px))",gap:3,marginTop:8}},
+      ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(function(day){
+        return ce("div",{key:day,style:{fontSize:9,color:"var(--text-3)",textAlign:"center",marginBottom:3,width:"clamp(34px,9.5vw,80px)",fontWeight:600}},day);
+      }),
+      days.map(function(d,i){
+        var k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
+        var done2=!!(logs[k]&&logs[k][id]);
+        var isToday=k===td;
+        var isFuture=d>today;
         return ce("div",{key:i,
           title:d.toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"short"}),
-          style:{
-            width:"clamp(34px,9.5vw,80px)",height:"clamp(34px,9.5vw,80px)",borderRadius:8,
-            background:isFuture?"var(--border-light)":done?(color||"#7C3AED"):"var(--border)",
+          style:{width:"clamp(34px,9.5vw,80px)",height:"clamp(34px,9.5vw,80px)",borderRadius:8,
+            background:isFuture?"var(--border-light)":done2?(color||"#7C3AED"):"var(--border)",
             boxShadow:isToday?"0 0 0 2px "+(color||"#7C3AED"):"none",
-            opacity:isFuture?0.25:done?1:0.55,
-            cursor:"default",
-            transition:"background .15s"
-          }
-        });
+            opacity:isFuture?0.25:done2?1:0.55,transition:"background .15s"}});
       })
     );
-  };
+  }
 
   return ce("div",{style:{animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}},
@@ -948,93 +952,85 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
           ce("i",{className:"ti ti-target",style:{fontSize:20,color:"#38A169"}})),
         ce("div",null,
           ce("div",{className:"pt",style:{fontSize:24}},"Hábitos"),
-          ce("div",{className:"ps"},
-            today.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"})
-          )
+          ce("div",{className:"ps"},today.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"}))
         )
       ),
-      ce("button",{className:"bt dk",onClick:()=>setShow(true),style:{gap:5}},
-        ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Novo hábito")
+      ce("button",{className:"bt dk",onClick:function(){setShow(true);},style:{gap:5}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Novo hábito")
     ),
-
-    habits.length===0?ce("div",{style:{textAlign:"center",padding:"48px 20px",color:"var(--text-3)"}},
-      ce("i",{className:"ti ti-target",style:{fontSize:36,display:"block",marginBottom:10,opacity:.3}}),
-      ce("p",{style:{fontSize:14}},"Sem hábitos ainda."),
-      ce("button",{className:"bt dk",onClick:()=>setShow(true),style:{marginTop:12,gap:5}},
-        ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Criar primeiro hábito")
-    ):
-
-    ce("div",{style:{display:"flex",flexDirection:"column",gap:14}},
-      habits.map(h=>{
-        const done=((logs||{})[td]||{})[h.id];
-        const str=streak(h.id);
-        return ce("div",{key:h.id,className:"cd",style:{padding:16}},
-          ce("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:10}},
-            ce("button",{onClick:()=>tog(h.id),style:{
-              width:36,height:36,borderRadius:"50%",border:"2px solid "+(done?(h.color||"#7C3AED"):"var(--border)"),
-              background:done?(h.color||"#7C3AED"):"transparent",cursor:"pointer",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              fontSize:16,flexShrink:0,transition:"all .15s"}},
-              done?ce("i",{className:"ti ti-check",style:{fontSize:16,color:"#fff"}}):ce("span",null,h.emoji||"⭐")
-            ),
-            ce("div",{style:{flex:1}},
-              ce("div",{style:{fontSize:14,fontWeight:500,color:"var(--text-1)"}},h.name),
-              ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:2}},
-                str>0?str+" dia"+(str!==1?"s":"")+" seguido"+(str!==1?"s":"")+" 🔥":"Ainda não feito hoje"
-              )
-            ),
-            ce("div",{style:{display:"flex",gap:6}},
-              ce("div",{style:{padding:"3px 9px",borderRadius:20,fontSize:11,fontWeight:600,
-                background:done?"#F0FFF4":"var(--bg-surface)",color:done?"#38A169":"var(--text-3)",
-                border:"1px solid "+(done?"#9AE6B4":"var(--border)")}},
-                done?"✓ Feito":"Pendente"
+    habits.length===0?
+      ce("div",{style:{textAlign:"center",padding:"48px 20px",color:"var(--text-3)"}},
+        ce("i",{className:"ti ti-target",style:{fontSize:36,display:"block",marginBottom:10,opacity:.3}}),
+        ce("p",{style:{fontSize:14}},"Sem hábitos ainda."),
+        ce("button",{className:"bt dk",onClick:function(){setShow(true);},style:{marginTop:12,gap:5}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Criar primeiro hábito")
+      ):
+      ce("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+        habits.map(function(h){
+          var done=isDone(h.id);
+          var str=streak(h.id);
+          return ce("div",{key:h.id,className:"cd",style:{padding:16}},
+            ce("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:10}},
+              ce("button",{onClick:function(){tog(h.id);},
+                style:{width:40,height:40,borderRadius:"50%",
+                  border:"2px solid "+(done?(h.color||"#7C3AED"):"var(--border)"),
+                  background:done?(h.color||"#7C3AED"):"transparent",
+                  cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:18,flexShrink:0,transition:"all .2s"}},
+                done?ce("i",{className:"ti ti-check",style:{fontSize:18,color:"#fff"}}):ce("span",null,h.emoji||"⭐")
               ),
-              ce("button",{onClick:()=>saveHabits(habits.filter(x=>x.id!==h.id)),
-                style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",padding:"2px 5px"}},
-                ce("i",{className:"ti ti-trash",style:{fontSize:13}})
+              ce("div",{style:{flex:1}},
+                ce("div",{style:{fontSize:14,fontWeight:500,color:"var(--text-1)"}},h.name),
+                ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:2}},
+                  str>0?str+" dia"+(str!==1?"s":"")+" seguido"+(str!==1?"s":"")+" 🔥":"Ainda não feito hoje"
+                )
+              ),
+              ce("div",{style:{display:"flex",gap:6}},
+                ce("div",{style:{padding:"3px 9px",borderRadius:20,fontSize:11,fontWeight:600,
+                  background:done?"#F0FFF4":"var(--bg-surface)",color:done?"#38A169":"var(--text-3)",
+                  border:"1px solid "+(done?"#9AE6B4":"var(--border)")}},
+                  done?"✓ Feito":"Pendente"
+                ),
+                ce("button",{onClick:function(){saveHabits&&saveHabits(habits.filter(function(x){return x.id!==h.id;}));},
+                  style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",padding:"2px 5px"}},
+                  ce("i",{className:"ti ti-trash",style:{fontSize:13}})
+                )
               )
-            )
-          ),
-          grid(h.id,h.color||"#7C3AED")
-        );
-      })
-    ),
-
-    show&&ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},onClick:e=>{if(e.target===e.currentTarget)setShow(false);}},
+            ),
+            grid(h.id,h.color||"#7C3AED")
+          );
+        })
+      ),
+    show?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShow(false);}},
       ce("div",{style:{background:"var(--bg-app)",borderRadius:12,padding:24,width:380,maxWidth:"92vw",border:"1px solid var(--border)"}},
         ce("div",{style:{fontSize:15,fontWeight:600,marginBottom:16,display:"flex",justifyContent:"space-between"}},
           "Novo hábito",
-          ce("button",{onClick:()=>setShow(false),style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},"×")
+          ce("button",{onClick:function(){setShow(false);},style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},"x")
         ),
-        ce("input",{className:"ip",value:newH,onChange:e=>setNewH(e.target.value),
-          onKeyDown:e=>{if(e.key==="Enter"&&newH.trim()){saveHabits([...habits,{id:"h"+Date.now(),name:newH.trim(),emoji:newE,color:newC}]);setNewH("");setShow(false);toast&&toast("Hábito criado!");}},
+        ce("input",{className:"ip",value:newH,onChange:function(e){setNewH(e.target.value);},
+          onKeyDown:function(e){if(e.key==="Enter"&&newH.trim()){saveHabits&&saveHabits(habits.concat([{id:"h"+Date.now(),name:newH.trim(),emoji:newE,color:newC}]));setNewH("");setShow(false);toast&&toast("Hábito criado!");}},
           placeholder:"Nome do hábito...",autoFocus:true,style:{marginBottom:10}}),
         ce("div",{style:{marginBottom:10}},
           ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:6}},"Emoji"),
           ce("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
-            EMOJIS.map(e=>ce("button",{key:e,onClick:()=>setNewE(e),
-              style:{fontSize:18,padding:"4px 8px",borderRadius:6,border:"2px solid "+(newE===e?"var(--purple)":"var(--border)"),
-                background:newE===e?"var(--purple-bg)":"transparent",cursor:"pointer"}},e))
+            EMOJIS.map(function(em){return ce("button",{key:em,onClick:function(){setNewE(em);},style:{fontSize:18,padding:"4px 8px",borderRadius:6,border:"2px solid "+(newE===em?"var(--purple)":"var(--border)"),background:newE===em?"var(--purple-bg)":"transparent",cursor:"pointer"}},em);})
           )
         ),
         ce("div",{style:{marginBottom:14}},
           ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:6}},"Cor"),
           ce("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-            ["#7C3AED","#38A169","#3182CE","#E53E3E","#D69E2E","#D53F8C","#DD6B20","#2C7A7B"].map(c=>
-              ce("button",{key:c,onClick:()=>setNewC(c),
-                style:{width:24,height:24,borderRadius:"50%",background:c,border:newC===c?"3px solid var(--text-1)":"2px solid transparent",cursor:"pointer"}})
-            )
+            ["#7C3AED","#38A169","#3182CE","#E53E3E","#D69E2E","#D53F8C","#DD6B20","#2C7A7B"].map(function(c){
+              return ce("button",{key:c,onClick:function(){setNewC(c);},style:{width:24,height:24,borderRadius:"50%",background:c,border:newC===c?"3px solid var(--text-1)":"2px solid transparent",cursor:"pointer"}});
+            })
           )
         ),
         ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end"}},
-          ce("button",{className:"bt",onClick:()=>setShow(false)},"Cancelar"),
-          ce("button",{className:"bt dk",disabled:!newH.trim(),onClick:()=>{
-            saveHabits([...habits,{id:"h"+Date.now(),name:newH.trim(),emoji:newE,color:newC}]);
+          ce("button",{className:"bt",onClick:function(){setShow(false);}},"Cancelar"),
+          ce("button",{className:"bt dk",disabled:!newH.trim(),onClick:function(){
+            saveHabits&&saveHabits(habits.concat([{id:"h"+Date.now(),name:newH.trim(),emoji:newE,color:newC}]));
             setNewH("");setShow(false);toast&&toast("Hábito criado!");
           },style:{gap:5}},ce("i",{className:"ti ti-check",style:{fontSize:12}})," Criar")
         )
       )
-    )
+    ):null
   );
 }
 
