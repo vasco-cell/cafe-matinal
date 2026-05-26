@@ -58,6 +58,7 @@ a{text-decoration:none}
 }
 
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div id="err"></div>
@@ -1340,6 +1341,7 @@ function PPrios({prios,savePrios,tasks,toast}){
 
 
 
+
 function PCal(props){
   var tasks=props.tasks||[];var calEvents=props.calEvents||[];
   var habits=props.habits||[];var logs=props.logs||{};
@@ -1378,31 +1380,29 @@ function PCal(props){
 
   async function createFromCal(){
     if(!niName.trim()||!newItem)return;
-    var WH="https://hook.eu1.make.com/77msmctjelcxsi2zss5yttvuyys29rlu";
     var dateStr=(function(){var d=newItem.date;return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})();
     var dateTs=String(newItem.date.getTime());
+    var cal1Id=localStorage.getItem("bj-gcal1")||"primary";
+    var cal2Id=localStorage.getItem("bj-gcal2")||"";
     if(newItem.type==="tarefa"){
+      // 1. Café Matinal
       var newT={id:"l"+Date.now(),name:niName,status:"por iniciar",priority:niPrio,list:"BBTOP20",list_id:"",due_date:dateTs,url:"",date_updated:"0"};
-      // 1. Café Matinal — always
       addTask&&addTask(newT);
       // 2. ClickUp
       if(niDest==="clickup"||niDest==="ambos"){
-        try{await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create",task_name:niName,priority:niPrio,list:"BBTOP20",due_date:dateStr}),mode:"no-cors"});}catch{}
+        try{await whF({action:"create",task_name:niName,priority:niPrio,list:"BBTOP20",due_date:dateStr});}catch{}
       }
-      // 3. Google Calendar (both configured calendars for tasks)
-      var gcal1=localStorage.getItem("bj-gcal1")||"";
-      var gcal2=localStorage.getItem("bj-gcal2")||"";
-      try{await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create_event",title:niName,date:dateStr,time:"09:00",calendar:"gcal1",email:gcal1,type:"tarefa",priority:niPrio,description:"Criado no Cafe Matinal"}),mode:"no-cors"});}catch{}
-      if(gcal2){try{await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create_event",title:niName,date:dateStr,time:"09:00",calendar:"gcal2",email:gcal2,type:"tarefa",priority:niPrio}),mode:"no-cors"});}catch{}}
-      var dest=niDest==="ambos"?"Cafe Matinal + ClickUp + Google Calendar":niDest==="clickup"?"Cafe Matinal + ClickUp + Google Calendar":"Cafe Matinal + Google Calendar";
-      toast&&toast("Tarefa criada em: "+dest+"!");
+      // 3. Google Calendar — both calendars
+      var ok1=await gcalCreateEvent(cal1Id,niName,dateStr,"09:00","Tarefa criada no Cafe Matinal | Prioridade: "+niPrio);
+      var ok2=cal2Id?await gcalCreateEvent(cal2Id,niName,dateStr,"09:00","Tarefa criada no Cafe Matinal | Prioridade: "+niPrio):false;
+      var calMsg=ok1||ok2?" + Google Calendar":"";
+      toast&&toast("Tarefa criada no Cafe Matinal"+(niDest!=="local"?" + ClickUp":"")+calMsg+"!");
     }else{
-      // Evento → Google Calendar escolhido
-      var calEmail=niDest==="gcal2"?(localStorage.getItem("bj-gcal2")||""):(localStorage.getItem("bj-gcal1")||"");
-      try{
-        await fetch(WH,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"create_event",title:niName,date:dateStr,time:niTime,calendar:niDest,email:calEmail,type:"evento"}),mode:"no-cors"});
-        toast&&toast("Evento criado no Google Calendar"+(niDest==="gcal2"?" pessoal":" principal")+"!");
-      }catch(e){toast&&toast("Erro ao criar evento");}
+      // Evento → calendário escolhido directamente
+      var targetCal=niDest==="gcal2"?(cal2Id||cal1Id):cal1Id;
+      var ok=await gcalCreateEvent(targetCal,niName,dateStr,niTime,"Evento criado no Cafe Matinal");
+      if(ok) toast&&toast("Evento criado no Google Calendar"+(niDest==="gcal2"?" pessoal":" principal")+"!");
+      else toast&&toast("Erro ao criar evento. Verifica a ligacao ao Google Calendar nas Definicoes.");
     }
     setNiName("");setNewItem(null);
   }
@@ -2697,6 +2697,79 @@ const NAV=[
 ];
 
 // ── APP ───────────────────────────────────────────────────────────────────────
+// ── Google Calendar Direct API ─────────────────────────────────────────────
+var GCAL_CLIENT_ID="646056331144-185m6p0ns41nla9pblqghi2gjkr6kh1j.apps.googleusercontent.com";
+var GCAL_SCOPE="https://www.googleapis.com/auth/calendar";
+var _gcalToken=null;
+var _gcalTokenClient=null;
+var _gcalPendingResolve=null;
+
+function gcalInit(){
+  if(!window.google||!window.google.accounts)return false;
+  if(_gcalTokenClient)return true;
+  try{
+    _gcalTokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:GCAL_CLIENT_ID,
+      scope:GCAL_SCOPE,
+      callback:function(resp){
+        if(resp.access_token){
+          _gcalToken=resp.access_token;
+          localStorage.setItem("bj-gcal-token",resp.access_token);
+          // expires in 1hr
+          localStorage.setItem("bj-gcal-token-exp",String(Date.now()+3500000));
+        }
+        if(_gcalPendingResolve){_gcalPendingResolve(resp.access_token||null);_gcalPendingResolve=null;}
+      }
+    });
+    return true;
+  }catch(e){console.warn("gcalInit error",e);return false;}
+}
+
+function gcalGetToken(){
+  return new Promise(function(resolve){
+    // Check cached token
+    var cached=localStorage.getItem("bj-gcal-token");
+    var exp=parseInt(localStorage.getItem("bj-gcal-token-exp")||"0");
+    if(cached&&Date.now()<exp){_gcalToken=cached;resolve(cached);return;}
+    // Need new token
+    if(!gcalInit()){resolve(null);return;}
+    _gcalPendingResolve=resolve;
+    _gcalTokenClient.requestAccessToken({prompt:""});
+  });
+}
+
+async function gcalCreateEvent(calendarId,title,dateStr,timeStr,description){
+  var tk=await gcalGetToken();
+  if(!tk){console.warn("No Google Calendar token");return false;}
+  var start,end;
+  if(timeStr&&timeStr!=="all-day"){
+    start={dateTime:dateStr+"T"+timeStr+":00",timeZone:"Europe/Lisbon"};
+    var parts=timeStr.split(":");
+    var endH=String((parseInt(parts[0])+1)%24).padStart(2,"0");
+    end={dateTime:dateStr+"T"+endH+":"+parts[1]+":00",timeZone:"Europe/Lisbon"};
+  }else{
+    start={date:dateStr};end={date:dateStr};
+  }
+  var body={summary:title,description:description||"Criado no Cafe Matinal",start:start,end:end};
+  try{
+    var r=await fetch("https://www.googleapis.com/calendar/v3/calendars/"+encodeURIComponent(calendarId)+"/events",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json"},
+      body:JSON.stringify(body)
+    });
+    var data=await r.json();
+    if(r.ok){console.log("GCal event created:",data.id);return true;}
+    else{console.warn("GCal error:",data.error);return false;}
+  }catch(e){console.warn("GCal fetch error",e);return false;}
+}
+
+async function gcalConnect(){
+  if(!gcalInit()){alert("Google Identity Services nao carregou. Tenta recarregar a pagina.");return false;}
+  var tk=await gcalGetToken();
+  return !!tk;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function App(){
   const[pg,setPg]=useState("hoje");
 
