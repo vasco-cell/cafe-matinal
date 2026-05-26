@@ -1189,7 +1189,16 @@ function PDefs({tasks,calEvents,loading,lastSync,setPage,toast}){var aks=useStat
           );
         }),
         ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:4,lineHeight:1.5}},
-          "Introduz o email do Google Calendar. Os eventos sao sincronizados via Make.com.")
+          "Introduz o email do Google Calendar (ex: vasco@gmail.com) e clica em Ligar."),
+      ce("button",{className:"bt dk",
+        onClick:async function(){
+          var ok=await gcalConnect();
+          toast&&toast(ok?"Google Calendar ligado! Agora podes criar eventos directamente.":"Nao foi possivel ligar. Verifica o popup do Google.");
+        },
+        style:{gap:6,width:"100%",justifyContent:"center",marginTop:10}},
+        (function(){var t=localStorage.getItem("bj-gcal-token");var e=parseInt(localStorage.getItem("bj-gcal-token-exp")||"0");return t&&Date.now()<e?"✓ Google Calendar ligado":"Ligar Google Calendar";})()
+      ),
+      ce("div",{style:{fontSize:10,color:"var(--text-3)",marginTop:6}},"Autentica uma vez — o token renova automaticamente durante a sessao.")
       )
     ),
     // Briefing
