@@ -894,7 +894,7 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
   const[newE,setNewE]=useState("⭐");
   const[newC,setNewC]=useState("#7C3AED");
 
-  function tog(id){var newDay=Object.assign({},tdL);newDay[id]=!newDay[id];var newLogs=Object.assign({},logs);newLogs[td]=newDay;saveLogs(newLogs);}
+  function tog(id){var curDay=Object.assign({},(logs||{})[td]||{});curDay[id]=!curDay[id];var newLogs=Object.assign({},logs||{});newLogs[td]=curDay;saveLogs(newLogs);}
 
   function streak(id){
     let s=0,d=new Date(today);
@@ -923,7 +923,7 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
         ce("div",{key:i,style:{fontSize:9,color:"var(--text-3)",textAlign:"center",marginBottom:4,width:"clamp(34px,9.5vw,80px)",fontWeight:600}},d)),
       days.map((d,i)=>{
         const k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
-        const done=logs[k]&&logs[k][id];
+        const done=(logs||{})[k]&&(logs||{})[k][id];
         const isToday=k===td;
         const isFuture=d>today;
         return ce("div",{key:i,
@@ -966,7 +966,7 @@ function PHabitos({habits,saveHabits,logs,saveLogs,toast}){
 
     ce("div",{style:{display:"flex",flexDirection:"column",gap:14}},
       habits.map(h=>{
-        const done=tdL[h.id];
+        const done=((logs||{})[td]||{})[h.id];
         const str=streak(h.id);
         return ce("div",{key:h.id,className:"cd",style:{padding:16}},
           ce("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:10}},
