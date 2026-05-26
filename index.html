@@ -886,6 +886,10 @@ function PNotas(props){
 function PHabitos(props){
   var habits=props.habits||[];var saveHabits=props.saveHabits;
   var logs=props.logs||{};var saveLogs=props.saveLogs;var toast=props.toast;
+  var localLogs_s=useState(function(){return props.logs||{};});
+  var localLogs=localLogs_s[0];var setLocalLogs=localLogs_s[1];
+  // Sync localLogs when props.logs changes (from GitHub load)
+  useEffect(function(){setLocalLogs(props.logs||{});},[props.logs]);
   var n=new Date();
   var today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
   var td=today.toDateString();
@@ -896,17 +900,19 @@ function PHabitos(props){
   var EMOJIS=["⭐","💪","📚","🏃","💧","🧘","✍️","🎯","💤","🥗"];
 
   function tog(id){
-    var safeLogs=logs&&typeof logs==="object"?logs:{};
+    var safeLogs=localLogs&&typeof localLogs==="object"?localLogs:{};
     var todayLogs=safeLogs[td]&&typeof safeLogs[td]==="object"?Object.assign({},safeLogs[td]):{};
     todayLogs[id]=!todayLogs[id];
     var newLogs=Object.assign({},safeLogs);
     newLogs[td]=todayLogs;
+    setLocalLogs(newLogs);
     saveLogs&&saveLogs(newLogs);
   }
 
   function isDone(id){
-    if(!logs||typeof logs!=="object")return false;
-    var day=logs[td];
+    var src=localLogs&&typeof localLogs==="object"?localLogs:logs;
+    if(!src||typeof src!=="object")return false;
+    var day=src[td];
     return !!(day&&day[id]);
   }
 
