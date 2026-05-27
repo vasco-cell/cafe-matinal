@@ -886,157 +886,136 @@ function PNotas(props){
 function PHabitos(props){
   var habits=props.habits||[];var saveHabits=props.saveHabits;
   var logs=props.logs||{};var saveLogs=props.saveLogs;var toast=props.toast;
-  var localLogs_s=useState(function(){return props.logs||{};});
-  var localLogs=localLogs_s[0];var setLocalLogs=localLogs_s[1];
-  // Sync localLogs when props.logs changes (from GitHub load)
-  useEffect(function(){setLocalLogs(props.logs||{});},[props.logs]);
   var n=new Date();
   var today=new Date(n.getFullYear(),n.getMonth(),n.getDate());
   var td=today.toDateString();
-  var sh=useState(false);var show=sh[0],setShow=sh[1];
-  var nh=useState("");var newH=nh[0],setNewH=nh[1];
-  var ne=useState("⭐");var newE=ne[0],setNewE=ne[1];
-  var nc=useState("#7C3AED");var newC=nc[0],setNewC=nc[1];
-  var EMOJIS=["⭐","💪","📚","🏃","💧","🧘","✍️","🎯","💤","🥗"];
-
+  var _td_s=useState({});var todayDone=_td_s[0];var setTodayDone=_td_s[1];
+  var _loaded_s=useState(false);var loaded=_loaded_s[0];var setLoaded=_loaded_s[1];
+  if(!loaded&&logs&&Object.keys(logs).length>0){
+    setLoaded(true);
+    setTodayDone(logs[td]&&typeof logs[td]==="object"?Object.assign({},logs[td]):{});
+  }
   function tog(id){
-    var safeLogs=localLogs&&typeof localLogs==="object"?localLogs:{};
-    var todayLogs=safeLogs[td]&&typeof safeLogs[td]==="object"?Object.assign({},safeLogs[td]):{};
-    todayLogs[id]=!todayLogs[id];
-    var newLogs=Object.assign({},safeLogs);
-    newLogs[td]=todayLogs;
-    setLocalLogs(newLogs);
-    saveLogs&&saveLogs(newLogs);
+    var nd=Object.assign({},todayDone);nd[id]=!nd[id];
+    setTodayDone(nd);
+    var nl=Object.assign({},logs);nl[td]=nd;
+    saveLogs&&saveLogs(nl);
   }
-
-  function isDone(id){
-    var src=localLogs&&typeof localLogs==="object"?localLogs:logs;
-    if(!src||typeof src!=="object")return false;
-    var day=src[td];
-    return !!(day&&day[id]);
-  }
-
+  function isDone(id){return !!todayDone[id];}
   function streak(id){
     var s=0;var d=new Date(today);
     for(var i=0;i<366;i++){
       var k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
-      if(!(logs[k]&&logs[k][id]))break;
-      s++;d.setDate(d.getDate()-1);
-    }
-    return s;
+      var dl=k===td?todayDone:(logs[k]||{});
+      if(!dl[id])break;s++;d.setDate(d.getDate()-1);
+    }return s;
   }
-
+  var sh=useState(false);var show=sh[0];var setShow=sh[1];
+  var nh=useState("");var newH=nh[0];var setNewH=nh[1];
+  var ne=useState("⭐");var newE=ne[0];var setNewE=ne[1];
+  var nc=useState("#7C3AED");var newC=nc[0];var setNewC=nc[1];
+  var EMOJIS=["⭐","💪","📚","🏃","💧","🧘","✍️","🎯","💤","🥗"];
   var dow=today.getDay()===0?6:today.getDay()-1;
   var weekStart=new Date(today);weekStart.setDate(today.getDate()-dow);
   var gridStart=new Date(weekStart);gridStart.setDate(weekStart.getDate()-28);
-
   function grid(id,color){
     var days=Array.from({length:35},function(_,i){var d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;});
-    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,clamp(34px,9.5vw,80px))",gap:3,marginTop:8}},
-      ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(function(day){
-        return ce("div",{key:day,style:{fontSize:9,color:"var(--text-3)",textAlign:"center",marginBottom:3,width:"clamp(34px,9.5vw,80px)",fontWeight:600}},day);
-      }),
-      days.map(function(d,i){
-        var k=new Date(d.getFullYear(),d.getMonth(),d.getDate()).toDateString();
-        var done2=!!(logs[k]&&logs[k][id]);
-        var isToday=k===td;
-        var isFuture=d>today;
-        return ce("div",{key:i,
-          title:d.toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"short"}),
-          style:{width:"clamp(34px,9.5vw,80px)",height:"clamp(34px,9.5vw,80px)",borderRadius:8,
-            background:isFuture?"var(--border-light)":done2?(color||"#7C3AED"):"var(--border)",
-            boxShadow:isToday?"0 0 0 2px "+(color||"#7C3AED"):"none",
-            opacity:isFuture?0.25:done2?1:0.55,transition:"background .15s"}});
+    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginTop:8}},
+      days.map(function(day,i){
+        var k=new Date(day.getFullYear(),day.getMonth(),day.getDate()).toDateString();
+        var done=k===td?isDone(id):!!(logs[k]&&logs[k][id]);
+        var isToday=k===td;var isFuture=day>today;
+        return ce("div",{key:i,title:day.toLocaleDateString("pt-PT"),
+          style:{width:"100%",paddingBottom:"100%",borderRadius:4,position:"relative",
+            background:done?color||"#7C3AED":isFuture?"transparent":"var(--bg-surface)",
+            border:isToday?"2px solid "+(color||"#7C3AED"):"1px solid var(--border-light)",
+            opacity:isFuture?0.3:1,cursor:isToday?"pointer":"default"},
+          onClick:isToday?function(){tog(id);}:undefined});
       })
     );
   }
-
-  return ce("div",{style:{animation:"fU .2s"}},
-    ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}},
-      ce("div",{style:{display:"flex",alignItems:"center",gap:14}},
-        ce("div",{style:{width:40,height:40,borderRadius:10,background:"#F0FFF4",display:"flex",alignItems:"center",justifyContent:"center"}},
-          ce("i",{className:"ti ti-target",style:{fontSize:20,color:"#38A169"}})),
-        ce("div",null,
-          ce("div",{className:"pt",style:{fontSize:24}},"Hábitos"),
-          ce("div",{className:"ps"},today.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long",year:"numeric"}))
-        )
+  var done_total=habits.filter(function(h){return isDone(h.id);}).length;
+  return ce("div",{style:{padding:"0 0 24px"}},
+    ce("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}},
+      ce("div",null,
+        ce("div",{className:"pt"},"Hábitos"),
+        ce("div",{className:"ps"},"Constrói consistência dia após dia.")
       ),
-      ce("button",{className:"bt dk",onClick:function(){setShow(true);},style:{gap:5}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Novo hábito")
+      ce("button",{className:"bt dk",onClick:function(){setShow(true);},style:{gap:5}},
+        ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Novo hábito")
     ),
-    habits.length===0?
-      ce("div",{style:{textAlign:"center",padding:"48px 20px",color:"var(--text-3)"}},
-        ce("i",{className:"ti ti-target",style:{fontSize:36,display:"block",marginBottom:10,opacity:.3}}),
-        ce("p",{style:{fontSize:14}},"Sem hábitos ainda."),
-        ce("button",{className:"bt dk",onClick:function(){setShow(true);},style:{marginTop:12,gap:5}},ce("i",{className:"ti ti-plus",style:{fontSize:13}})," Criar primeiro hábito")
-      ):
-      ce("div",{style:{display:"flex",flexDirection:"column",gap:14}},
-        habits.map(function(h){
-          var done=isDone(h.id);
-          var str=streak(h.id);
-          return ce("div",{key:h.id,className:"cd",style:{padding:16}},
-            ce("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:10}},
-              ce("button",{onClick:function(){tog(h.id);},
-                style:{width:40,height:40,borderRadius:"50%",
-                  border:"2px solid "+(done?(h.color||"#7C3AED"):"var(--border)"),
-                  background:done?(h.color||"#7C3AED"):"transparent",
-                  cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
-                  fontSize:18,flexShrink:0,transition:"all .2s"}},
-                done?ce("i",{className:"ti ti-check",style:{fontSize:18,color:"#fff"}}):ce("span",null,h.emoji||"⭐")
-              ),
-              ce("div",{style:{flex:1}},
-                ce("div",{style:{fontSize:14,fontWeight:500,color:"var(--text-1)"}},h.name),
-                ce("div",{style:{fontSize:11,color:"var(--text-3)",marginTop:2}},
-                  str>0?str+" dia"+(str!==1?"s":"")+" seguido"+(str!==1?"s":"")+" 🔥":"Ainda não feito hoje"
-                )
-              ),
-              ce("div",{style:{display:"flex",gap:6}},
-                ce("div",{style:{padding:"3px 9px",borderRadius:20,fontSize:11,fontWeight:600,
-                  background:done?"#F0FFF4":"var(--bg-surface)",color:done?"#38A169":"var(--text-3)",
-                  border:"1px solid "+(done?"#9AE6B4":"var(--border)")}},
-                  done?"✓ Feito":"Pendente"
-                ),
-                ce("button",{onClick:function(){saveHabits&&saveHabits(habits.filter(function(x){return x.id!==h.id;}));},
-                  style:{border:"none",background:"transparent",cursor:"pointer",color:"var(--text-3)",padding:"2px 5px"}},
-                  ce("i",{className:"ti ti-trash",style:{fontSize:13}})
-                )
-              )
+    habits.length>0&&ce("div",{style:{background:"var(--bg-app)",border:"1px solid var(--border)",borderRadius:10,padding:"10px 16px",marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between"}},
+      ce("div",{style:{fontSize:13,color:"var(--text-2)"}},"Hoje"),
+      ce("div",{style:{fontSize:20,fontWeight:700,color:"var(--text-1)"}},done_total+"/"+habits.length+" hábitos"),
+      ce("div",{style:{width:40,height:40,borderRadius:"50%",border:"3px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"var(--purple)"}},
+        Math.round((done_total/Math.max(1,habits.length))*100)+"%")
+    ),
+    habits.length===0&&ce("div",{style:{textAlign:"center",padding:"40px 20px",color:"var(--text-3)"}},
+      ce("div",{style:{fontSize:32,marginBottom:8}},"🌱"),
+      ce("div",{style:{fontSize:14}},"Cria o teu primeiro hábito para começar.")
+    ),
+    ce("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+      habits.map(function(h){
+        var done=isDone(h.id);var str=streak(h.id);
+        return ce("div",{key:h.id,className:"cd",style:{padding:16}},
+          ce("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:10}},
+            ce("button",{onClick:function(){tog(h.id);},
+              style:{width:40,height:40,borderRadius:"50%",
+                border:"2px solid "+(done?(h.color||"#7C3AED"):"var(--border)"),
+                background:done?(h.color||"#7C3AED"):"transparent",
+                cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:18,flexShrink:0,transition:"all .2s"}},
+              done?ce("i",{className:"ti ti-check",style:{fontSize:18,color:"#fff"}}):ce("span",null,h.emoji||"⭐")
             ),
-            grid(h.id,h.color||"#7C3AED")
-          );
-        })
-      ),
-    show?ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShow(false);}},
-      ce("div",{style:{background:"var(--bg-app)",borderRadius:12,padding:24,width:380,maxWidth:"92vw",border:"1px solid var(--border)"}},
-        ce("div",{style:{fontSize:15,fontWeight:600,marginBottom:16,display:"flex",justifyContent:"space-between"}},
+            ce("div",{style:{flex:1}},
+              ce("div",{style:{fontSize:16,fontWeight:600,color:"var(--text-1)"}},(h.emoji||"")+" "+h.name),
+              ce("div",{style:{fontSize:12,color:"var(--text-3)",marginTop:2}},str>0?"🔥 "+str+" dias seguidos":"Começa hoje!")
+            ),
+            ce("div",{style:{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,
+              background:done?"#F0FFF4":"var(--bg-surface)",color:done?"#38A169":"var(--text-3)"}},
+              done?"✓ Feito":"Marcar hoje"
+            ),
+            ce("button",{onClick:function(){saveHabits&&saveHabits(habits.filter(function(x){return x.id!==h.id;}));},
+              style:{background:"none",border:"none",cursor:"pointer",color:"var(--text-3)",padding:4,fontSize:13}},
+              ce("i",{className:"ti ti-trash"})
+            )
+          ),
+          grid(h.id,h.color||"#7C3AED")
+        );
+      })
+    ),
+    show&&ce("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"},
+      onClick:function(e){if(e.target===e.currentTarget)setShow(false);}},
+      ce("div",{style:{background:"var(--bg-app)",borderRadius:14,padding:24,width:420,maxWidth:"94vw",border:"1px solid var(--border)",boxShadow:"0 8px 32px rgba(0,0,0,.15)"}},
+        ce("div",{style:{fontSize:16,fontWeight:600,marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center"}},
           "Novo hábito",
-          ce("button",{onClick:function(){setShow(false);},style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},"x")
+          ce("button",{onClick:function(){setShow(false);},style:{border:"none",background:"none",cursor:"pointer",fontSize:18,color:"var(--text-3)"}},ce("i",{className:"ti ti-x"}))
         ),
-        ce("input",{className:"ip",value:newH,onChange:function(e){setNewH(e.target.value);},
-          onKeyDown:function(e){if(e.key==="Enter"&&newH.trim()){saveHabits&&saveHabits(habits.concat([{id:"h"+Date.now(),name:newH.trim(),emoji:newE,color:newC}]));setNewH("");setShow(false);toast&&toast("Hábito criado!");}},
-          placeholder:"Nome do hábito...",autoFocus:true,style:{marginBottom:10}}),
-        ce("div",{style:{marginBottom:10}},
-          ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:6}},"Emoji"),
-          ce("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
-            EMOJIS.map(function(em){return ce("button",{key:em,onClick:function(){setNewE(em);},style:{fontSize:18,padding:"4px 8px",borderRadius:6,border:"2px solid "+(newE===em?"var(--purple)":"var(--border)"),background:newE===em?"var(--purple-bg)":"transparent",cursor:"pointer"}},em);})
+        ce("input",{className:"ip",placeholder:"Nome do hábito...",value:newH,onChange:function(e){setNewH(e.target.value);},style:{marginBottom:12}}),
+        ce("div",{style:{marginBottom:12}},
+          ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:6,fontWeight:500}},"Emoji"),
+          ce("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
+            EMOJIS.map(function(em){return ce("button",{key:em,onClick:function(){setNewE(em);},style:{fontSize:18,padding:"4px 8px",borderRadius:6,border:newE===em?"2px solid var(--purple)":"2px solid transparent",background:newE===em?"var(--purple-bg)":"transparent",cursor:"pointer"}},em);})
           )
         ),
-        ce("div",{style:{marginBottom:14}},
-          ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:6}},"Cor"),
-          ce("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-            ["#7C3AED","#38A169","#3182CE","#E53E3E","#D69E2E","#D53F8C","#DD6B20","#2C7A7B"].map(function(c){
-              return ce("button",{key:c,onClick:function(){setNewC(c);},style:{width:24,height:24,borderRadius:"50%",background:c,border:newC===c?"3px solid var(--text-1)":"2px solid transparent",cursor:"pointer"}});
+        ce("div",{style:{marginBottom:16}},
+          ce("div",{style:{fontSize:11,color:"var(--text-3)",marginBottom:6,fontWeight:500}},"Cor"),
+          ce("div",{style:{display:"flex",gap:6}},
+            ["#7C3AED","#2563EB","#16A34A","#DC2626","#D97706","#0891B2","#BE185D","#374151"].map(function(c){
+              return ce("button",{key:c,onClick:function(){setNewC(c);},style:{width:24,height:24,borderRadius:"50%",background:c,border:newC===c?"3px solid var(--text-1)":"3px solid transparent",cursor:"pointer"}});
             })
           )
         ),
         ce("div",{style:{display:"flex",gap:8,justifyContent:"flex-end"}},
           ce("button",{className:"bt",onClick:function(){setShow(false);}},"Cancelar"),
-          ce("button",{className:"bt dk",disabled:!newH.trim(),onClick:function(){
+          ce("button",{className:"bt dk",onClick:function(){
+            if(!newH.trim()){toast&&toast("Escreve o nome do hábito.");return;}
             saveHabits&&saveHabits(habits.concat([{id:"h"+Date.now(),name:newH.trim(),emoji:newE,color:newC}]));
-            setNewH("");setShow(false);toast&&toast("Hábito criado!");
-          },style:{gap:5}},ce("i",{className:"ti ti-check",style:{fontSize:12}})," Criar")
+            setNewH("");setNewE("⭐");setNewC("#7C3AED");setShow(false);toast&&toast("Hábito criado!");
+          }},"Criar hábito")
         )
       )
-    ):null
+    )
   );
 }
 
