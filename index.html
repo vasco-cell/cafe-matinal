@@ -895,10 +895,16 @@ function PHabitos(props){
     setLoaded(true);
     setTodayDone(logs[td]&&typeof logs[td]==="object"?Object.assign({},logs[td]):{});
   }
-  function tog(id){
-    var nd=Object.assign({},todayDone);nd[id]=!nd[id];
-    setTodayDone(nd);
-    var nl=Object.assign({},logs);nl[td]=nd;
+  function tog(id,dateKey){
+    var dk=dateKey||td;
+    var nl=Object.assign({},logs);
+    var dayLog=nl[dk]&&typeof nl[dk]==="object"?Object.assign({},nl[dk]):{};
+    dayLog[id]=!dayLog[id];
+    nl[dk]=dayLog;
+    if(dk===td){
+      var nd=Object.assign({},todayDone);nd[id]=!nd[id];
+      setTodayDone(nd);
+    }
     saveLogs&&saveLogs(nl);
   }
   function isDone(id){return !!todayDone[id];}
@@ -925,12 +931,17 @@ function PHabitos(props){
         var k=new Date(day.getFullYear(),day.getMonth(),day.getDate()).toDateString();
         var done=k===td?isDone(id):!!(logs[k]&&logs[k][id]);
         var isToday=k===td;var isFuture=day>today;
-        return ce("div",{key:i,title:day.toLocaleDateString("pt-PT"),
+        var cellKey=k;
+        return ce("div",{key:i,title:day.toLocaleDateString("pt-PT",{weekday:"short",day:"numeric",month:"short"})+(done?" · Feito":" · Clica para marcar"),
           style:{width:"100%",paddingBottom:"100%",borderRadius:4,position:"relative",
             background:done?color||"#7C3AED":isFuture?"transparent":"var(--bg-surface)",
-            border:isToday?"2px solid "+(color||"#7C3AED"):"1px solid var(--border-light)",
-            opacity:isFuture?0.3:1,cursor:isToday?"pointer":"default"},
-          onClick:isToday?function(){tog(id);}:undefined});
+            border:isToday?"2px solid "+(color||"#7C3AED"):done?"1px solid "+(color||"#7C3AED"):"1px solid var(--border-light)",
+            opacity:isFuture?0.3:1,
+            cursor:isFuture?"default":"pointer",
+            transform:"scale(1)",transition:"transform .1s"},
+          onClick:isFuture?undefined:function(){tog(id,cellKey);},
+          onMouseEnter:isFuture?undefined:function(e){e.currentTarget.style.transform="scale(1.15)";e.currentTarget.style.zIndex="1";},
+          onMouseLeave:isFuture?undefined:function(e){e.currentTarget.style.transform="scale(1)";e.currentTarget.style.zIndex="";} });
       })
     );
   }
