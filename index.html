@@ -965,7 +965,7 @@ function PHabitos(props){
       ce("div",{style:{fontSize:32,marginBottom:8}},"🌱"),
       ce("div",{style:{fontSize:14}},"Cria o teu primeiro hábito para começar.")
     ),
-    ce("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+    ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,alignItems:"start"}},
       habits.map(function(h){
         var done=isDone(h.id);var str=streak(h.id);
         return ce("div",{key:h.id,className:"cd",style:{padding:12}},
