@@ -926,7 +926,7 @@ function PHabitos(props){
   var gridStart=new Date(weekStart);gridStart.setDate(weekStart.getDate()-28);
   function grid(id,color){
     var days=Array.from({length:35},function(_,i){var d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;});
-    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginTop:6}},
+    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginTop:4}},
       days.map(function(day,i){
         var k=new Date(day.getFullYear(),day.getMonth(),day.getDate()).toDateString();
         var done=k===td?isDone(id):!!(logs[k]&&logs[k][id]);
@@ -968,7 +968,7 @@ function PHabitos(props){
     ce("div",{style:{display:"flex",flexDirection:"column",gap:12}},
       habits.map(function(h){
         var done=isDone(h.id);var str=streak(h.id);
-        return ce("div",{key:h.id,className:"cd",style:{padding:16}},
+        return ce("div",{key:h.id,className:"cd",style:{padding:12}},
           ce("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:10}},
             ce("button",{onClick:function(){tog(h.id);},
               style:{width:46,height:46,borderRadius:"50%",
