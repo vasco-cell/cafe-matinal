@@ -473,6 +473,7 @@ Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}.
 
 
 
+
 function PTarefas(props){
   var tasks=props.tasks||[];var addTask=props.addTask;var updateTask=props.updateTask;
   var toast=props.toast;var prios=props.prios||[];var savePrios=props.savePrios;
@@ -496,7 +497,8 @@ function PTarefas(props){
   var CU_LISTS=["BBTOP20","BOS","Podcast","Marketing","Social Media","Pessoal","Operacoes"];
   function PA(p){return({urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE",low:"#38A169"}[p]||"#CBD5E0");}
   function PR(p){return({urgent:"Urgente",high:"Alta",normal:"Normal",low:"Baixa"}[p]||p);}
-  var filtered=tasks.filter(function(t){
+  var srcTasks=filter==="concluidas"?closedTasks:tasks;
+  var filtered=srcTasks.filter(function(t){
     if(filter==="abertas")return t.status!=="done"&&t.status!=="closed"&&t.status!=="feito";
     if(filter==="hoje"){var d=new Date();return t.due_date&&t.due_date!=="null"&&new Date(+t.due_date).toDateString()===d.toDateString();}
     if(filter==="atrasadas"){var n=new Date();return t.status!=="done"&&t.due_date&&t.due_date!=="null"&&new Date(+t.due_date)<n;}
@@ -550,6 +552,9 @@ function PTarefas(props){
     );
   }
   function ListView(){
+    if(filter==="concluidas"&&closedLoading)return ce("div",{style:{textAlign:"center",padding:"40px 20px",color:"var(--text-3)"}},
+      ce("i",{className:"ti ti-loader",style:{fontSize:28,display:"block",marginBottom:8,opacity:.5}}),
+      ce("p",{style:{fontSize:13}},"A carregar tarefas concluidas..."));
     if(filtered.length===0)return ce("div",{style:{textAlign:"center",padding:"40px 20px",color:"var(--text-3)"}},
       ce("i",{className:"ti ti-checkbox",style:{fontSize:32,display:"block",marginBottom:8,opacity:.4}}),
       ce("p",{style:{fontSize:14}},"Sem tarefas neste filtro."));
@@ -650,6 +655,32 @@ function PTarefas(props){
       })
     );
   }
+  async function fetchClosedTasks(){
+    var key=localStorage.getItem("cu_key");
+    if(!key||closedLoaded)return;
+    setClosedLoading(true);
+    try{
+      var CU_TEAM="24309030";var CU_USER="206530598";
+      var r=await fetch("https://api.clickup.com/api/v2/team/"+CU_TEAM+"/task?assignees[]="+CU_USER+"&include_closed=true&statuses[]=closed&statuses[]=feito&statuses[]=done&subtasks=true&page=0&order_by=updated&reverse=true",
+        {headers:{Authorization:key}});
+      if(r.ok){
+        var d=await r.json();
+        var arr=(d.tasks||[]).filter(function(t){
+          return t.status&&(t.status.status==="closed"||t.status.status==="feito"||t.status.status==="done");
+        }).map(function(t){
+          return {id:t.id,name:t.name,status:t.status?.status||"done",
+            priority:(t.priority?.priority||"normal"),list:t.list?.name||"",
+            list_id:t.list?.id||"",due_date:t.due_date||"null",
+            url:t.url||("https://app.clickup.com/t/"+t.id),
+            date_updated:t.date_updated||"0"};
+        });
+        setClosedTasks(arr);
+        setClosedLoaded(true);
+      }
+    }catch(e){console.warn("fetchClosedTasks error",e);}
+    setClosedLoading(false);
+  }
+
   return ce("div",{style:{display:"flex",flexDirection:"column",height:"100%",animation:"fU .2s"}},
     ce("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexShrink:0}},
       ce("div",{style:{display:"flex",alignItems:"center",gap:14}},
