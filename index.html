@@ -923,10 +923,10 @@ function PHabitos(props){
   var EMOJIS=["⭐","💪","📚","🏃","💧","🧘","✍️","🎯","💤","🥗"];
   var dow=today.getDay()===0?6:today.getDay()-1;
   var weekStart=new Date(today);weekStart.setDate(today.getDate()-dow);
-  var gridStart=new Date(weekStart);gridStart.setDate(weekStart.getDate()-28);
+  var gridStart=new Date(weekStart);gridStart.setDate(weekStart.getDate()-14);
   function grid(id,color){
-    var days=Array.from({length:35},function(_,i){var d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;});
-    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginTop:4}},
+    var days=Array.from({length:21},function(_,i){var d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;});
+    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginTop:6}},
       days.map(function(day,i){
         var k=new Date(day.getFullYear(),day.getMonth(),day.getDate()).toDateString();
         var done=k===td?isDone(id):!!(logs[k]&&logs[k][id]);
