@@ -481,10 +481,7 @@ Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}.
 function PTarefas(props){
   var tasks=props.tasks||[];var addTask=props.addTask;var updateTask=props.updateTask;
   var toast=props.toast;var prios=props.prios||[];var savePrios=props.savePrios;
-  var view_s=useState("lista");
-  var _ct=useState([]);var closedTasks=_ct[0];var setClosedTasks=_ct[1];
-  var _cl=useState(false);var closedLoading=_cl[0];var setClosedLoading=_cl[1];
-  var _cld=useState(false);var closedLoaded=_cld[0];var setClosedLoaded=_cld[1];var view=view_s[0],setView=view_s[1];
+  var view_s=useState("lista");var view=view_s[0],setView=view_s[1];
   var filter_s=useState("abertas");var filter=filter_s[0],setFilter=filter_s[1];
   var sort_s=useState("due");var sortBy=sort_s[0],setSortBy=sort_s[1];
   var open_s=useState(false);var newOpen=open_s[0],setNewOpen=open_s[1];
@@ -504,6 +501,9 @@ function PTarefas(props){
   var CU_LISTS=["BBTOP20","BOS","Podcast","Marketing","Social Media","Pessoal","Operacoes"];
   function PA(p){return({urgent:"#E53E3E",high:"#DD6B20",normal:"#3182CE",low:"#38A169"}[p]||"#CBD5E0");}
   function PR(p){return({urgent:"Urgente",high:"Alta",normal:"Normal",low:"Baixa"}[p]||p);}
+  var _ct=useState([]);var closedTasks=_ct[0];var setClosedTasks=_ct[1];
+  var _cl=useState(false);var closedLoading=_cl[0];var setClosedLoading=_cl[1];
+  var _cld=useState(false);var closedLoaded=_cld[0];var setClosedLoaded=_cld[1];
   var srcTasks=filter==="concluidas"?closedTasks:tasks;
   var filtered=srcTasks.filter(function(t){
     if(filter==="abertas")return t.status!=="done"&&t.status!=="closed"&&t.status!=="feito";
