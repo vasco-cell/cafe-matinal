@@ -630,7 +630,7 @@ function PTarefas(props){
           ce("div",{style:{fontSize:16,fontWeight:600}},"Nova tarefa"),
           ce("button",{onClick:function(){setNewOpen(false);},style:{border:"none",background:"transparent",cursor:"pointer",fontSize:20,color:"var(--text-3)"}},"x")
         ),
-        ce("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+        ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
           ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:4}},"Titulo *"),ce("input",{className:"ip",value:tName,autoFocus:true,onChange:function(e){setTName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")createTask();},placeholder:"Titulo da tarefa..."})),
           ce("div",null,ce("label",{style:{fontSize:12,fontWeight:500,color:"var(--text-2)",display:"block",marginBottom:4}},"Descricao"),ce("textarea",{className:"ip",value:tDesc,onChange:function(e){setTDesc(e.target.value);},rows:3,placeholder:"Detalhes opcionais...",style:{resize:"vertical"}})),
           ce("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
@@ -926,7 +926,7 @@ function PHabitos(props){
   var gridStart=new Date(weekStart);gridStart.setDate(weekStart.getDate()-28);
   function grid(id,color){
     var days=Array.from({length:35},function(_,i){var d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;});
-    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginTop:6,maxWidth:"56%"}},
+    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginTop:6}},
       days.map(function(day,i){
         var k=new Date(day.getFullYear(),day.getMonth(),day.getDate()).toDateString();
         var done=k===td?isDone(id):!!(logs[k]&&logs[k][id]);
