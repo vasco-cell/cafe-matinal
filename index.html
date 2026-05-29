@@ -474,6 +474,7 @@ Eventos hoje: ${(calEvents||[]).map(e=>e.summary).join(", ")||"nenhum"}.
 
 
 
+
 function PTarefas(props){
   var tasks=props.tasks||[];var addTask=props.addTask;var updateTask=props.updateTask;
   var toast=props.toast;var prios=props.prios||[];var savePrios=props.savePrios;
@@ -695,7 +696,7 @@ function PTarefas(props){
       )
     ),
     view==="lista"?ce("div",{style:{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",flexShrink:0,alignItems:"center"}},
-      [["abertas","Abertas"],["hoje","Hoje"],["atrasadas","Atrasadas"],["concluidas","Concluidas"],["todas","Todas"]].map(function(arr){var v=arr[0],l=arr[1];return ce("button",{key:v,onClick:function(){setFilter(v);},style:{padding:"4px 12px",borderRadius:20,border:"1px solid "+(filter===v?"var(--purple)":"var(--border)"),background:filter===v?"var(--purple-bg)":"transparent",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:filter===v?"var(--purple)":"var(--text-2)"}},l);}),
+      [["abertas","Abertas"],["hoje","Hoje"],["atrasadas","Atrasadas"],["concluidas","Concluidas"],["todas","Todas"]].map(function(arr){var v=arr[0],l=arr[1];return ce("button",{key:v,onClick:function(){setFilter(v);if(v==="concluidas")fetchClosedTasks();},style:{padding:"4px 12px",borderRadius:20,border:"1px solid "+(filter===v?"var(--purple)":"var(--border)"),background:filter===v?"var(--purple-bg)":"transparent",fontSize:12,cursor:"pointer",fontFamily:"inherit",color:filter===v?"var(--purple)":"var(--text-2)"}},l);}),
       ce("select",{value:sortBy,onChange:function(e){setSortBy(e.target.value);},style:{marginLeft:"auto",padding:"3px 8px",borderRadius:6,border:"1px solid var(--border)",fontSize:11,fontFamily:"inherit",background:"var(--bg-app)",color:"var(--text-2)"}},ce("option",{value:"due"},"Por prazo"),ce("option",{value:"prio"},"Por prioridade"))
     ):null,
     view==="lista"?ce(ListView,null):ce(KanbanView,null),
