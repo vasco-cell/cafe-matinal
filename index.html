@@ -2869,7 +2869,7 @@ function App(){
     const key=localStorage.getItem('cu_key');
     if(key){
       try{
-        const r1=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?assignees[]='+CU_USER+'&include_closed=false&subtasks=true&page=0&order_by=updated&reverse=true',{headers:{'Authorization':key}});
+        const r1=await fetch('https://api.clickup.com/api/v2/team/'+CU_TEAM+'/task?assignees[]='+CU_USER+'&include_closed=true&subtasks=true&page=0&order_by=updated&reverse=true',{headers:{'Authorization':key}});
         if(r1.ok){
           const d=await r1.json();
           const arr=(d.tasks||[]).map(function(t){return{id:t.id,name:t.name,status:t.status?.status||'open',priority:(t.priority?.priority||'normal'),list:t.list?.name||'',list_id:t.list?.id||'',due_date:t.due_date||'null',url:t.url||('https://app.clickup.com/t/'+t.id),date_updated:t.date_updated||'0'};});
