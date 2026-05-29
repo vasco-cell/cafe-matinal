@@ -926,7 +926,7 @@ function PHabitos(props){
   var gridStart=new Date(weekStart);gridStart.setDate(weekStart.getDate()-28);
   function grid(id,color){
     var days=Array.from({length:35},function(_,i){var d=new Date(gridStart);d.setDate(gridStart.getDate()+i);return d;});
-    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginTop:6,maxWidth:"80%"}},
+    return ce("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginTop:6,maxWidth:"56%"}},
       days.map(function(day,i){
         var k=new Date(day.getFullYear(),day.getMonth(),day.getDate()).toDateString();
         var done=k===td?isDone(id):!!(logs[k]&&logs[k][id]);
